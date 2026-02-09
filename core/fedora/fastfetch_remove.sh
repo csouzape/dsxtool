@@ -1,6 +1,6 @@
 remove_fastfetch(){
     echo "Removing Fastfetch..."
-    apt remove fastfetch -y
+    dnf remove fastfetch -y
     echo "Fastfetch removed successfully."
 }
 remove_config(){

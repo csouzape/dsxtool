@@ -1,3 +1,5 @@
+#!/bin/bash
+
 HOME="$HOME"
 
 check(){
@@ -26,17 +28,24 @@ configure(){
         echo "curl not found, skipping configuration"
     fi
 }
+
 setup(){
-    mkdir -p "${HOME}/.bashrc"
-    echo "source $HOME/.bashrc" >> "$HOME/.bashrc"
-    echo "source $HOME/.bashrc" >> "$HOME/.bash_profile"
+    # Adiciona fastfetch ao .bashrc se ainda não estiver lá
+    if ! grep -q "fastfetch" "$HOME/.bashrc"; then
+        echo "fastfetch" >> "$HOME/.bashrc"
+    fi
+    
+    # Adiciona source do .bashrc ao .bash_profile se ainda não estiver lá
+    if ! grep -q "source.*\.bashrc" "$HOME/.bash_profile" 2>/dev/null; then
+        echo "source $HOME/.bashrc" >> "$HOME/.bash_profile"
+    fi
 }
 
 main(){
-    check
     fastfetch_install
     configure
     setup
-
+    echo "Setup completed!"
 }
+
 main

@@ -1,4 +1,4 @@
-# this is tlp script for ubuntu 
+#!/bin/bash
 tlp_install(){
     echo "Installing TLP..."
     sudo dnf install tlp tlp-rdw -y

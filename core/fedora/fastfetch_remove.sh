@@ -1,3 +1,5 @@
+#!/bin/bash
+HOME="$HOME"
 remove_fastfetch(){
     echo "Removing Fastfetch..."
     dnf remove fastfetch -y

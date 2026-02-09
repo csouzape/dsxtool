@@ -1,3 +1,4 @@
+#!/bin/bash
 # this is install script 
 
 check_root() {

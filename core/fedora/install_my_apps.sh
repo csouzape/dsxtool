@@ -1,11 +1,32 @@
 #!/bin/bash
 install_flatpak_apps(){
-    echo "Installing Flatpak apps..."
-    flatpak install -y flathub com.spotify.Client
-    flatpak install -y flathub com.visualstudio.code
-    flatpak install -y flathub com.discordapp.Discord
-    flatpak install -y flathub com.io.github.shiftey.Desktop
-    echo "Flatpak apps installed successfully."
+     local app_id="$1" 
+    if flatpak list --app | grep -q "$app_id"; then 
+        return 0 
+    else
+        return 1  
+    fi
+    
+if is_flatpak_installed "com.spotify.Client"; then
+        echo "Spotify has installed."
+    else
+        echo "Instalando Spotify..."
+        flatpak install -y flathub com.spotify.Client
+    fi
+
+    if is_flatpak_installed "com.discordapp.Discord"; then
+        echo "Discord has installed."
+    else
+        echo "Instalando Discord..."
+        flatpak install -y flathub com.discordapp.Discord
+    fi
+
+    if is_flatpak_installed "com.stremio.Stremio"; then
+        echo "Stremio has installed."
+    else
+        echo "Instalando Stremio..."
+        flatpak install -y flathub com.stremio.Stremio
+    fi
 }
 
 install_browser(){

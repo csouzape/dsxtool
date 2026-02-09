@@ -24,57 +24,73 @@ check_distro() {
         exit 1
     fi
 }
-main(){
+
+run_script() {
+    local script_path="$1"
+    
+    if [ ! -f "$script_path" ]; then
+        echo "Error: Script not found: $script_path"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    if ! bash "$script_path"; then
+        echo "Error: Script failed: $script_path"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+main() {
+    # Verificações iniciais
+    check_root
+    check_distro
+    
     while true; do
-        echo "Choice the script"
-        echo "1) TLP"
-        echo "2) Fastfetch"
+        clear
+        echo "================================"
+        echo "  System Configuration Menu"
+        echo "================================"
+        echo "Detected distro: $DISTRO"
+        echo ""
+        echo "1) Install TLP (Battery Optimization)"
+        echo "2) Install Fastfetch"
         echo "3) Remove Fastfetch"
         echo "4) Gaming Setup"
         echo "5) Install My Apps"
         echo "6) Exit"
+        echo ""
         read -p "Enter your choice: " choice
+        
         case $choice in
             1)
-                check_root
-                check_distro
-                bash core/$DISTRO/tlp.sh
-                clear
+                run_script "core/$DISTRO/tlp.sh"
                 ;;
             2)
-                check_root
-                check_distro
-                bash core/$DISTRO/fastfetch.sh
-                clear
+                run_script "core/$DISTRO/fastfetch.sh"
                 ;;
             3)
-                check_root
-                check_distro
-                bash core/$DISTRO/fastfetch_remove.sh
-                clear
+                run_script "core/$DISTRO/fastfetch_remove.sh"
                 ;;
             4)
-                check_root
-                check_distro
-                bash core/$DISTRO/gaming-setup.sh
-                clear
+                run_script "core/$DISTRO/gaming-setup.sh"
                 ;;
             5)
-                check_root
-                check_distro
-                bash core/$DISTRO/install_my_apps.sh
-                clear
+                run_script "core/$DISTRO/install_my_apps.sh"
                 ;;
             6)
                 echo "Exiting..."
-                clear
                 exit 0
                 ;;
             *)
                 echo "Invalid choice. Please try again."
+                sleep 2
                 ;;
         esac
-        
     done
 }
+
 main

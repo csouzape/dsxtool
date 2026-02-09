@@ -1,3 +1,5 @@
+HOME="$HOME"
+
 check(){
     command -v fastfetch &>/dev/null
 }
@@ -13,11 +15,11 @@ fastfetch_install(){
 }
 
 configure(){
-    mkdir -p "${HOME}/.config/fastfetch"
+    mkdir -p "$HOME/.config/fastfetch"
 
     if command -v curl &>/dev/null; then
         curl -fsSL \
-          -o "${HOME}/.config/fastfetch/config.jsonc" \
+          -o "$HOME/.config/fastfetch/config.jsonc" \
           https://raw.githubusercontent.com/ChrisTitusTech/mybash/main/config.jsonc
         echo "Fastfetch configured successfully."
     else
@@ -26,8 +28,8 @@ configure(){
 }
 setup(){
     mkdir -p "${HOME}/.bashrc"
-    echo "source ${HOME}/.bashrc" >> "${HOME}/.bashrc"
-    echo "source ${HOME}/.bashrc" >> "${HOME}/.bash_profile"
+    echo "source $HOME/.bashrc" >> "$HOME/.bashrc"
+    echo "source $HOME/.bashrc" >> "$HOME/.bash_profile"
 }
 
 main(){

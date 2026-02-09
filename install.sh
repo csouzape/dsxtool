@@ -50,6 +50,5 @@ main(){
                 echo "Invalid choice. Please try again."
                 ;;
         esac
-
-
+    done
 }

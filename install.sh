@@ -30,7 +30,8 @@ main(){
         echo "Choice the script"
         echo "1) TLP"
         echo "2) Fastfetch"
-        echo "3) Exit"
+        echo "3) Remove Fastfetch"
+        echo "4) Exit"
         read -p "Enter your choice: " choice
         case $choice in
             1)
@@ -44,6 +45,11 @@ main(){
                 bash core/$DISTRO/fastfetch.sh
                 ;;
             3)
+                check_root
+                check_distro
+                bash core/$DISTRO/fastfetch_remove.sh
+                ;;
+            4)
                 echo "Exiting..."
                 exit 0
                 ;;

@@ -1,8 +1,16 @@
 #!/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+RC='\033[0m'
+
 check_root() {
     if [ "$EUID" -ne 0 ]; then
-        echo "Please run as root"
+        echo -e "${RED}Error: Please run as root${RC}"
         exit 1
     fi
 }
@@ -15,12 +23,12 @@ check_distro() {
                 DISTRO="$ID"
                 ;;
             *)
-                echo "Unsupported distro: $ID"
+                echo -e "${RED}Unsupported distro: $ID${RC}"
                 exit 1
                 ;;
         esac
     else
-        echo "Cannot determine distro"
+        echo -e "${RED}Cannot determine distro${RC}"
         exit 1
     fi
 }
@@ -29,17 +37,19 @@ run_script() {
     local script_path="$1"
     
     if [ ! -f "$script_path" ]; then
-        echo "Error: Script not found: $script_path"
+        echo -e "${RED}Error: Script not found: $script_path${RC}"
         read -p "Press Enter to continue..."
         return 1
     fi
     
+    echo -e "${BLUE}Running: $script_path${RC}"
     if ! bash "$script_path"; then
-        echo "Error: Script failed: $script_path"
+        echo -e "${RED}Error: Script failed: $script_path${RC}"
         read -p "Press Enter to continue..."
         return 1
     fi
     
+    echo -e "${GREEN}Script completed successfully!${RC}"
     echo ""
     read -p "Press Enter to continue..."
 }
@@ -51,19 +61,19 @@ main() {
     
     while true; do
         clear
-        echo "================================"
-        echo "      DSXTool - $DISTRO Edition"
-        echo "================================"
-        echo "Detected distro: $DISTRO"
+        echo -e "${CYAN}================================${RC}"
+        echo -e "${MAGENTA}      DSXTool - $DISTRO Edition${RC}"
+        echo -e "${CYAN}================================${RC}"
+        echo -e "${YELLOW}Detected distro: ${GREEN}$DISTRO${RC}"
         echo ""
-        echo "1) Install TLP (Battery Optimization)"
-        echo "2) Install Fastfetch"
-        echo "3) Remove Fastfetch"
-        echo "4) Gaming Setup"
-        echo "5) Install My Apps"
-        echo "6) Exit"
+        echo -e "${BLUE}1)${RC} Install TLP (Battery Optimization)"
+        echo -e "${BLUE}2)${RC} Install Fastfetch"
+        echo -e "${BLUE}3)${RC} Remove Fastfetch"
+        echo -e "${BLUE}4)${RC} Gaming Setup"
+        echo -e "${BLUE}5)${RC} Install My Apps"
+        echo -e "${RED}6)${RC} Exit"
         echo ""
-        read -p "Enter your choice: " choice
+        read -p "$(echo -e ${YELLOW}Enter your choice:${RC} )" choice
         
         case $choice in
             1)
@@ -82,11 +92,11 @@ main() {
                 run_script "core/$DISTRO/install_my_apps.sh"
                 ;;
             6)
-                echo "Exiting..."
+                echo -e "${GREEN}Exiting...${RC}"
                 exit 0
                 ;;
             *)
-                echo "Invalid choice. Please try again."
+                echo -e "${RED}Invalid choice. Please try again.${RC}"
                 sleep 2
                 ;;
         esac

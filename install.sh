@@ -1,5 +1,4 @@
 #!/bin/bash
-# this is install script 
 
 check_root() {
     if [ "$EUID" -ne 0 ]; then
@@ -40,29 +39,35 @@ main(){
                 check_root
                 check_distro
                 bash core/$DISTRO/tlp.sh
+                clear
                 ;;
             2)
                 check_root
                 check_distro
                 bash core/$DISTRO/fastfetch.sh
+                clear
                 ;;
             3)
                 check_root
                 check_distro
                 bash core/$DISTRO/fastfetch_remove.sh
+                clear
                 ;;
             4)
                 check_root
                 check_distro
                 bash core/$DISTRO/gaming-setup.sh
+                clear
                 ;;
             5)
                 check_root
                 check_distro
                 bash core/$DISTRO/install_my_apps.sh
+                clear
                 ;;
             6)
                 echo "Exiting..."
+                clear
                 exit 0
                 ;;
             *)

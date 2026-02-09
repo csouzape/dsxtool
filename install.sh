@@ -24,9 +24,6 @@ check_distro() {
         exit 1
     fi
 }
-
-
-
 main(){
     while true; do
         echo "Choice the script"
@@ -56,4 +53,3 @@ main(){
 
 
 }
-

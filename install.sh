@@ -32,7 +32,9 @@ main(){
         echo "1) TLP"
         echo "2) Fastfetch"
         echo "3) Remove Fastfetch"
-        echo "4) Exit"
+        echo "4) Gaming Setup"
+        echo "5) Install My Apps"
+        echo "6) Exit"
         read -p "Enter your choice: " choice
         case $choice in
             1)

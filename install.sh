@@ -51,6 +51,16 @@ main(){
                 bash core/$DISTRO/fastfetch_remove.sh
                 ;;
             4)
+                check_root
+                check_distro
+                bash core/$DISTRO/gaming-setup.sh
+                ;;
+            5)
+                check_root
+                check_distro
+                bash core/$DISTRO/install_my_apps.sh
+                ;;
+            6)
                 echo "Exiting..."
                 exit 0
                 ;;

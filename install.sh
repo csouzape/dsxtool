@@ -26,6 +26,7 @@ check_distro() {
 }
 main(){
     while true; do
+        clear
         echo "Choice the script"
         echo "1) TLP"
         echo "2) Fastfetch"
@@ -50,7 +51,7 @@ main(){
                 echo "Invalid choice. Please try again."
                 ;;
         esac
-        clear
+        
     done
 }
 main

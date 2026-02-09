@@ -9,7 +9,7 @@ remove_config(){
 }
 
 main(){
-    remove_fastfetchq
+    remove_fastfetch
     remove_config
 }
 main

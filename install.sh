@@ -52,3 +52,4 @@ main(){
         esac
     done
 }
+main

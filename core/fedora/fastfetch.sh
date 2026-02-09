@@ -6,10 +6,10 @@ fastfetch_install(){
     if check; then
         echo "Fastfetch is already installed"
         return
+    else
+        echo "Installing Fastfetch..."
+        sudo dnf install -y fastfetch
     fi
-
-    echo "Installing Fastfetch..."
-    sudo dnf install -y fastfetch
 }
 
 configure(){

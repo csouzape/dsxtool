@@ -1,30 +1,33 @@
 check(){
-    if [ -f /usr/bin/fastfetch ]; then
-        echo "Fastfetch is already installed"
-        exit 0
-    fi
-} 
-fastfetch_install(){
-    echo "Installing Fastfetch..."
-    if [ -f /usr/bin/fastfetch ]; then
-        echo "Fastfetch is already installed"
-        exit 0
-    fi
-    sudo dnf install fastfetch -y
-    echo "Fastfetch installed successfully."
+    command -v fastfetch &>/dev/null
 }
+
+fastfetch_install(){
+    if check; then
+        echo "Fastfetch is already installed"
+        return
+    fi
+
+    echo "Installing Fastfetch..."
+    sudo dnf install -y fastfetch
+}
+
 configure(){
     mkdir -p "${HOME}/.config/fastfetch"
-    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/ChrisTitusTech/mybash/main/config.jsonc
-    echo "Fastfetch configured successfully."
 
+    if command -v curl &>/dev/null; then
+        curl -fsSL \
+          -o "${HOME}/.config/fastfetch/config.jsonc" \
+          https://raw.githubusercontent.com/ChrisTitusTech/mybash/main/config.jsonc
+        echo "Fastfetch configured successfully."
+    else
+        echo "curl not found, skipping configuration"
+    fi
 }
 setup(){
     mkdir -p "${HOME}/.bashrc"
     echo "source ${HOME}/.bashrc" >> "${HOME}/.bashrc"
     echo "source ${HOME}/.bashrc" >> "${HOME}/.bash_profile"
-    echo "Fastfetch setup completed successfully."
-
 }
 
 main(){

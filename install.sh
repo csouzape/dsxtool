@@ -52,7 +52,7 @@ main() {
     while true; do
         clear
         echo "================================"
-        echo "  System Configuration Menu"
+        echo "      DSXTool - $DISTRO Edition"
         echo "================================"
         echo "Detected distro: $DISTRO"
         echo ""

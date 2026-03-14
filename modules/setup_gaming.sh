@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+
+
 _enable_multilib_arch() {
     if grep -q "^\s*\[multilib\]" /etc/pacman.conf; then
         log_info "multilib is already enabled."

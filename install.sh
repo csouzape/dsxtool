@@ -15,9 +15,7 @@ fi
 
 source "$BASE_DIR/core/distros/$DISTRO.sh"
 
-# --------------------------------------------------
-# verify fzf
-# --------------------------------------------------
+
 
 verify_fzf_tool() {
     if command -v fzf >/dev/null 2>&1; then
@@ -43,10 +41,7 @@ verify_fzf_tool() {
 
 verify_fzf_tool
 
-# --------------------------------------------------
-# module wrappers — cada um isolado com subshell
-# para não deixar o set -e matar o loop principal
-# --------------------------------------------------
+
 
 update_system_module() {
     source "$BASE_DIR/modules/update_system.sh"
@@ -118,9 +113,11 @@ change_desktop_module() {
     prompt_change_desktop || log_warn "Desktop setup finished with errors."
 }
 
-# --------------------------------------------------
-# banner
-# --------------------------------------------------
+setup_gaming_module() {
+    source "$BASE_DIR/modules/setup_gaming.sh"
+    setup_gaming || log_warn "Gaming setup finished with errors."
+}
+
 
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
@@ -132,9 +129,7 @@ BANNER=$(cat <<'EOF'
 EOF
 )
 
-# --------------------------------------------------
-# menu
-# --------------------------------------------------
+
 
 build_menu() {
     printf '%s\n' \
@@ -150,15 +145,14 @@ build_menu() {
         "10 - Fonts Downloader" \
         "11 - Setup Flatpak" \
         "12 - Setup Virtualization" \
-        "13 - Setup Shell"
+        "13 - Setup Shell" \
+        "14 - Setup Gaming"
 
-    [[ "$DISTRO" == "arch" ]] && echo "14 - Setup yay (AUR helper)"
+    [[ "$DISTRO" == "arch" ]] && echo "15 - Setup yay (AUR helper)"
     echo "0 - Exit"
 }
 
-# --------------------------------------------------
-# run menu
-# --------------------------------------------------
+
 
 run_menu() {
     local tmp_in tmp_out
@@ -205,6 +199,7 @@ case "$item" in
 "Setup Flatpak")             echo "Installs Flatpak + Flathub remote."; echo; echo "  • Enables sandboxed app distribution" ;;
 "Setup Virtualization")      echo "Installs KVM/QEMU virtualization stack."; echo; echo "  • virt-manager GUI"; echo "  • libvirt + virtnetworkd" ;;
 "Setup Shell")               echo "Configure your shell environment."; echo; echo "  • Zsh + oh-my-zsh"; echo "  • Fish + fisher"; echo "  • Plugins and prompt setup" ;;
+"Setup Gaming")              echo "Full gaming environment setup."; echo; echo "  • Wine + gaming libraries"; echo "  • Steam + Lutris"; echo "  • MangoHud + GameMode"; echo "  • RPM Fusion on Fedora"; echo "  • multilib on Arch" ;;
 "Setup yay (AUR helper)")    echo "Builds and installs yay from AUR."; echo; echo "  • Arch Linux only"; echo "  • Requires non-root user" ;;
 "Exit")                      echo "Exit dsxtool." ;;
 esac
@@ -220,9 +215,7 @@ esac
     rm -f "$tmp_in" "$tmp_out"
 }
 
-# --------------------------------------------------
-# main loop
-# --------------------------------------------------
+
 
 dsxtool_main() {
     while true; do
@@ -250,6 +243,7 @@ dsxtool_main() {
             "Setup Flatpak")             clear; install_flatpak_module ;;
             "Setup Virtualization")      clear; install_virtualization_module ;;
             "Setup Shell")               clear; install_shell_module ;;
+            "Setup Gaming")              clear; setup_gaming_module ;;
             "Setup yay (AUR helper)")    clear; install_yay_module ;;
             "Exit")                      log_info "Exiting"; exit 0 ;;
             *)                           continue ;;

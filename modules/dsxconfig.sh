@@ -6,10 +6,33 @@ DSXCONFIG_REPO="https://github.com/csouzape/dsxconfig.git"
 
 _dsxconfig_check_go() {
     if command -v go &>/dev/null; then
+        log_info "Go $(go version | awk '{print $3}') found."
         return 0
     fi
+
     log_info "Go not found. Installing..."
-    pkg_install go || die "Failed to install Go."
+
+    case "$DISTRO" in
+        arch)
+            pkg_install go
+            ;;
+        debian)
+            pkg_install golang-go
+            ;;
+        fedora)
+            pkg_install golang
+            ;;
+        *)
+            die "Unsupported distro for Go installation: $DISTRO"
+            ;;
+    esac
+
+    # Verify installation
+    if ! command -v go &>/dev/null; then
+        die "Go installation failed. Please install Go manually: https://go.dev/dl/"
+    fi
+
+    log_info "Go $(go version | awk '{print $3}') installed successfully."
 }
 
 _dsxconfig_install_or_update() {

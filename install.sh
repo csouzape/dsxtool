@@ -15,8 +15,6 @@ fi
 
 source "$BASE_DIR/core/distros/$DISTRO.sh"
 
-
-
 verify_fzf_tool() {
     if command -v fzf >/dev/null 2>&1; then
         return
@@ -40,7 +38,6 @@ verify_fzf_tool() {
 }
 
 verify_fzf_tool
-
 
 
 update_system_module() {
@@ -118,9 +115,12 @@ setup_gaming_module() {
     setup_gaming || log_warn "Gaming setup finished with errors."
 }
 
-# --------------------------------------------------
-# banner
-# --------------------------------------------------
+dsxconfig_module() {
+    source "$BASE_DIR/modules/dsxconfig.sh"
+    setup_dsxconfig || log_warn "dsxconfig finished with errors."
+}
+
+
 
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
@@ -149,12 +149,12 @@ build_menu() {
         "11 - Setup Flatpak" \
         "12 - Setup Virtualization" \
         "13 - Setup Shell" \
-        "14 - Setup Gaming"
+        "14 - Setup Gaming" \
+        "15 - DSXConfig (backup & restore)"
 
-    [[ "$DISTRO" == "arch" ]] && echo "15 - Setup yay (AUR helper)"
+    [[ "$DISTRO" == "arch" ]] && echo "16 - Setup yay (AUR helper)"
     echo "0 - Exit"
 }
-
 
 
 run_menu() {
@@ -202,7 +202,8 @@ case "$item" in
 "Setup Flatpak")             echo "Installs Flatpak + Flathub remote."; echo; echo "  • Enables sandboxed app distribution" ;;
 "Setup Virtualization")      echo "Installs KVM/QEMU virtualization stack."; echo; echo "  • virt-manager GUI"; echo "  • libvirt + virtnetworkd" ;;
 "Setup Shell")               echo "Configure your shell environment."; echo; echo "  • Zsh + oh-my-zsh"; echo "  • Fish + fisher"; echo "  • Plugins and prompt setup" ;;
-"Setup Gaming")              echo "Full gaming environment setup."; echo; echo "  • Wine + gaming libraries"; echo "  • Steam + Lutris"; echo "  • MangoHud + GameMode"; echo "  • RPM Fusion on Fedora"; echo "  • multilib on Arch" ;;
+"Setup Gaming")              echo "Full gaming environment setup."; echo; echo "  • Wine + gaming libraries"; echo "  • Steam + Lutris"; echo "  • MangoHud + GameMode" ;;
+"DSXConfig (backup & restore)") echo "Backup and restore your Linux setup."; echo; echo "  • Export packages, AUR, Flatpak"; echo "  • Backup dotfiles"; echo "  • Restore on any machine"; echo "  • Cross-distro support" ;;
 "Setup yay (AUR helper)")    echo "Builds and installs yay from AUR."; echo; echo "  • Arch Linux only"; echo "  • Requires non-root user" ;;
 "Exit")                      echo "Exit dsxtool." ;;
 esac
@@ -218,9 +219,6 @@ esac
     rm -f "$tmp_in" "$tmp_out"
 }
 
-# --------------------------------------------------
-# main loop
-# --------------------------------------------------
 
 dsxtool_main() {
     while true; do
@@ -235,23 +233,24 @@ dsxtool_main() {
         item="$(sed 's/^[0-9]\+ *- *//' <<< "$choice")"
 
         case "$item" in
-            "Update System")              clear; update_system_module ;;
-            "Install TLP")               clear; install_tlp_module ;;
-            "Install Apps")              clear; install_apps_module ;;
-            "Install Alacritty")         clear; install_alacritty_module ;;
-            "Install Konsole")           clear; install_konsole_module ;;
-            "Install Kitty")             clear; install_kitty_module ;;
-            "Install Ghostty")           clear; install_ghostty_module ;;
-            "Setup Wallpapers")          clear; install_wallpapers_module ;;
-            "Change Desktop Environment") clear; change_desktop_module ;;
-            "Fonts Downloader")          clear; install_fonts_module ;;
-            "Setup Flatpak")             clear; install_flatpak_module ;;
-            "Setup Virtualization")      clear; install_virtualization_module ;;
-            "Setup Shell")               clear; install_shell_module ;;
-            "Setup Gaming")              clear; setup_gaming_module ;;
-            "Setup yay (AUR helper)")    clear; install_yay_module ;;
-            "Exit")                      log_info "Exiting"; exit 0 ;;
-            *)                           continue ;;
+            "Update System")                 clear; update_system_module ;;
+            "Install TLP")                   clear; install_tlp_module ;;
+            "Install Apps")                  clear; install_apps_module ;;
+            "Install Alacritty")             clear; install_alacritty_module ;;
+            "Install Konsole")               clear; install_konsole_module ;;
+            "Install Kitty")                 clear; install_kitty_module ;;
+            "Install Ghostty")               clear; install_ghostty_module ;;
+            "Setup Wallpapers")              clear; install_wallpapers_module ;;
+            "Change Desktop Environment")    clear; change_desktop_module ;;
+            "Fonts Downloader")              clear; install_fonts_module ;;
+            "Setup Flatpak")                 clear; install_flatpak_module ;;
+            "Setup Virtualization")          clear; install_virtualization_module ;;
+            "Setup Shell")                   clear; install_shell_module ;;
+            "Setup Gaming")                  clear; setup_gaming_module ;;
+            "DSXConfig (backup & restore)")  clear; dsxconfig_module ;;
+            "Setup yay (AUR helper)")        clear; install_yay_module ;;
+            "Exit")                          log_info "Exiting"; exit 0 ;;
+            *)                               continue ;;
         esac
 
         prompt_continue

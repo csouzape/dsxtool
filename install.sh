@@ -40,6 +40,7 @@ verify_fzf_tool() {
 verify_fzf_tool
 
 
+
 update_system_module() {
     source "$BASE_DIR/modules/update_system.sh"
     update_system || log_warn "update_system finished with errors."
@@ -132,8 +133,6 @@ BANNER=$(cat <<'EOF'
 EOF
 )
 
-
-
 build_menu() {
     printf '%s\n' \
         "1 - Update System" \
@@ -150,12 +149,11 @@ build_menu() {
         "12 - Setup Virtualization" \
         "13 - Setup Shell" \
         "14 - Setup Gaming" \
-        "15 - DSXConfig (Beta)"
+        "15 - DSXConfig (backup & restore)"
 
     [[ "$DISTRO" == "arch" ]] && echo "16 - Setup yay (AUR helper)"
     echo "0 - Exit"
 }
-
 
 run_menu() {
     local tmp_in tmp_out
@@ -218,7 +216,6 @@ esac
     cat "$tmp_out"
     rm -f "$tmp_in" "$tmp_out"
 }
-
 
 dsxtool_main() {
     while true; do

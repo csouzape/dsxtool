@@ -150,7 +150,7 @@ build_menu() {
         "12 - Setup Virtualization" \
         "13 - Setup Shell" \
         "14 - Setup Gaming" \
-        "15 - DSXConfig (backup & restore)"
+        "15 - DSXConfig (Beta)"
 
     [[ "$DISTRO" == "arch" ]] && echo "16 - Setup yay (AUR helper)"
     echo "0 - Exit"

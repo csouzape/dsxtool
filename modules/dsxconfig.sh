@@ -27,7 +27,6 @@ _dsxconfig_check_go() {
             ;;
     esac
 
-    # Verify installation
     if ! command -v go &>/dev/null; then
         die "Go installation failed. Please install Go manually: https://go.dev/dl/"
     fi

@@ -159,6 +159,23 @@ install_ide() {
                     || die "Failed to install Claude Code."
             fi
             ;;
+        "VScodium") 
+            log_info "Installing VScodium..."
+            if [[ "$DISTRO" != "arch" ]]; then
+                if ! command -v yay &>/dev/null; then 
+                    die "yay is not installed.|| Please run 'Setup yay' first."
+                fi 
+                yay -S --noconfirm vscodium \
+                    && log_info "vscodium installed successfully." \
+                    || die "Failed to install vscodium."
+            else
+                log_info "Installing VScodium via flatpka..." 
+                flatpak install -y flathub com.vscodium.codium
+                    && log_info "VScodium intalled successfully." \ 
+                    || die "Failed to install VScodium."
+            fi
+            ;;
+        
     esac
 }
 
@@ -333,6 +350,23 @@ install_devtool() {
             esac
             log_info "kubectl installed successfully."
             ;;
+        "gcc")
+            log_info "Installing Gcc.." 
+            case "$DISTRO" in 
+                arch) 
+                    pkg_install gcc \ 
+                    || die "Failed to install gcc."
+                    ;;
+                debian) 
+                    pkg_install build-essential \ 
+                    || DIE "Failed to install gcc."
+                    ;;
+                fedora) 
+                    pkg_install gcc \ 
+                    || die "Failed to install gcc."
+                    ;;
+            esac 
+            log_info "gcc installed successfully."
     esac
 }
 
@@ -362,7 +396,7 @@ menu_languages() {
 menu_ides() {
     local selections
     selections=$(printf '%s\n' \
-        "VS Code" "Zed" "NVIM (LazyVim)" "Kate" "Cursor" "Claude Code" \
+        "VS Code" "Zed" "NVIM (LazyVim)" "Kate" "Cursor" "Claude Code" "VScodium" \
         | fzf -m \
               --prompt="IDEs > " \
               --header="[TAB] Select  [ENTER] Install  [ESC] Back" \

@@ -16,7 +16,3 @@ setup_kitty() {
     install_kitty
 }
 
-main() {
-    install_kitty
-}
-

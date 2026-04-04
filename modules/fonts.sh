@@ -27,8 +27,13 @@ install_meslo() {
 
     if ! command -v git &>/dev/null; then
         log_warn "Git not found."
-        read -rp "Install git? (y/n): " confirm
+        read -rp "Install git? (y/n): " confirm < /dev/tty
         [[ "$confirm" =~ ^[Yy]$ ]] && pkg_install git || return 1
+    fi
+
+    if ! command -v unzip &>/dev/null; then
+        log_warn "unzip not found. Installing..."
+        pkg_install unzip || die "Failed to install unzip."
     fi
 
     log_info "Installing '$FONT_NAME'..."
@@ -37,11 +42,19 @@ install_meslo() {
     TEMP_DIR=$(mktemp -d)
     trap 'rm -rf "$TEMP_DIR"' EXIT
 
-    curl -sSLo "$TEMP_DIR/$FONT_NAME.zip" \
+    curl -fsSLo "$TEMP_DIR/$FONT_NAME.zip" \
         "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
     unzip -q "$TEMP_DIR/$FONT_NAME.zip" -d "$TEMP_DIR"
     mkdir -p "$FONT_DIR"
-    mv "$TEMP_DIR"/*.ttf "$FONT_DIR"
+
+    local -a ttf_files
+    shopt -s nullglob
+    ttf_files=("$TEMP_DIR"/*.ttf)
+    shopt -u nullglob
+
+    [[ ${#ttf_files[@]} -gt 0 ]] || die "No TTF files found in Meslo archive."
+
+    cp "${ttf_files[@]}" "$FONT_DIR/"
     fc-cache -f
 
     log_info "'$FONT_NAME' installed successfully."

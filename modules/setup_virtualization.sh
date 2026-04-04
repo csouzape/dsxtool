@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -uo pipefail
+set -euo pipefail
 
 # ─────────────────────────────────────────────────────────────────────────────
 # fzf wrapper
@@ -154,8 +154,13 @@ _setup_virtualbox() {
             ;;
         debian)
             log_info "Adding VirtualBox repository..."
-            wget -qO- https://www.virtualbox.org/download/oracle_vbox_2016.asc \
-                | sudo gpg --dearmor -o /usr/share/keyrings/virtualbox.gpg
+            local key_file
+            key_file=$(mktemp)
+            curl -fsSL "https://www.virtualbox.org/download/oracle_vbox_2016.asc" -o "$key_file" \
+                || die "Failed to download VirtualBox signing key."
+            sudo gpg --dearmor -o /usr/share/keyrings/virtualbox.gpg "$key_file" \
+                || { rm -f "$key_file"; die "Failed to install VirtualBox signing key."; }
+            rm -f "$key_file"
             echo "deb [arch=amd64 signed-by=/usr/share/keyrings/virtualbox.gpg] \
                 https://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" \
                 | sudo tee /etc/apt/sources.list.d/virtualbox.list

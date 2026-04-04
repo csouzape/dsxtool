@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -uo pipefail
+set -euo pipefail
 
 
 
@@ -75,15 +75,23 @@ _install_gaming_debian() {
     
     log_info "Installing Lutris from GitHub releases..."
     local lutris_url
-    lutris_url=$(curl -s https://api.github.com/repos/lutris/lutris/releases/latest \
-        | grep "browser_download_url.*\.deb" \
-        | cut -d '"' -f 4)
+    if command -v jq &>/dev/null; then
+        lutris_url=$(curl -fsSL "https://api.github.com/repos/lutris/lutris/releases/latest" \
+            | jq -r '.assets[] | select(.browser_download_url | test("\\.deb$")) | .browser_download_url' \
+            | head -n1)
+    else
+        lutris_url=$(curl -fsSL "https://api.github.com/repos/lutris/lutris/releases/latest" \
+            | grep "browser_download_url.*\.deb" \
+            | cut -d '"' -f 4)
+    fi
 
     if [[ -n "$lutris_url" ]]; then
-        curl -sSLo /tmp/lutris.deb "$lutris_url" \
+        local lutris_deb
+        lutris_deb=$(mktemp --suffix=.deb)
+        curl -fsSLo "$lutris_deb" "$lutris_url" \
             || die "Failed to download Lutris."
-        sudo dpkg -i /tmp/lutris.deb || sudo apt-get install -f -y
-        rm -f /tmp/lutris.deb
+        sudo dpkg -i "$lutris_deb" || sudo apt-get install -f -y
+        rm -f "$lutris_deb"
         log_info "Lutris installed."
     else
         log_warn "Could not fetch Lutris release URL. Trying apt..."

@@ -9,8 +9,14 @@ install_zsh() {
     if [[ -d "$HOME/.oh-my-zsh" ]]; then
         log_warn "oh-my-zsh already installed. Skipping."
     else
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
-            || die "Failed to install oh-my-zsh."
+        local tmp_script
+        tmp_script=$(mktemp)
+        curl -fsSL "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" -o "$tmp_script" \
+            || die "Failed to download oh-my-zsh installer."
+        chmod +x "$tmp_script"
+        RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh "$tmp_script" --unattended \
+            || { rm -f "$tmp_script"; die "Failed to install oh-my-zsh."; }
+        rm -f "$tmp_script"
     fi
 
     log_info "Installing zsh plugins..."
@@ -33,6 +39,7 @@ install_zsh() {
     fi
 
     log_info "Enabling plugins in ~/.zshrc..."
+    [[ -f "$HOME/.zshrc" ]] && cp "$HOME/.zshrc" "$HOME/.zshrc.bak"
     if grep -q "^plugins=" "$HOME/.zshrc" 2>/dev/null; then
         sed -i 's/^plugins=(.*/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
     else
@@ -48,8 +55,13 @@ install_fish() {
 
     log_info "Installing fisher (plugin manager)..."
     if ! fish -c "type fisher" &>/dev/null; then
-        fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher" \
-            || die "Failed to install fisher."
+        local fisher_script
+        fisher_script=$(mktemp)
+        curl -fsSL "https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish" -o "$fisher_script" \
+            || die "Failed to download fisher installer."
+        fish -c "source '$fisher_script'; fisher install jorgebucaran/fisher" \
+            || { rm -f "$fisher_script"; die "Failed to install fisher."; }
+        rm -f "$fisher_script"
     else
         log_warn "fisher already installed. Skipping."
     fi

@@ -21,7 +21,11 @@ fi
 if [[ -d "$INSTALL_DIR/.git" ]]; then
     echo "[INFO] Updating dsxtool..."
     git -C "$INSTALL_DIR" fetch origin
-    git -C "$INSTALL_DIR" reset --hard origin/main
+    if ! git -C "$INSTALL_DIR" pull --ff-only origin main; then
+        echo "[ERROR] Fast-forward update failed. Local changes may exist in $INSTALL_DIR."
+        echo "[ERROR] Resolve manually or remove the directory and run bootstrap again."
+        exit 1
+    fi
 else
     echo "[INFO] Installing dsxtool..."
     rm -rf "$INSTALL_DIR"

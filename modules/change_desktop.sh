@@ -26,11 +26,13 @@ _install_desktop() {
     local name="$1"
     local key="$2"
     local pkg
+    local -a packages
     pkg=$(get_desktop_packages "$key")
+    read -r -a packages <<< "$pkg"
     log_info "Instalando $name (pacotes: $pkg)..."
     _fzf_confirm "Prosseguir com a instalação do $name?" \
         || { log_warn "Instalação cancelada."; return 0; }
-    pkg_install $pkg \
+    pkg_install "${packages[@]}" \
         && log_info "$name instalado com sucesso." \
         || die "Falha na instalação do $name."
 }

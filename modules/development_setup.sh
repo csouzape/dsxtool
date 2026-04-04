@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -uo pipefail
+set -euo pipefail
 
 _fzf_menu() {
     local tmp_in tmp_out
@@ -21,6 +21,14 @@ _check_yay() {
     if ! command -v yay &>/dev/null; then
         die "yay is not installed. Please run 'Setup yay' first."
     fi
+}
+
+_download_script() {
+    local url="$1"
+    local destination="$2"
+    curl --proto '=https' --tlsv1.2 -fsSL "$url" -o "$destination" \
+        || die "Failed to download script from: $url"
+    chmod +x "$destination"
 }
 
 _install_jetbrains_flatpak() {
@@ -72,9 +80,13 @@ install_lang() {
             ;;
         "Rust")
             log_info "Installing Rust via rustup..."
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+            local rustup_script
+            rustup_script=$(mktemp)
+            _download_script "https://sh.rustup.rs" "$rustup_script"
+            sh "$rustup_script" -y \
                 && log_info "Rust installed successfully." \
-                || die "Failed to install Rust."
+                || { rm -f "$rustup_script"; die "Failed to install Rust."; }
+            rm -f "$rustup_script"
             ;;
         "Go")
             log_info "Installing Go..."
@@ -100,9 +112,13 @@ install_lang() {
             ;;
         "NVM")
             log_info "Installing NVM (Node Version Manager)..."
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash \
+            local nvm_script
+            nvm_script=$(mktemp)
+            _download_script "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh" "$nvm_script"
+            bash "$nvm_script" \
                 && log_info "NVM installed. Restart your shell to use it." \
-                || die "Failed to install NVM."
+                || { rm -f "$nvm_script"; die "Failed to install NVM."; }
+            rm -f "$nvm_script"
             ;;
         "Java (OpenJDK 17)")
             log_info "Installing OpenJDK 17 + Maven + Gradle..."
@@ -124,9 +140,13 @@ install_lang() {
             ;;
         "PNPM")
             log_info "Installing PNPM..."
-            curl -fsSL https://get.pnpm.io/install.sh | sh - \
+            local pnpm_script
+            pnpm_script=$(mktemp)
+            _download_script "https://get.pnpm.io/install.sh" "$pnpm_script"
+            sh "$pnpm_script" \
                 && log_info "PNPM installed successfully." \
-                || die "Failed to install PNPM."
+                || { rm -f "$pnpm_script"; die "Failed to install PNPM."; }
+            rm -f "$pnpm_script"
             ;;
     esac
 }
@@ -174,9 +194,13 @@ install_ide() {
             ;;
         "Zed")
             log_info "Installing Zed..."
-            curl --proto '=https' --tlsv1.2 -sSf https://zed.dev/install.sh | sh \
+            local zed_script
+            zed_script=$(mktemp)
+            _download_script "https://zed.dev/install.sh" "$zed_script"
+            sh "$zed_script" \
                 && log_info "Zed installed successfully." \
-                || die "Failed to install Zed."
+                || { rm -f "$zed_script"; die "Failed to install Zed."; }
+            rm -f "$zed_script"
             ;;
         "NVIM (LazyVim)")
             log_info "Installing Neovim + LazyVim..."
@@ -246,13 +270,18 @@ install_ide() {
                 local tmp_dir
                 tmp_dir=$(mktemp -d)
                 local url
-                url=$(curl -s "https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release" \
-                    | grep -o '"linux":{[^}]*}' \
-                    | grep -o '"link":"[^"]*"' \
-                    | head -1 \
-                    | sed 's/"link":"//;s/"//')
+                if command -v jq &>/dev/null; then
+                    url=$(curl -fsSL "https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release" \
+                        | jq -r '.TBA[0].downloads.linux.link // empty' 2>/dev/null || true)
+                else
+                    url=$(curl -fsSL "https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release" \
+                        | grep -o '"linux":{[^}]*}' \
+                        | grep -o '"link":"[^"]*"' \
+                        | head -1 \
+                        | sed 's/"link":"//;s/"//')
+                fi
                 [[ -z "$url" ]] && die "Failed to get JetBrains Toolbox download URL."
-                curl -L "$url" -o "$tmp_dir/toolbox.tar.gz" \
+                curl -fL "$url" -o "$tmp_dir/toolbox.tar.gz" \
                     || die "Failed to download JetBrains Toolbox."
                 tar -xzf "$tmp_dir/toolbox.tar.gz" -C "$tmp_dir"
                 local binary
@@ -328,7 +357,7 @@ install_ide() {
             local tmp_dir url
             tmp_dir=$(mktemp -d)
             url="https://download.oracle.com/otn/java/sqldeveloper/sqldeveloper-23.3.1.345.2114-no-jre.zip"
-            curl -L "$url" -o "$tmp_dir/sqldeveloper.zip" || die "Failed to download Oracle SQL Developer."
+            curl -fL "$url" -o "$tmp_dir/sqldeveloper.zip" || die "Failed to download Oracle SQL Developer."
             sudo unzip "$tmp_dir/sqldeveloper.zip" -d /opt/ || die "Failed to extract."
             sudo ln -sf /opt/sqldeveloper/sqldeveloper.sh /usr/local/bin/sqldeveloper || die "Failed to create symlink."
             rm -rf "$tmp_dir"
@@ -458,8 +487,11 @@ install_devtool() {
                     sudo usermod -aG docker "${SUDO_USER:-$USER}"
                     ;;
                 debian)
-                    curl -fsSL https://get.docker.com | sudo sh \
-                        || die "Failed to install Docker."
+                    local docker_script
+                    docker_script=$(mktemp)
+                    _download_script "https://get.docker.com" "$docker_script"
+                    sudo sh "$docker_script" || { rm -f "$docker_script"; die "Failed to install Docker."; }
+                    rm -f "$docker_script"
                     sudo usermod -aG docker "${SUDO_USER:-$USER}"
                     ;;
                 fedora)
@@ -484,8 +516,13 @@ install_devtool() {
             case "$DISTRO" in
                 arch)   pkg_install kubectl || die "Failed." ;;
                 debian)
-                    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key \
-                        | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+                    local k8s_key
+                    k8s_key=$(mktemp)
+                    curl -fsSL "https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key" -o "$k8s_key" \
+                        || die "Failed to download Kubernetes signing key."
+                    sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg "$k8s_key" \
+                        || { rm -f "$k8s_key"; die "Failed to install Kubernetes signing key."; }
+                    rm -f "$k8s_key"
                     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
                         https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" \
                         | sudo tee /etc/apt/sources.list.d/kubernetes.list
@@ -501,16 +538,20 @@ install_devtool() {
             case "$DISTRO" in
                 arch)   pkg_install minikube || die "Failed." ;;
                 debian)
+                    local minikube_deb
+                    minikube_deb=$(mktemp --suffix=.deb)
                     curl -fsSL https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb \
-                        -o /tmp/minikube.deb
-                    sudo dpkg -i /tmp/minikube.deb || die "Failed."
-                    rm -f /tmp/minikube.deb
+                        -o "$minikube_deb"
+                    sudo dpkg -i "$minikube_deb" || { rm -f "$minikube_deb"; die "Failed."; }
+                    rm -f "$minikube_deb"
                     ;;
                 fedora)
+                    local minikube_rpm
+                    minikube_rpm=$(mktemp --suffix=.rpm)
                     curl -fsSL https://storage.googleapis.com/minikube/releases/latest/minikube-latest.x86_64.rpm \
-                        -o /tmp/minikube.rpm
-                    sudo rpm -Uvh /tmp/minikube.rpm || die "Failed."
-                    rm -f /tmp/minikube.rpm
+                        -o "$minikube_rpm"
+                    sudo rpm -Uvh "$minikube_rpm" || { rm -f "$minikube_rpm"; die "Failed."; }
+                    rm -f "$minikube_rpm"
                     ;;
             esac
             log_info "Minikube installed successfully."
@@ -520,8 +561,13 @@ install_devtool() {
             case "$DISTRO" in
                 arch)   pkg_install terraform || die "Failed." ;;
                 debian)
-                    wget -O - https://apt.releases.hashicorp.com/gpg \
-                        | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+                    local hashicorp_key
+                    hashicorp_key=$(mktemp)
+                    curl -fsSL "https://apt.releases.hashicorp.com/gpg" -o "$hashicorp_key" \
+                        || die "Failed to download HashiCorp signing key."
+                    sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg "$hashicorp_key" \
+                        || { rm -f "$hashicorp_key"; die "Failed to install HashiCorp signing key."; }
+                    rm -f "$hashicorp_key"
                     echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
                         https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
                         | sudo tee /etc/apt/sources.list.d/hashicorp.list
@@ -560,8 +606,13 @@ install_cli_tool() {
             case "$DISTRO" in
                 arch)   pkg_install github-cli || die "Failed." ;;
                 debian)
-                    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-                        | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+                    local gh_key
+                    gh_key=$(mktemp)
+                    curl -fsSL "https://cli.github.com/packages/githubcli-archive-keyring.gpg" -o "$gh_key" \
+                        || die "Failed to download GitHub CLI signing key."
+                    sudo install -Dm644 "$gh_key" /usr/share/keyrings/githubcli-archive-keyring.gpg \
+                        || { rm -f "$gh_key"; die "Failed to install GitHub CLI signing key."; }
+                    rm -f "$gh_key"
                     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
                         https://cli.github.com/packages stable main" \
                         | sudo tee /etc/apt/sources.list.d/github-cli.list
@@ -575,14 +626,22 @@ install_cli_tool() {
             case "$DISTRO" in
                 arch) pkg_install lazygit || die "Failed." ;;
                 debian|fedora)
+                    local tmp_dir
+                    tmp_dir=$(mktemp -d)
                     local version
-                    version=$(curl -s https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
-                        | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
-                    curl -Lo /tmp/lazygit.tar.gz \
+                    if command -v jq &>/dev/null; then
+                        version=$(curl -fsSL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
+                            | jq -r '.tag_name // empty' | sed 's/^v//')
+                    else
+                        version=$(curl -fsSL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
+                            | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+                    fi
+                    [[ -n "$version" ]] || { rm -rf "$tmp_dir"; die "Failed to detect lazygit latest version."; }
+                    curl -fLo "$tmp_dir/lazygit.tar.gz" \
                         "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${version}_Linux_x86_64.tar.gz"
-                    tar -xf /tmp/lazygit.tar.gz -C /tmp lazygit
-                    sudo install /tmp/lazygit /usr/local/bin
-                    rm -f /tmp/lazygit.tar.gz /tmp/lazygit
+                    tar -xf "$tmp_dir/lazygit.tar.gz" -C "$tmp_dir" lazygit
+                    sudo install "$tmp_dir/lazygit" /usr/local/bin
+                    rm -rf "$tmp_dir"
                     ;;
             esac
             ;;

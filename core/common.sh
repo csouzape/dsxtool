@@ -32,5 +32,5 @@ require_sudo() {
 }
 
 prompt_continue() {
-    read -rp "$(echo -e "${YELLOW}Press Enter to continue...${RESET}")"
+    read -rp "$(echo -e "${YELLOW}Press Enter to continue...${RESET}")" < /dev/tty
 }

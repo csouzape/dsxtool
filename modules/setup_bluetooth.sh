@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -uo pipefail
+set -euo pipefail
 
 install_bluetooth() {
     if command -v bluetoothctl &>/dev/null; then

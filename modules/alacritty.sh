@@ -19,7 +19,7 @@ install_alacritty() {
 }
 
 prompt_csouzape_config() {
-    read -rp "Install csouzape's Alacritty configuration? (y/n): " confirm
+    read -rp "Install csouzape's Alacritty configuration? (y/n): " confirm < /dev/tty
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         apply_csouzape_alacritty_config
     else

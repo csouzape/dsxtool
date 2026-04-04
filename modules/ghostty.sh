@@ -11,9 +11,12 @@ install_ghostty() {
             ;;
         debian)
             log_info "Installing Ghostty via install script (ubuntu)..."
-            curl -fsSL https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh \
-                | sudo bash \
-                || die "Failed to install Ghostty."
+            local tmp_script
+            tmp_script=$(mktemp)
+            curl -fsSL "https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh" -o "$tmp_script" \
+                || die "Failed to download Ghostty installer."
+            sudo bash "$tmp_script" || { rm -f "$tmp_script"; die "Failed to install Ghostty."; }
+            rm -f "$tmp_script"
             ;;
         fedora)
             log_info "Enabling Ghostty COPR and installing..."
@@ -28,8 +31,4 @@ install_ghostty() {
     esac
 
     log_info "Ghostty installed successfully."
-}
-
-main() {
-    install_ghostty
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -uo pipefail
+set -euo pipefail
 
 DSXCONFIG_DIR="$HOME/.local/share/dsxconfig"
 DSXCONFIG_REPO="https://github.com/csouzape/dsxconfig.git"
@@ -31,8 +31,10 @@ _dsxconfig_install_or_update() {
         log_info "Updating dsxconfig..."
         git -C "$DSXCONFIG_DIR" fetch origin \
             || die "Failed to fetch dsxconfig updates."
-        git -C "$DSXCONFIG_DIR" reset --hard origin/testing \
-            || die "Failed to update dsxconfig."
+        git -C "$DSXCONFIG_DIR" checkout testing \
+            || die "Failed to checkout dsxconfig testing branch."
+        git -C "$DSXCONFIG_DIR" pull --ff-only origin testing \
+            || die "Failed to update dsxconfig (non fast-forward)."
     else
         log_info "Cloning dsxconfig..."
         rm -rf "$DSXCONFIG_DIR"

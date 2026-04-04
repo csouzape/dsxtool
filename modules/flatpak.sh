@@ -17,9 +17,9 @@ configure_flatpak() {
     log_info "Flathub repository added successfully."
 }
 
-main() {
+setup_flatpak() {
     if ! pkg_exists flatpak; then
-        read -rp "Flatpak is not installed. Do you want to install it now? (y/n): " confirm
+        read -rp "Flatpak is not installed. Do you want to install it now? (y/n): " confirm < /dev/tty
         if [[ "$confirm" =~ ^[Yy]$ ]]; then
             install_flatpak
         else
@@ -32,5 +32,3 @@ main() {
 
     configure_flatpak
 }
-
-main "$@"

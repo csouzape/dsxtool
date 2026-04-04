@@ -15,7 +15,3 @@ install_konsole() {
 setup_konsole() {
     install_konsole
 }
-
-main() {
-    install_konsole
-}

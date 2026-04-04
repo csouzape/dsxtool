@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -uo pipefail
+set -euo pipefail
 
 declare -A APP_REGISTRY
 
@@ -127,24 +127,38 @@ _install_native_app() {
                     ;;
                 debian)
                     log_info "Downloading Google Chrome (.deb)..."
-                    wget --progress=bar:force \
-                        "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
-                        -O /tmp/google-chrome.deb \
-                        || die "Failed to download Google Chrome."
-                    sudo dpkg -i /tmp/google-chrome.deb 2>/dev/null || true
+                    local chrome_deb
+                    chrome_deb=$(mktemp --suffix=.deb)
+                    if command -v wget &>/dev/null; then
+                        wget --progress=bar:force \
+                            "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
+                            -O "$chrome_deb" \
+                            || die "Failed to download Google Chrome."
+                    else
+                        curl -fL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o "$chrome_deb" \
+                            || die "Failed to download Google Chrome."
+                    fi
+                    sudo dpkg -i "$chrome_deb" 2>/dev/null || true
                     sudo apt-get install -f -y \
                         || die "Failed to fix Google Chrome dependencies."
-                    rm -f /tmp/google-chrome.deb
+                    rm -f "$chrome_deb"
                     ;;
                 fedora)
                     log_info "Downloading Google Chrome (.rpm)..."
-                    wget --progress=bar:force \
-                        "https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm" \
-                        -O /tmp/google-chrome.rpm \
-                        || die "Failed to download Google Chrome."
-                    sudo dnf install -y /tmp/google-chrome.rpm \
+                    local chrome_rpm
+                    chrome_rpm=$(mktemp --suffix=.rpm)
+                    if command -v wget &>/dev/null; then
+                        wget --progress=bar:force \
+                            "https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm" \
+                            -O "$chrome_rpm" \
+                            || die "Failed to download Google Chrome."
+                    else
+                        curl -fL "https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm" -o "$chrome_rpm" \
+                            || die "Failed to download Google Chrome."
+                    fi
+                    sudo dnf install -y "$chrome_rpm" \
                         || die "Failed to install Google Chrome."
-                    rm -f /tmp/google-chrome.rpm
+                    rm -f "$chrome_rpm"
                     ;;
                 *)
                     die "Unsupported distro for Google Chrome: $DISTRO"

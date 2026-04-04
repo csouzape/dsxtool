@@ -3,7 +3,7 @@ set -euo pipefail
 
 
 pkg_update() {
-    read -rp "Do you want to update the system? (y/n): " confirm
+    read -rp "Do you want to update the system? (y/n): " confirm < /dev/tty
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         log_info "Updating system..."
         sudo apt update -y && sudo apt upgrade -y

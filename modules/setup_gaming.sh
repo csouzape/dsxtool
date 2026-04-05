@@ -90,7 +90,6 @@ _install_gaming_debian() {
         pkg_install lutris || log_warn "Lutris not available in apt."
     fi
 }
-
 _install_gaming_fedora() {
     log_info "Adding RPM Fusion repositories..."
     local fedora_ver

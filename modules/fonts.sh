@@ -13,20 +13,20 @@ declare -A font_pkgs_fedora=(
     [monoid]="monoid-fonts"
     [ubuntu-mono]="ubuntu-fonts-mono"
     [dejavu-mono]="dejavu-sans-mono-fonts"
-    [meslo]="meslo-nerd-font"  # fallback manual
+    [meslo]="meslo-nerd-font"  
 )
 
 declare -A font_pkgs_debian=(
     [jetbrains-mono]="fonts-jetbrains-mono"
     [fira-code]="fonts-firacode"
-    [source-code-pro]="fonts-adobe-sourcecode"   # via apt ou manual
+    [source-code-pro]="fonts-adobe-sourcecode"   
     [hack]="fonts-hack"
     [cascadia-mono]="fonts-cascadia-code"
-    [iosevka]="fonts-iosevka"                    # PPA ou manual
-    [monoid]="fonts-monoid"                      # PPA ou manual
+    [iosevka]="fonts-iosevka"                    
+    [monoid]="fonts-monoid"                      
     [ubuntu-mono]="fonts-ubuntu"
     [dejavu-mono]="fonts-dejavu"
-    [meslo]="meslo-nerd-font"                    # sempre manual
+    [meslo]="meslo-nerd-font"                   
 )
 
 declare -A font_pkgs_arch=(
@@ -39,7 +39,7 @@ declare -A font_pkgs_arch=(
     [monoid]="ttf-monoid"
     [ubuntu-mono]="ttf-ubuntu-font-family"
     [dejavu-mono]="ttf-dejavu"
-    [meslo]="ttf-meslo-nerd-font-powerlevel10k" # AUR
+    [meslo]="ttf-meslo-nerd-font-powerlevel10k" 
 )
 
 detect_distro_family() {
@@ -104,7 +104,7 @@ install_meslo() {
 }
 
 setup_fonts() {
-    local keys=("${!font_pkgs_fedora[@]}")  # chaves canônicas como menu
+    local keys=("${!font_pkgs_fedora[@]}")  
     local selected
 
     selected=$(printf '%s\n' "${keys[@]}" | sort | fzf \

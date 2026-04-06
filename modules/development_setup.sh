@@ -360,15 +360,14 @@ install_devtool() {
                         || die "Failed to install DBeaver."
                     ;;
                 fedora)
-                    sudo rpm --import https://dbeaver.io/debs/dbeaver.gpg.key \
-                        || die "Failed to import DBeaver GPG key."
-                    sudo dnf config-manager --add-repo \
-                        https://dbeaver.io/rpm/dbeaver-ce/x86_64/ \
-                        || die "Failed to add DBeaver repo."
-                    pkg_install dbeaver-ce \
+                    wget -O /tmp/dbeaver-ce.rpm \
+                        https://dbeaver.io/files/dbeaver-ce-latest-stable.x86_64.rpm \
+                        || die "Failed to download DBeaver RPM."
+                    sudo rpm -Uvh /tmp/dbeaver-ce.rpm \
                         && log_info "DBeaver installed successfully." \
-                        || die "Failed to install DBeaver."
-                    ;;
+                    || die "Failed to install DBeaver."
+                        rm -f /tmp/dbeaver-ce.rpm
+                ;;
             esac
             ;;
         "Insomnia")

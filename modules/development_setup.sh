@@ -11,11 +11,6 @@ _fzf_menu() {
     rm -f "$tmp_in" "$tmp_out"
 }
 
-_check_not_root() {
-    if [[ $EUID -eq 0 ]]; then
-        die "$1 cannot be installed as root. Please run dsxtool as a normal user."
-    fi
-}
 
 _check_yay() {
     if ! command -v yay &>/dev/null; then
@@ -344,15 +339,42 @@ install_devtool() {
                 && log_info "Postman installed successfully." \
                 || die "Failed to install Postman."
             ;;
+        "DBeaver")
+            log_info "Installing DBeaver..."
+            case "$DISTRO" in
+                arch)
+                    _check_yay
+                    sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm dbeaver-ce \
+                        && log_info "DBeaver installed successfully." \
+                        || die "Failed to install DBeaver."
+                    ;;
+                debian)
+                    curl -fsSL https://dbeaver.io/debs/dbeaver.gpg.key \
+                        | sudo gpg --dearmor -o /etc/apt/keyrings/dbeaver.gpg \
+                        || die "Failed to import DBeaver GPG key."
+                    echo "deb [signed-by=/etc/apt/keyrings/dbeaver.gpg] https://dbeaver.io/debs/dbeaver-ce /" \
+                        | sudo tee /etc/apt/sources.list.d/dbeaver.list
+                    sudo apt update -y
+                    pkg_install dbeaver-ce \
+                        && log_info "DBeaver installed successfully." \
+                        || die "Failed to install DBeaver."
+                    ;;
+                fedora)
+                    sudo rpm --import https://dbeaver.io/debs/dbeaver.gpg.key \
+                        || die "Failed to import DBeaver GPG key."
+                    sudo dnf config-manager --add-repo \
+                        https://dbeaver.io/rpm/dbeaver-ce/x86_64/ \
+                        || die "Failed to add DBeaver repo."
+                    pkg_install dbeaver-ce \
+                        && log_info "DBeaver installed successfully." \
+                        || die "Failed to install DBeaver."
+                    ;;
+            esac
+            ;;
         "Insomnia")
             flatpak install -y flathub rest.insomnia.Insomnia \
                 && log_info "Insomnia installed successfully." \
                 || die "Failed to install Insomnia."
-            ;;
-        "DBeaver")
-            flatpak install -y flathub io.dbeaver.DBeaverCommunity \
-                && log_info "DBeaver installed successfully." \
-                || die "Failed to install DBeaver."
             ;;
         "PostgreSQL")
             log_info "Installing PostgreSQL server..."
@@ -634,7 +656,7 @@ menu_ides() {
 menu_devtools() {
     local selections
     selections=$(printf '%s\n' \
-        "Postman" "Insomnia" "DBeaver" \
+        "Postman" "DBeaver" "Insomnia" \
         "PostgreSQL" "PostgreSQL Client" "MySQL Client" \
         "Redis" "Redis Tools" "SQLite" "HTTPie" \
         "Build Tools" "GCC" \

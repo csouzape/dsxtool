@@ -31,6 +31,12 @@ require_sudo() {
     fi
 }
 
+_check_not_root() {
+    if [[ $EUID -eq 0 ]]; then
+        die "$1 cannot be installed as root. Please run dsxtool as a normal user."
+    fi
+}
+
 prompt_continue() {
     read -rp "$(echo -e "${YELLOW}Press Enter to continue...${RESET}")"
 }

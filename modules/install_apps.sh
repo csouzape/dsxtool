@@ -57,7 +57,6 @@ APP_REGISTRY["fastfetch"]="pkg|fastfetch|-|-"
 APP_REGISTRY["net-tools"]="pkg|net-tools|-|-"
 APP_REGISTRY["openssh"]="native|-|-|-"
 
-
 _fzf_menu() {
     local tmp_in tmp_out
     tmp_in=$(mktemp)
@@ -68,12 +67,113 @@ _fzf_menu() {
     rm -f "$tmp_in" "$tmp_out"
 }
 
+_is_installed() {
+    local app="$1"
+    local entry="${APP_REGISTRY[$app]:-}"
+    local method pkg_name flatpak_id aur_pkg
+    IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$entry"
+
+    case "$method" in
+        pkg)
+            case "$DISTRO" in
+                arch)   pacman -Q "$pkg_name" &>/dev/null ;;
+                debian) dpkg -s "$pkg_name" &>/dev/null ;;
+                fedora) rpm -q "$pkg_name" &>/dev/null ;;
+            esac
+            ;;
+        flatpak)
+            flatpak list --app 2>/dev/null | grep -q "$flatpak_id"
+            ;;
+        aur)
+            pacman -Q "$aur_pkg" &>/dev/null
+            ;;
+        native)
+            case "$app" in
+                "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
+                "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
+                "openssh")       command -v ssh &>/dev/null ;;
+                *)               return 1 ;;
+            esac
+            ;;
+        *) return 1 ;;
+    esac
+}
+
+_remove_app() {
+    local app="$1"
+    local entry="${APP_REGISTRY[$app]:-}"
+    local method pkg_name flatpak_id aur_pkg
+    IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$entry"
+
+    log_info "Removing $app..."
+
+    case "$method" in
+        pkg)
+            case "$DISTRO" in
+                arch)   sudo pacman -Rns --noconfirm "$pkg_name" ;;
+                debian) sudo apt-get remove -y "$pkg_name" ;;
+                fedora) sudo dnf remove -y "$pkg_name" ;;
+            esac
+            ;;
+        flatpak)
+            flatpak uninstall -y "$flatpak_id"
+            ;;
+        aur)
+            sudo pacman -Rns --noconfirm "$aur_pkg"
+            ;;
+        native)
+            case "$app" in
+                "Google Chrome")
+                    case "$DISTRO" in
+                        arch)   sudo pacman -Rns --noconfirm google-chrome ;;
+                        debian) sudo apt-get remove -y google-chrome-stable ;;
+                        fedora) sudo dnf remove -y google-chrome-stable ;;
+                    esac
+                    ;;
+                "fd")
+                    case "$DISTRO" in
+                        arch)   sudo pacman -Rns --noconfirm fd ;;
+                        debian) sudo apt-get remove -y fd-find ;;
+                        fedora) sudo dnf remove -y fd-find ;;
+                    esac
+                    ;;
+                "openssh")
+                    case "$DISTRO" in
+                        arch)   sudo pacman -Rns --noconfirm openssh ;;
+                        debian) sudo apt-get remove -y openssh-client ;;
+                        fedora) sudo dnf remove -y openssh ;;
+                    esac
+                    ;;
+                *)
+                    die "No removal handler defined for: $app"
+                    ;;
+            esac
+            ;;
+        *)
+            die "Unknown method '$method' for $app."
+            ;;
+    esac
+
+    log_info "$app removed successfully."
+}
+
 _install_app() {
     local app="$1"
     local entry="${APP_REGISTRY[$app]:-}"
 
     if [[ -z "$entry" ]]; then
         die "Unknown app: $app"
+    fi
+
+    if _is_installed "$app"; then
+        log_warn "$app is already installed."
+        read -rp "$(echo -e "${YELLOW}Would you like to remove it? [y/n]: ${RESET}")" answer < /dev/tty
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            _remove_app "$app"
+        else
+            log_info "Skipping $app."
+        fi
+        return
     fi
 
     local method pkg_name flatpak_id aur_pkg
@@ -256,11 +356,11 @@ setup_apps() {
               --no-info)
 
         case "$choice" in
-            *Browsers)      menu_browsers ;;
-            *Media)         menu_media ;;
-            *Communication) menu_communication ;;
-            *Productivity)  menu_productivity ;;
-            *Gaming)        menu_gaming ;;
+            *Browsers)       menu_browsers ;;
+            *Media)          menu_media ;;
+            *Communication)  menu_communication ;;
+            *Productivity)   menu_productivity ;;
+            *Gaming)         menu_gaming ;;
             *"System Tools") menu_system_tools ;;
             *Development)
                 source "$BASE_DIR/modules/development_setup.sh"

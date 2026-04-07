@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# ─────────────────────────────────────────────────────────────────────────────
-# fzf wrapper
-# ─────────────────────────────────────────────────────────────────────────────
-
 _fzf_menu() {
     local tmp_in tmp_out
     tmp_in=$(mktemp)
@@ -14,10 +10,6 @@ _fzf_menu() {
     cat "$tmp_out"
     rm -f "$tmp_in" "$tmp_out"
 }
-
-# ─────────────────────────────────────────────────────────────────────────────
-# VirtManager (KVM/QEMU) — script original mantido para estabilidade
-# ─────────────────────────────────────────────────────────────────────────────
 
 install_virtualization() {
     local -a arch_packages=(
@@ -139,10 +131,6 @@ _setup_virtmanager() {
     _service_setup
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# VirtualBox
-# ─────────────────────────────────────────────────────────────────────────────
-
 _setup_virtualbox() {
     log_info "Installing VirtualBox..."
 
@@ -181,9 +169,6 @@ _setup_virtualbox() {
     log_info "VirtualBox installed successfully. Restart session to apply group changes."
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Main
-# ─────────────────────────────────────────────────────────────────────────────
 
 setup_virtualization() {
     local choice

@@ -3,6 +3,13 @@
 get_preview() {
     local item="$1"
     case "$item" in
+        "Setup Alias")
+            echo "Sets up a convenient alias for dsxtool."
+            echo
+            echo "  • Adds 'alias dsxtool=\"bash $BASE_DIR/install.sh\"' to your shell config"
+            echo "  • Supports Bash and Zsh"
+            echo "  • Prompts to remove existing alias if found"
+            ;;
         "Update System")
             echo "Runs a full system package upgrade."
             echo
@@ -115,6 +122,13 @@ get_preview() {
             echo
             echo "  • Arch Linux only"
             echo "  • Requires non-root user"
+            ;;
+        "DSXSWAP (BETA)")
+            echo "Configure swap space on your system."
+            echo
+            echo "  • Create and manage swap files"
+            echo "  • Adjust swappiness settings"
+            echo "  • Monitor swap usage"
             ;;
         "Exit")
             echo "Exit dsxtool."

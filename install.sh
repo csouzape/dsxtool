@@ -38,7 +38,43 @@ verify_fzf_tool() {
     done
 }
 
+setup_alias() {
+    local shell_rc=""
+
+    if [[ "$SHELL" == *"zsh"* ]]; then
+        shell_rc="$HOME/.zshrc"
+    elif [[ "$SHELL" == *"bash"* ]]; then
+        shell_rc="$HOME/.bashrc"
+    else
+        log_warn "Unsupported shell: $SHELL. Skipping alias setup."
+        return
+    fi
+
+    echo ""
+
+    if grep -q "alias dsxtool=" "$shell_rc"; then
+        log_info "Alias 'dsxtool' already exists in $shell_rc."
+        read -rp "Would you like to remove it? [y/n]: " answer < /dev/tty
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            sed -i '/alias dsxtool=/d' "$shell_rc"
+            log_info "Alias 'dsxtool' removed from $shell_rc. Please restart your terminal or run 'source $shell_rc' to apply."
+        else
+            log_info "Alias removal skipped."
+        fi
+    else
+        read -rp "Would you like to set up the 'dsxtool' alias for easy access? [y/n]: " answer < /dev/tty
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            echo "alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'" >> "$shell_rc"
+            log_info "Alias 'dsxtool' added to $shell_rc. Please restart your terminal or run 'source $shell_rc' to apply."
+        else
+            log_info "Alias setup skipped."
+        fi
+    fi
+}
+
+
 verify_fzf_tool
+
 
 update_system_module()          { source "$BASE_DIR/modules/update_system.sh";        update_system            || log_warn "update_system finished with errors."; }
 install_tlp_module()            { source "$BASE_DIR/modules/tlp.sh";                  replace_manager_with_tlp || log_warn "TLP setup finished with errors."; }
@@ -58,7 +94,7 @@ setup_gaming_module()           { source "$BASE_DIR/modules/setup_gaming.sh";   
 dsxconfig_module()              { source "$BASE_DIR/modules/dsxconfig.sh";           setup_dsxconfig          || log_warn "DSXConfig setup finished with errors."; }    
 bluetooth_module()              { source "$BASE_DIR/modules/setup_bluetooth.sh";      setup_bluetooth          || log_warn "Bluetooth setup finished with errors."; }
 setup_printer_module()          { source "$BASE_DIR/modules/setup_printer.sh";        setup_printer            || log_warn "Printer setup finished with errors."; }
-
+dsxswap_module()              { source "$BASE_DIR/modules/dsxswap.sh";              main                       || log_warn "Swap configuration finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║
@@ -72,25 +108,28 @@ EOF
 
 build_menu() {
     printf '%s\n' \
-        "1 - Update System" \
-        "2 - Install TLP" \
-        "3 - Install Apps" \
-        "4 - Install Alacritty" \
-        "5 - Install Konsole" \
-        "6 - Install Kitty" \
-        "7 - Install Ghostty" \
-        "8 - Setup Wallpapers" \
-        "9 - Change Desktop Environment" \
-        "10 - Fonts Downloader" \
-        "11 - Setup Flatpak" \
-        "12 - Setup Virtualization" \
-        "13 - Setup Shell" \
-        "14 - Setup Gaming" \
-        "15 - DSXConfig" \
-        "16 - Setup Bluetooth" \
-        "17 - Setup Printer"
+        "1 - Setup Alias" \
+        "2 - Update System" \
+        "3 - Install TLP" \
+        "4 - Install Apps" \
+        "5 - Install Alacritty" \
+        "6 - Install Konsole" \
+        "7 - Install Kitty" \
+        "8 - Install Ghostty" \
+        "9 - Setup Wallpapers" \
+        "10 - Change Desktop Environment" \
+        "11 - Fonts Downloader" \
+        "12 - Setup Flatpak" \
+        "13 - Setup Virtualization" \
+        "14 - Setup Shell" \
+        "15 - Setup Gaming" \
+        "16 - DSXConfig" \
+        "17 - Setup Bluetooth" \
+        "18 - Setup Printer" \
+        "19 - DSXSWAP (BETA)" \
 
-    [[ "$DISTRO" == "arch" ]] && echo "18 - Setup yay (AUR helper)"
+
+    [[ "$DISTRO" == "arch" ]] && echo "20 - Setup yay (AUR helper)"
     echo "0 - Exit"
 }
 
@@ -141,6 +180,7 @@ dsxtool_main() {
         item="$(sed 's/^[0-9]\+ *- *//' <<< "$choice")"
 
         case "$item" in
+            "Setup Alias")                 clear; setup_alias ;;
             "Update System")               clear; update_system_module ;;
             "Install TLP")                 clear; install_tlp_module ;;
             "Install Apps")                clear; install_apps_module ;;
@@ -155,7 +195,8 @@ dsxtool_main() {
             "Setup Virtualization")        clear; install_virtualization_module ;;
             "Setup Shell")                 clear; install_shell_module ;;
             "Setup Gaming")                clear; setup_gaming_module ;;
-            "DSXConfig")            clear; dsxconfig_module ;;
+            "DSXConfig")                   clear; dsxconfig_module ;;
+            "DSXSWAP (BETA)")              clear; dsxswap_module ;;
             "Setup Bluetooth")             clear; bluetooth_module ;;
             "Setup Printer")               clear; setup_printer_module ;;
             "Setup yay (AUR helper)")      clear; install_yay_module ;;

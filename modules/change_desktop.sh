@@ -35,10 +35,16 @@ _install_desktop() {
         || die "Falha na instalação do $name."
 }
 
-install_kde()      { _install_desktop "KDE Plasma" "kde"; }
-install_xfce()     { _install_desktop "XFCE" "xfce"; }
-install_hyprland() { _install_desktop "Hyprland" "hyprland"; }
-install_cosmic()   { _install_desktop "Cosmic" "cosmic"; }
+install_kde()       { _install_desktop "KDE Plasma"  "kde"; }
+install_xfce()      { _install_desktop "XFCE"        "xfce"; }
+install_hyprland()  { _install_desktop "Hyprland"    "hyprland"; }
+install_cosmic()    { _install_desktop "Cosmic"      "cosmic"; }
+install_gnome()     { _install_desktop "GNOME"       "gnome"; }
+install_mate()      { _install_desktop "MATE"        "mate"; }
+install_cinnamon()  { _install_desktop "Cinnamon"    "cinnamon"; }
+install_i3()        { _install_desktop "i3"          "i3"; }
+install_sway()      { _install_desktop "Sway"        "sway"; }
+install_budgie()    { _install_desktop "Budgie"      "budgie"; }
 
 install_hyprland_csouzape() {
     local repo_url="https://github.com/csouzape/hyprdots"
@@ -81,15 +87,27 @@ prompt_change_desktop() {
         ["  Hyprland"]="install_hyprland"
         ["  Hyprland (csouzape edition)"]="install_hyprland_csouzape"
         ["  Cosmic"]="install_cosmic"
+        ["  GNOME"]="install_gnome"
+        ["  MATE"]="install_mate"
+        ["  Cinnamon"]="install_cinnamon"
+        ["  i3"]="install_i3"
+        ["  Sway"]="install_sway"
+        ["  Budgie"]="install_budgie"
         ["  Sair"]="__exit__"
     )
 
     local options=(
-        "  KDE Plasma"
+        "󰧨  KDE Plasma"
         "  XFCE"
         "  Hyprland"
         "  Hyprland (csouzape edition)"
         "  Cosmic"
+        "  GNOME"
+        "  MATE"
+        "  Cinnamon"
+        "  i3"
+        "  Sway"
+        "  Budgie"
         "  Sair"
     )
 
@@ -97,7 +115,7 @@ prompt_change_desktop() {
     selected=$(printf '%s\n' "${options[@]}" \
         | fzf --prompt="Ambiente de Desktop > " \
               --header="Selecione o DE para instalar" \
-              --height=13 \
+              --height=20 \
               --layout=reverse \
               --border=rounded \
               --pointer="▶" \

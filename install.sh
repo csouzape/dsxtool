@@ -103,14 +103,15 @@ setup_alias() {
 
     if grep -qE "$alias_pattern" "$shell_rc"; then
         log_info "Alias 'dsxtool' already exists in $shell_rc. Skipping setup."
+        return 0
+    fi
+
+    read -rp "Would you like to set up the 'dsxtool' alias for easy access? [y/n]: " answer < /dev/tty
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        echo "$alias_definition" >> "$shell_rc"
+        log_info "Alias 'dsxtool' added to $shell_rc. Please restart your terminal or run 'source $shell_rc' to apply."
     else
-        read -rp "Would you like to set up the 'dsxtool' alias for easy access? [y/n]: " answer < /dev/tty
-        if [[ "$answer" =~ ^[Yy]$ ]]; then
-            echo "$alias_definition" >> "$shell_rc"
-            log_info "Alias 'dsxtool' added to $shell_rc. Please restart your terminal or run 'source $shell_rc' to apply."
-        else
-            log_info "Alias setup skipped."
-        fi
+        log_info "Alias setup skipped."
     fi
 }
 

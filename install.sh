@@ -40,23 +40,63 @@ verify_fzf_tool() {
 
 setup_alias() {
     local shell_rc=""
+    local alias_definition=""
+    local alias_pattern=""
+    local remove_pattern=""
+    local answer=""
+    local shell_name
 
-    if [[ "$SHELL" == *"zsh"* ]]; then
-        shell_rc="$HOME/.zshrc"
-    elif [[ "$SHELL" == *"bash"* ]]; then
-        shell_rc="$HOME/.bashrc"
-    else
-        log_warn "Unsupported shell: $SHELL. Skipping alias setup."
-        return
-    fi
+    shell_name="$(basename "${SHELL:-}" )"
 
+    case "$shell_name" in
+        zsh)
+            shell_rc="$HOME/.zshrc"
+            alias_definition="alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
+            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            ;;
+        bash)
+            if [[ -f "$HOME/.bashrc" ]]; then
+                shell_rc="$HOME/.bashrc"
+            elif [[ -f "$HOME/.bash_profile" ]]; then
+                shell_rc="$HOME/.bash_profile"
+            else
+                shell_rc="$HOME/.bashrc"
+            fi
+            alias_definition="alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
+            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            ;;
+        fish)
+            shell_rc="$HOME/.config/fish/config.fish"
+            alias_definition="alias dsxtool 'curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
+            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool\b'
+            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool\b'
+            ;;
+        ksh)
+            shell_rc="$HOME/.kshrc"
+            alias_definition="alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
+            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            ;;
+        *)
+            shell_rc="$HOME/.profile"
+            alias_definition="alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
+            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool'
+            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool'
+            log_warn "Shell '$shell_name' is not explicitly supported; writing alias to $shell_rc."
+            ;;
+    esac
+
+    mkdir -p "$(dirname "$shell_rc")"
+    touch "$shell_rc"
     echo ""
 
-    if grep -q "alias dsxtool=" "$shell_rc"; then
+    if grep -qE "$alias_pattern" "$shell_rc"; then
         log_info "Alias 'dsxtool' already exists in $shell_rc."
         read -rp "Would you like to remove it? [y/n]: " answer < /dev/tty
         if [[ "$answer" =~ ^[Yy]$ ]]; then
-            sed -i '/alias dsxtool=/d' "$shell_rc"
+            sed -i "/$remove_pattern/d" "$shell_rc"
             log_info "Alias 'dsxtool' removed from $shell_rc. Please restart your terminal or run 'source $shell_rc' to apply."
         else
             log_info "Alias removal skipped."
@@ -64,7 +104,7 @@ setup_alias() {
     else
         read -rp "Would you like to set up the 'dsxtool' alias for easy access? [y/n]: " answer < /dev/tty
         if [[ "$answer" =~ ^[Yy]$ ]]; then
-            echo "alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'" >> "$shell_rc"
+            echo "$alias_definition" >> "$shell_rc"
             log_info "Alias 'dsxtool' added to $shell_rc. Please restart your terminal or run 'source $shell_rc' to apply."
         else
             log_info "Alias setup skipped."

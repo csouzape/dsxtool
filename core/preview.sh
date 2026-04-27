@@ -6,8 +6,8 @@ get_preview() {
         "Setup Alias")
             echo "Sets up a convenient alias for dsxtool."
             echo
-            echo "  • Adds 'alias dsxtool=\"bash $BASE_DIR/install.sh\"' to your shell config"
-            echo "  • Supports Bash and Zsh"
+            echo "  • Adds 'alias dsxtool=\'curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash\'' to your shell config"
+            echo "  • Supports Bash, Zsh, Fish, Ksh and other shells"
             echo "  • Prompts to remove existing alias if found"
             ;;
         "Update System")

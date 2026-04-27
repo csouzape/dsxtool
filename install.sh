@@ -59,12 +59,16 @@ setup_alias() {
             remove_pattern='^[[:space:]]*alias[[:space:]]+dsxtool='
             ;;
         bash)
-            if [[ -f "$HOME/.bash_profile" ]] && ! grep -qE '(^|[[:space:]])(source|\.)[[:space:]]+(~\/)?\.bashrc' "$HOME/.bash_profile"; then
-                shell_rc="$HOME/.bash_profile"
-            elif [[ -f "$HOME/.bashrc" ]]; then
-                shell_rc="$HOME/.bashrc"
-            elif [[ -f "$HOME/.bash_profile" ]]; then
-                shell_rc="$HOME/.bash_profile"
+            if shopt -q login_shell 2>/dev/null; then
+                if [[ -f "$HOME/.bash_profile" ]]; then
+                    shell_rc="$HOME/.bash_profile"
+                elif [[ -f "$HOME/.bash_login" ]]; then
+                    shell_rc="$HOME/.bash_login"
+                elif [[ -f "$HOME/.profile" ]]; then
+                    shell_rc="$HOME/.profile"
+                else
+                    shell_rc="$HOME/.bash_profile"
+                fi
             else
                 shell_rc="$HOME/.bashrc"
             fi
@@ -75,8 +79,8 @@ setup_alias() {
         fish)
             shell_rc="$HOME/.config/fish/config.fish"
             alias_definition="alias dsxtool 'curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
-            alias_pattern='^[[:space:]]*alias[[:space:]]+dsxtool\b'
-            remove_pattern='^[[:space:]]*alias[[:space:]]+dsxtool\b'
+            alias_pattern='^[[:space:]]*alias[[:space:]]+dsxtool'
+            remove_pattern='^[[:space:]]*alias[[:space:]]+dsxtool'
             ;;
         ksh)
             shell_rc="$HOME/.kshrc"

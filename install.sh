@@ -47,16 +47,21 @@ setup_alias() {
     local shell_name
 
     shell_name="$(basename "${SHELL:-}" )"
+    if [[ -z "$shell_name" ]]; then
+        shell_name="$(basename "$(ps -p $$ -o comm= 2>/dev/null || true)")"
+    fi
 
     case "$shell_name" in
         zsh)
             shell_rc="$HOME/.zshrc"
             alias_definition="alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
-            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
-            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            alias_pattern='^[[:space:]]*alias[[:space:]]+dsxtool='
+            remove_pattern='^[[:space:]]*alias[[:space:]]+dsxtool='
             ;;
         bash)
-            if [[ -f "$HOME/.bashrc" ]]; then
+            if [[ -f "$HOME/.bash_profile" ]] && ! grep -qE '(^|[[:space:]])(source|\.)[[:space:]]+(~\/)?\.bashrc' "$HOME/.bash_profile"; then
+                shell_rc="$HOME/.bash_profile"
+            elif [[ -f "$HOME/.bashrc" ]]; then
                 shell_rc="$HOME/.bashrc"
             elif [[ -f "$HOME/.bash_profile" ]]; then
                 shell_rc="$HOME/.bash_profile"
@@ -64,26 +69,26 @@ setup_alias() {
                 shell_rc="$HOME/.bashrc"
             fi
             alias_definition="alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
-            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
-            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            alias_pattern='^[[:space:]]*alias[[:space:]]+dsxtool='
+            remove_pattern='^[[:space:]]*alias[[:space:]]+dsxtool='
             ;;
         fish)
             shell_rc="$HOME/.config/fish/config.fish"
             alias_definition="alias dsxtool 'curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
-            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool\b'
-            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool\b'
+            alias_pattern='^[[:space:]]*alias[[:space:]]+dsxtool\b'
+            remove_pattern='^[[:space:]]*alias[[:space:]]+dsxtool\b'
             ;;
         ksh)
             shell_rc="$HOME/.kshrc"
             alias_definition="alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
-            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
-            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool='
+            alias_pattern='^[[:space:]]*alias[[:space:]]+dsxtool='
+            remove_pattern='^[[:space:]]*alias[[:space:]]+dsxtool='
             ;;
         *)
             shell_rc="$HOME/.profile"
             alias_definition="alias dsxtool='curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash'"
-            alias_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool'
-            remove_pattern='^[[:space:]]*alias[[:space:]]\+dsxtool'
+            alias_pattern='^[[:space:]]*alias[[:space:]]+dsxtool'
+            remove_pattern='^[[:space:]]*alias[[:space:]]+dsxtool'
             log_warn "Shell '$shell_name' is not explicitly supported; writing alias to $shell_rc."
             ;;
     esac

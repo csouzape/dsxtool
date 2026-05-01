@@ -28,9 +28,16 @@ pkg_exists() {
 # Desktop environment package mappings
 get_desktop_packages() {
     case "$1" in
-        kde) echo "kde-plasma-desktop" ;;
-        xfce) echo "xfce4" ;;
-        hyprland) echo "hyprland" ;;
-        *) echo "$1" ;;
+        kde)        echo "kde-plasma-desktop" ;;
+        xfce)       echo "xfce4 xfce4-goodies" ;;
+        hyprland)   echo "hyprland hyprpaper" ;;
+        cosmic)     echo "cosmic-desktop" ;;
+        gnome)      echo "gnome" ;;
+        mate)       echo "mate-desktop-environment" ;;
+        cinnamon)   echo "cinnamon-desktop" ;;
+        i3)         echo "i3" ;;
+        sway)       echo "sway" ;;
+        budgie)     echo "budgie-desktop" ;;
+        *)          echo "$1" ;;
     esac
 }

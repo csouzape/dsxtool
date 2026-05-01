@@ -26,10 +26,16 @@ pkg_exists() {
 
 get_desktop_packages() {
     case "$1" in
-        kde)      echo "plasma-meta plasma-desktop" ;;
-        xfce)     echo "xfce4 xfce4-goodies" ;;
-        hyprland) echo "hyprland hyprpaper" ;;
-        cosmic)   echo "cosmic" ;;
-        *)        echo "$1" ;;
+        kde)        echo "plasma-meta plasma-wayland-session" ;;
+        xfce)       echo "xfce4 xfce4-goodies" ;;
+        hyprland)   echo "hyprland hyprpaper xdg-desktop-portal-hyprland" ;;
+        cosmic)     echo "" ;;
+        gnome)      echo "gnome" ;;
+        mate)       echo "mate" ;;
+        cinnamon)   echo "cinnamon" ;;
+        i3)         echo "i3" ;;
+        sway)       echo "sway" ;;
+        budgie)     echo "budgie-desktop" ;;
+        *)          echo "$1" ;;
     esac
 }

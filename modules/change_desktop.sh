@@ -2,35 +2,94 @@
 set -euo pipefail
 
 _require_fzf() {
-    if ! command -v fzf &>/dev/null; then
-        log_error "fzf não encontrado. Instale com: sudo pacman -S fzf  ou  sudo apt install fzf"
-        return 1
+    if command -v fzf &>/dev/null; then
+        return 0
     fi
+
+    log_warn "fzf não encontrado. Será usado um menu de texto simples."
+    return 1
+}
+
+_select_desktop_option() {
+    local options=()
+    local option
+    local selected
+
+    options+=("$@")
+
+    if command -v fzf &>/dev/null; then
+        selected=$(printf '%s\n' "${options[@]}" \
+            | fzf --prompt="Ambiente de Desktop > " \
+                  --header="Selecione o DE para instalar" \
+                  --height=20 \
+                  --layout=reverse \
+                  --border=rounded \
+                  --pointer="▶" \
+                  --color='header:#e5c07b,prompt:#61afef,pointer:#e06c75,hl:#98c379' \
+                  --no-info \
+            || true)
+        printf '%s' "$selected"
+        return
+    fi
+
+    echo "Escolha o ambiente pelo número:" >&2
+    PS3='Ambiente de Desktop > '
+    select option in "${options[@]}"; do
+        if [[ -n "$option" ]]; then
+            printf '%s' "$option"
+            return
+        fi
+        echo "Opção inválida, tente novamente." >&2
+    done
+}
+
+_resolve_desktop_packages() {
+    local key="$1"
+    local pkg
+    pkg=$(get_desktop_packages "$key")
+
+    if [[ -z "${pkg// }" ]]; then
+        die "Não há pacotes mapeados para '$key' em $DISTRO. Verifique se esse ambiente é suportado nesta distro."
+    fi
+
+    printf '%s' "$pkg"
 }
 
 _fzf_confirm() {
     local prompt="${1:-Confirmar?}"
     local choice
-    choice=$(printf "Sim\nNão" \
-        | fzf --prompt="$prompt > " \
-              --height=5 \
-              --layout=reverse \
-              --border=rounded \
-              --no-info \
-              --color='prompt:#61afef,pointer:#e06c75' \
-        || true)
-    [[ "$choice" == "Sim" ]]
+
+    if command -v fzf &>/dev/null; then
+        choice=$(printf "Sim\nNão" \
+            | fzf --prompt="$prompt > " \
+                  --height=5 \
+                  --layout=reverse \
+                  --border=rounded \
+                  --no-info \
+                  --color='prompt:#61afef,pointer:#e06c75' \
+            || true)
+        [[ "$choice" == "Sim" ]]
+        return
+    fi
+
+    read -rp "$prompt (s/n): " choice < /dev/tty
+    [[ "$choice" =~ ^[Ss]$ ]]
 }
 
 _install_desktop() {
     local name="$1"
     local key="$2"
     local pkg
-    pkg=$(get_desktop_packages "$key")
+    local packages=()
+
+    pkg=$(_resolve_desktop_packages "$key")
+    read -r -a packages <<< "$pkg"
+
     log_info "Instalando $name (pacotes: $pkg)..."
     _fzf_confirm "Prosseguir com a instalação do $name?" \
         || { log_warn "Instalação cancelada."; return 0; }
-    pkg_install $pkg \
+
+    pkg_install "${packages[@]}" \
         && log_info "$name instalado com sucesso." \
         || die "Falha na instalação do $name."
 }
@@ -79,7 +138,7 @@ install_hyprland_csouzape() {
 }
 
 prompt_change_desktop() {
-    _require_fzf || return 1
+    _require_fzf
 
     local -A actions=(
         ["󰧨  KDE Plasma"]="install_kde"
@@ -112,16 +171,7 @@ prompt_change_desktop() {
     )
 
     local selected
-    selected=$(printf '%s\n' "${options[@]}" \
-        | fzf --prompt="Ambiente de Desktop > " \
-              --header="Selecione o DE para instalar" \
-              --height=20 \
-              --layout=reverse \
-              --border=rounded \
-              --pointer="▶" \
-              --color='header:#e5c07b,prompt:#61afef,pointer:#e06c75,hl:#98c379' \
-              --no-info \
-        || true)
+    selected=$(_select_desktop_option "${options[@]}")
 
     [[ -z "$selected" ]] && { log_warn "Nenhuma opção selecionada."; return 0; }
 

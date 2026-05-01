@@ -13,7 +13,7 @@ pkg_update() {
 }
 
 pkg_install() {
-    sudo dnf install -y --allowerasing --skip-unavailable "$@"
+    sudo dnf install -y --allowerasing "$@"
 }
 
 pkg_remove() {
@@ -26,10 +26,16 @@ pkg_exists() {
 
 get_desktop_packages() {
     case "$1" in
-        kde)      echo "@kde-desktop-environment" ;;
-        xfce)     echo "@xfce-desktop-environment" ;;
-        hyprland) echo "hyprland" ;;
-        cosmic)   echo "cosmic-desktop" ;;
-        *)        echo "$1" ;;
+        kde)        echo "@kde-desktop-environment" ;;
+        xfce)       echo "@xfce-desktop-environment" ;;
+        hyprland)   echo "hyprland hyprpaper" ;;
+        cosmic)     echo "cosmic-desktop" ;;
+        gnome)      echo "@gnome-desktop" ;;
+        mate)       echo "@mate-desktop" ;;
+        cinnamon)   echo "@cinnamon-desktop" ;;
+        i3)         echo "i3" ;;
+        sway)       echo "sway" ;;
+        budgie)     echo "@budgie-desktop" ;;
+        *)          echo "$1" ;;
     esac
 }

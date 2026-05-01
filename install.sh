@@ -145,22 +145,28 @@ run_menu() {
 
     build_menu > "$tmp_in"
 
+    local FZF_COLORS="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244"
+
     SHELL=/usr/bin/bash fzf \
         --layout=reverse \
         --prompt="  ➜  " \
-        --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244" \
+        --color="$FZF_COLORS" \
         --header="$BANNER
 
   welcome: $USER_NAME
   distro:  $DISTRO
   desktop: $CURRENT_DE
-  ─────────────────────────────────────────────" \
+  ─────────────────────────────────────────────
+  Type to search, Enter to select, Ctrl-C to cancel." \
+        --footer='Use arrows to move, type to filter, Enter to select.' \
         --preview="bash '$BASE_DIR/core/preview.sh' \"\$(echo {} | sed 's/^[0-9]\\+ *- *//')\"" \
-        --preview-window=right:45%:wrap,border-left \
+        --preview-window=right:50%:wrap,border-left \
         --height=100% \
         --border=rounded \
         --pointer="▶" \
-        --no-info \
+        --info=inline \
+        --cycle \
+        --bind='ctrl-d:preview-down,ctrl-u:preview-up' \
         < "$tmp_in" > "$tmp_out" || true
 
     cat "$tmp_out"

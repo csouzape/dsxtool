@@ -62,12 +62,7 @@ curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh 
 |--------|-------------|
 | **Update System** | Runs a full system upgrade using the distro's package manager |
 | **Install TLP** | Detects the current power manager and offers to replace it with TLP |
-| **Install Apps** | Categorized app installer: Browsers, Media, Communication, Productivity, Gaming, System Tools, Development |
-| **Install Alacritty** | Installs Alacritty and applies csouzape's config |
-| **Install Konsole** | Installs Konsole |
-| **Install Kitty** | Installs Kitty |
-| **Install Ghostty** | Installs Ghostty |
-| **Setup Wallpapers** | Clones the wallpapers repository into `~/Pictures/wallpapers` |
+| **Install Apps** | Categorized app installer: Browsers, Media, Communication, Productivity, Gaming, System Tools, Terminals, Development |
 | **Change Desktop Environment** | Installs KDE Plasma, XFCE, Hyprland, Cosmic, or Hyprland csouzape edition |
 | **Fonts Downloader** | Downloads and installs Nerd Fonts and developer fonts |
 | **Setup Flatpak** | Installs Flatpak and adds the Flathub remote |
@@ -94,23 +89,22 @@ dsxtool/
 │       ├── debian.sh
 │       └── fedora.sh
 └── modules/
-    ├── alacritty.sh
     ├── change_desktop.sh
     ├── development_setup.sh
     ├── dsxconfig.sh
+    ├── dsxswap.sh
     ├── flatpak.sh
     ├── fonts.sh
-    ├── ghostty.sh
     ├── install_apps.sh
-    ├── kitty.sh
-    ├── konsole.sh
+    ├── setup_bluetooth.sh
     ├── setup_gaming.sh
+    ├── setup_printer.sh
     ├── setup_virtualization.sh
     ├── setupyay.sh
     ├── shell_personalization.sh
     ├── tlp.sh
     ├── update_system.sh
-    └── wallpapers.sh
+    └── change_desktop.sh
 ```
 
 ---

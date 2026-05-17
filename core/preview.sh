@@ -26,37 +26,9 @@ get_preview() {
         "Install Apps")
             echo "Install apps by category:"
             echo
-            echo "  Browsers, Media, Communication,"
-            echo "  Productivity, Gaming, Development"
-            ;;
-        "Install Alacritty")
-            echo "GPU-accelerated terminal emulator."
-            echo
-            echo "  • Written in Rust"
-            echo "  • OpenGL rendering"
-            ;;
-        "Install Konsole")
-            echo "KDE default terminal emulator."
-            echo
-            echo "  • Tabbed interface"
-            echo "  • Split view support"
-            ;;
-        "Install Kitty")
-            echo "Fast feature-rich terminal."
-            echo
-            echo "  • GPU rendering"
-            echo "  • Native image display"
-            ;;
-        "Install Ghostty")
-            echo "Modern terminal built for speed."
-            echo
-            echo "  • Native platform integration"
-            echo "  • Built-in multiplexer"
-            ;;
-        "Setup Wallpapers")
-            echo "Downloads csouzape wallpaper collection."
-            echo
-            echo "  • Saved to ~/Pictures/wallpapers"
+            echo "  • Browsers, Media, Communication"
+            echo "  • Productivity, Gaming"
+            echo "  • System Tools, Terminals, Development"
             ;;
         "Change Desktop Environment")
             echo "Install a new desktop environment."

@@ -54,6 +54,7 @@ curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh 
 
 ---
 
+
 ## How It Works
 
 On launch, `install.sh` sources `core/common.sh` and `core/detect.sh`, which sets the `$DISTRO` variable to `arch`, `debian`, or `fedora`. The corresponding distro file under `core/distros/` is then sourced, providing unified `pkg_install`, `pkg_remove`, and `pkg_exists` functions used across all modules.

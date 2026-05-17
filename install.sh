@@ -122,11 +122,6 @@ verify_fzf_tool
 update_system_module()          { source "$BASE_DIR/modules/update_system.sh";        update_system            || log_warn "update_system finished with errors."; }
 install_tlp_module()            { source "$BASE_DIR/modules/tlp.sh";                  replace_manager_with_tlp || log_warn "TLP setup finished with errors."; }
 install_apps_module()           { source "$BASE_DIR/modules/install_apps.sh";         setup_apps               || log_warn "Apps setup finished with errors."; }
-install_alacritty_module()      { source "$BASE_DIR/modules/alacritty.sh";            install_alacritty        || log_warn "Alacritty install finished with errors."; }
-install_konsole_module()        { source "$BASE_DIR/modules/konsole.sh";              setup_konsole            || log_warn "Konsole setup finished with errors."; }
-install_kitty_module()          { source "$BASE_DIR/modules/kitty.sh";                setup_kitty              || log_warn "Kitty setup finished with errors."; }
-install_ghostty_module()        { source "$BASE_DIR/modules/ghostty.sh";              install_ghostty          || log_warn "Ghostty install finished with errors."; }
-install_wallpapers_module()     { source "$BASE_DIR/modules/wallpapers.sh";           prompt_wallpapers        || log_warn "Wallpapers setup finished with errors."; }
 install_yay_module()            { source "$BASE_DIR/modules/setupyay.sh";             setup_yay                || log_warn "yay setup finished with errors."; }
 install_fonts_module()          { source "$BASE_DIR/modules/fonts.sh";                setup_fonts              || log_warn "Fonts setup finished with errors."; }
 install_flatpak_module()        { source "$BASE_DIR/modules/flatpak.sh";              setup_flatpak            || log_warn "Flatpak setup finished with errors."; }
@@ -155,24 +150,19 @@ build_menu() {
         "2 - Update System" \
         "3 - Install TLP" \
         "4 - Install Apps" \
-        "5 - Install Alacritty" \
-        "6 - Install Konsole" \
-        "7 - Install Kitty" \
-        "8 - Install Ghostty" \
-        "9 - Setup Wallpapers" \
-        "10 - Change Desktop Environment" \
-        "11 - Fonts Downloader" \
-        "12 - Setup Flatpak" \
-        "13 - Setup Virtualization" \
-        "14 - Setup Shell" \
-        "15 - Setup Gaming" \
-        "16 - DSXConfig" \
-        "17 - Setup Bluetooth" \
-        "18 - Setup Printer" \
-        "19 - DSXSWAP (BETA)" \
+        "5 - Change Desktop Environment" \
+        "6 - Fonts Downloader" \
+        "7 - Setup Flatpak" \
+        "8 - Setup Virtualization" \
+        "9 - Setup Shell" \
+        "10 - Setup Gaming" \
+        "11 - DSXConfig" \
+        "12 - Setup Bluetooth" \
+        "13 - Setup Printer" \
+        "14 - DSXSWAP (BETA)" \
 
 
-    [[ "$DISTRO" == "arch" ]] && echo "20 - Setup yay (AUR helper)"
+    [[ "$DISTRO" == "arch" ]] && echo "15 - Setup yay (AUR helper)"
     echo "0 - Exit"
 }
 
@@ -233,11 +223,6 @@ dsxtool_main() {
             "Update System")               clear; update_system_module ;;
             "Install TLP")                 clear; install_tlp_module ;;
             "Install Apps")                clear; install_apps_module ;;
-            "Install Alacritty")           clear; install_alacritty_module ;;
-            "Install Konsole")             clear; install_konsole_module ;;
-            "Install Kitty")               clear; install_kitty_module ;;
-            "Install Ghostty")             clear; install_ghostty_module ;;
-            "Setup Wallpapers")            clear; install_wallpapers_module ;;
             "Change Desktop Environment")  clear; change_desktop_module ;;
             "Fonts Downloader")            clear; install_fonts_module ;;
             "Setup Flatpak")               clear; install_flatpak_module ;;

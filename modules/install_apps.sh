@@ -43,6 +43,11 @@ APP_REGISTRY["MangoHud"]="pkg|mangohud|-|-"
 APP_REGISTRY["Sober"]="flatpak|-|org.vinegarhq.Sober|-"
 APP_REGISTRY["Bottles"]="flatpak|-|com.usebottles.bottles|-"
 
+APP_REGISTRY["Alacritty"]="pkg|alacritty|-|-"
+APP_REGISTRY["Kitty"]="pkg|kitty|-|-"
+APP_REGISTRY["Konsole"]="pkg|konsole|-|-"
+APP_REGISTRY["Ghostty"]="terminal|ghostty|-|-"
+
 APP_REGISTRY["htop"]="pkg|htop|-|-"
 APP_REGISTRY["btop"]="pkg|btop|-|-"
 APP_REGISTRY["ncdu"]="pkg|ncdu|-|-"
@@ -87,6 +92,9 @@ _is_installed() {
         aur)
             pacman -Q "$aur_pkg" &>/dev/null
             ;;
+        terminal)
+            command -v "$pkg_name" &>/dev/null
+            ;;
         native)
             case "$app" in
                 "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
@@ -120,6 +128,13 @@ _remove_app() {
             ;;
         aur)
             sudo pacman -Rns --noconfirm "$aur_pkg"
+            ;;
+        terminal)
+            case "$DISTRO" in
+                arch)   sudo pacman -Rns --noconfirm "$pkg_name" ;;
+                debian) sudo apt-get remove -y "$pkg_name" ;;
+                fedora) sudo dnf remove -y "$pkg_name" ;;
+            esac
             ;;
         native)
             case "$app" in
@@ -202,6 +217,9 @@ _install_app() {
             sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm "$aur_pkg" \
                 || die "Failed to install $app via AUR."
             ;;
+        terminal)
+            _install_terminal_app "$app"
+            ;;
         native)
             _install_native_app "$app"
             ;;
@@ -211,6 +229,68 @@ _install_app() {
     esac
 
     log_info "$app installed successfully."
+}
+
+_install_terminal_app() {
+    local app="$1"
+    case "$app" in
+        "Ghostty")
+            case "$DISTRO" in
+                arch)
+                    pkg_install ghostty || die "Failed to install Ghostty."
+                    ;;
+                debian)
+                    log_info "Installing Ghostty via install script (ubuntu)..."
+                    curl -fsSL https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh \
+                        | sudo bash \
+                        || die "Failed to install Ghostty."
+                    ;;
+                fedora)
+                    log_info "Enabling Ghostty COPR and installing..."
+                    sudo dnf copr enable -y scottames/ghostty \
+                        || die "Failed to enable Ghostty COPR."
+                    pkg_install ghostty || die "Failed to install Ghostty."
+                    ;;
+                *)
+                    die "Unsupported distro for Ghostty: $DISTRO"
+                    ;;
+            esac
+            ;;
+        "Alacritty")
+            pkg_install alacritty || die "Failed to install Alacritty."
+            read -rp "Install csouzape's Alacritty configuration? (y/n): " confirm < /dev/tty
+            if [[ "$confirm" =~ ^[Yy]$ ]]; then
+                _apply_alacritty_config
+            else
+                log_warn "Configuration skipped."
+            fi
+            ;;
+        *)
+            die "Unknown terminal app: $app"
+            ;;
+    esac
+}
+
+_apply_alacritty_config() {
+    log_info "Applying csouzape's Alacritty configuration..."
+    mkdir -p "$HOME/.config/alacritty"
+
+    cat > "$HOME/.config/alacritty/alacritty.yml" << 'EOF'
+window:
+  opacity: 0.6
+
+font:
+  size: 12.0
+  normal:
+    family: JetBrains Mono
+    style: Regular
+
+colors:
+  primary:
+    background: '#0f0f0f'
+EOF
+
+    log_info "Configuration saved to ~/.config/alacritty/alacritty.yml"
 }
 
 _install_native_app() {
@@ -333,6 +413,11 @@ menu_system_tools() {
         "net-tools" "openssh"
 }
 
+menu_terminals() {
+    _category_menu "Terminals" \
+        "Alacritty" "Kitty" "Konsole" "Ghostty"
+}
+
 setup_apps() {
     while true; do
         local choice
@@ -343,12 +428,13 @@ setup_apps() {
             "  Productivity" \
             "  Gaming" \
             "  System Tools" \
+            "  Terminals" \
             "  Development" \
             "  Exit" \
             | _fzf_menu \
               --prompt="Apps > " \
               --header="INSTALL APPS  │  [ENTER] select   [ESC] back" \
-              --height=14 \
+              --height=15 \
               --layout=reverse \
               --border=rounded \
               --pointer="▶" \
@@ -362,6 +448,7 @@ setup_apps() {
             *Productivity)   menu_productivity ;;
             *Gaming)         menu_gaming ;;
             *"System Tools") menu_system_tools ;;
+            *Terminals)      menu_terminals ;;
             *Development)
                 source "$BASE_DIR/modules/development_setup.sh"
                 setup_development

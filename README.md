@@ -54,6 +54,61 @@ curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh 
 
 ---
 
+## Features
+
+| Option | Description |
+|--------|-------------|
+| **Update System** | Runs a full system upgrade using the distro's package manager |
+| **Install TLP** | Detects the current power manager and offers to replace it with TLP |
+| **Install Apps** | Categorized app installer: Browsers, Media, Communication, Productivity, Gaming, System Tools, Terminals, Development |
+| **Change Desktop Environment** | Installs KDE Plasma, XFCE, Hyprland, Cosmic, or Hyprland csouzape edition |
+| **Fonts Downloader** | Downloads and installs Nerd Fonts and developer fonts |
+| **Setup Flatpak** | Installs Flatpak and adds the Flathub remote |
+| **Setup Virtualization** | KVM/QEMU with virt-manager or VirtualBox |
+| **Setup Shell** | Installs and configures Zsh or Fish with plugins |
+| **Setup Gaming** | Wine, Steam, Lutris, MangoHud, GameMode and gaming libraries |
+| **DSXConfig** | Launch [dsxconfig](https://github.com/csouzape/dsxconfig) to backup or restore your packages |
+| **Setup yay** *(Arch only)* | Installs the yay AUR helper |
+
+---
+
+## Project Structure
+
+```
+dsxtool/
+├── bootstrap.sh
+├── contributing.md
+├── install.sh
+├── CHANGELOG.md
+├── LICENSE
+├── README.md
+├── core/
+│   ├── common.sh
+│   ├── detect.sh
+│   ├── preview.sh
+│   └── distros/
+│       ├── arch.sh
+│       ├── debian.sh
+│       └── fedora.sh
+└── modules/
+    ├── change_desktop.sh
+    ├── development_setup.sh
+    ├── dsxconfig.sh
+    ├── dsxswap.sh
+    ├── flatpak.sh
+    ├── fonts.sh
+    ├── install_apps.sh
+    ├── setup_bluetooth.sh
+    ├── setup_gaming.sh
+    ├── setup_printer.sh
+    ├── setup_virtualization.sh
+    ├── setupyay.sh
+    ├── shell_personalization.sh
+    ├── tlp.sh
+    └── update_system.sh
+```
+
+---
 
 ## How It Works
 

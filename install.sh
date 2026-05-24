@@ -129,10 +129,11 @@ install_virtualization_module() { source "$BASE_DIR/modules/setup_virtualization
 install_shell_module()          { source "$BASE_DIR/modules/shell_personalization.sh"; setup_shell             || log_warn "Shell setup finished with errors."; }
 change_desktop_module()         { source "$BASE_DIR/modules/change_desktop.sh";       prompt_change_desktop    || log_warn "Desktop setup finished with errors."; }
 setup_gaming_module()           { source "$BASE_DIR/modules/setup_gaming.sh";         setup_gaming             || log_warn "Gaming setup finished with errors."; }
-dsxconfig_module()              { source "$BASE_DIR/modules/dsxconfig.sh";           setup_dsxconfig          || log_warn "DSXConfig setup finished with errors."; }    
+dsxconfig_module()              { source "$BASE_DIR/modules/dsxconfig.sh";           setup_dsxconfig           || log_warn "DSXConfig setup finished with errors."; }    
 bluetooth_module()              { source "$BASE_DIR/modules/setup_bluetooth.sh";      setup_bluetooth          || log_warn "Bluetooth setup finished with errors."; }
 setup_printer_module()          { source "$BASE_DIR/modules/setup_printer.sh";        setup_printer            || log_warn "Printer setup finished with errors."; }
 dsxswap_module()              { source "$BASE_DIR/modules/dsxswap.sh";              main                       || log_warn "Swap configuration finished with errors."; }
+sober_optimization_module()     { source "$BASE_DIR/modules/sober_optimization.sh";  run_sober_optimizer       || log_warn "Sober optimization finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║
@@ -160,9 +161,10 @@ build_menu() {
         "12 - Setup Bluetooth" \
         "13 - Setup Printer" \
         "14 - DSXSWAP (BETA)" \
+        "15 - Sober Optimization" \
 
 
-    [[ "$DISTRO" == "arch" ]] && echo "15 - Setup yay (AUR helper)"
+    [[ "$DISTRO" == "arch" ]] && echo "16 - Setup yay (AUR helper)"
     echo "0 - Exit"
 }
 
@@ -234,6 +236,7 @@ dsxtool_main() {
             "Setup Bluetooth")             clear; bluetooth_module ;;
             "Setup Printer")               clear; setup_printer_module ;;
             "Setup yay (AUR helper)")      clear; install_yay_module ;;
+            "Sober Optimization")          clear; sober_optimization_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

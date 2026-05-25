@@ -26,7 +26,7 @@
 |------|-------------|
 | [dsxtool](https://github.com/csouzape/dsxtool) | Post-install automation with interactive fzf TUI |
 | [dsxconfig](https://github.com/csouzape/dsxconfig) | Backup and restore packages across machines |
-| [dsxswap | Configure your swapfile and swaptype |
+| dsxswap | Configure your swapfile and swaptype |
 
 ---
 

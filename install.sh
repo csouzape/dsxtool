@@ -192,8 +192,8 @@ run_menu() {
   distro:  $DISTRO
   desktop: $CURRENT_DE
   ─────────────────────────────────────────────
-  Type to search, Enter to select, Ctrl-C to cancel." \
-        --footer='Use arrows to move, type to filter, Enter to select.' \
+  Type to search, Enter to select, Ctrl-C to cancel.
+  Use arrows to move, type to filter, Enter to select." \
         --preview="bash '$BASE_DIR/core/preview.sh' \"\$(echo {} | sed 's/^[0-9]\\+ *- *//')\"" \
         --preview-window=right:50%:wrap,border-left \
         --height=100% \
@@ -207,7 +207,6 @@ run_menu() {
     cat "$tmp_out"
     rm -f "$tmp_in" "$tmp_out"
 }
-
 dsxtool_main() {
     while true; do
         clear

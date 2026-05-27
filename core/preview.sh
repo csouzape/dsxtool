@@ -102,6 +102,15 @@ get_preview() {
             echo "  • Adjust swappiness settings"
             echo "  • Monitor swap usage"
             ;;
+        "Setup NVIDIA Drivers")
+            echo "Install proprietary NVIDIA drivers."
+            echo
+            echo "  • Auto-detects GPU via lspci"
+            echo "  • Picks driver series (current / 470xx / 390xx)"
+            echo "  • Installs 32-bit libs + DKMS/akmod"
+            echo "  • Enables DRM modeset (Wayland-ready)"
+            echo "  • Warns on Secure Boot"
+            ;;
         "Exit")
             echo "Exit dsxtool."
             ;;

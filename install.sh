@@ -134,6 +134,7 @@ bluetooth_module()              { source "$BASE_DIR/modules/setup_bluetooth.sh";
 setup_printer_module()          { source "$BASE_DIR/modules/setup_printer.sh";        setup_printer            || log_warn "Printer setup finished with errors."; }
 dsxswap_module()              { source "$BASE_DIR/modules/dsxswap.sh";              main                       || log_warn "Swap configuration finished with errors."; }
 sober_optimization_module()     { source "$BASE_DIR/modules/sober_optimization.sh";  run_sober_optimizer       || log_warn "Sober optimization finished with errors."; }
+nvidia_module()                 { source "$BASE_DIR/modules/nvidia.sh";              setup_nvidia               || log_warn "NVIDIA setup finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║
@@ -162,9 +163,10 @@ build_menu() {
         "13 - Setup Printer" \
         "14 - DSXSWAP (BETA)" \
         "15 - Sober Optimization" \
+        "16 - Setup NVIDIA Drivers" \
 
 
-    [[ "$DISTRO" == "arch" ]] && echo "16 - Setup yay (AUR helper)"
+    [[ "$DISTRO" == "arch" ]] && echo "17 - Setup yay (AUR helper)"
     echo "0 - Exit"
 }
 
@@ -236,6 +238,7 @@ dsxtool_main() {
             "Setup Printer")               clear; setup_printer_module ;;
             "Setup yay (AUR helper)")      clear; install_yay_module ;;
             "Sober Optimization")          clear; sober_optimization_module ;;
+            "Setup NVIDIA Drivers")        clear; nvidia_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

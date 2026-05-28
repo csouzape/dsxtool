@@ -224,3 +224,4 @@ setup_nvidia() {
     log_info "NVIDIA setup completed."
     log_info "Reboot to load the new driver. After reboot, verify with: nvidia-smi"
 }
+4

@@ -111,6 +111,20 @@ get_preview() {
             echo "  • Enables DRM modeset (Wayland-ready)"
             echo "  • Warns on Secure Boot"
             ;;
+        "System Maintenance")
+            echo "Clean up and tune your system."
+            echo
+            echo "  • Update system packages"
+            echo "  • Clean package manager cache"
+            echo "  • Remove orphan packages"
+            echo "  • Vacuum systemd journal logs"
+            echo "  • Clean user cache (~/.cache)"
+            echo "  • TRIM SSD (fstrim)"
+            echo "  • Remove unused Flatpak runtimes"
+            echo "  • Check failed services"
+            echo
+            echo "  Multi-select with TAB."
+            ;;
         "Exit")
             echo "Exit dsxtool."
             ;;

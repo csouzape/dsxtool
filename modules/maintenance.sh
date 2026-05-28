@@ -89,42 +89,47 @@ check_failed_services() {
 }
 
 system_maintenance() {
-    local selections
-    selections=$(printf '%s\n' \
-        "Update System" \
-        "Clean Package Cache" \
-        "Remove Orphan Packages" \
-        "Clean Journal Logs" \
-        "Clean User Cache" \
-        "Trim SSD" \
-        "Clean Unused Flatpaks" \
-        "Check Failed Services" \
-        | _fzf_menu -m \
-              --prompt="Maintenance > " \
-              --header="[TAB] Select  [ENTER] Run  [ESC] Back" \
-              --height=18 \
-              --layout=reverse \
-              --border=rounded \
-              --pointer="▶" \
-              --marker="✓" \
-              --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#f9e2af,border:#2a2a2a" \
-              --no-info)
+    while true; do
+        clear
 
-    [[ -z "$selections" ]] && { log_warn "No maintenance task selected."; return 0; }
+        local selections
+        selections=$(printf '%s\n' \
+            "Update System" \
+            "Clean Package Cache" \
+            "Remove Orphan Packages" \
+            "Clean Journal Logs" \
+            "Clean User Cache" \
+            "Trim SSD" \
+            "Clean Unused Flatpaks" \
+            "Check Failed Services" \
+            | _fzf_menu -m \
+                  --prompt="Maintenance > " \
+                  --header="[TAB] Select  [ENTER] Run  [ESC] Back" \
+                  --height=18 \
+                  --layout=reverse \
+                  --border=rounded \
+                  --pointer="▶" \
+                  --marker="✓" \
+                  --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#f9e2af,border:#2a2a2a" \
+                  --no-info)
 
-    while read -r task; do
-        [[ -z "$task" ]] && continue
-        case "$task" in
-            "Update System")          pkg_update ;;
-            "Clean Package Cache")    pkg_clean_cache ;;
-            "Remove Orphan Packages") pkg_remove_orphans ;;
-            "Clean Journal Logs")     clean_journal ;;
-            "Clean User Cache")       clean_user_cache ;;
-            "Trim SSD")               trim_ssd ;;
-            "Clean Unused Flatpaks")  clean_flatpak ;;
-            "Check Failed Services")  check_failed_services ;;
-        esac
-    done <<< "$selections"
+        [[ -z "$selections" ]] && return 0
 
-    log_info "Maintenance completed."
+        while read -r task; do
+            [[ -z "$task" ]] && continue
+            case "$task" in
+                "Update System")          pkg_update ;;
+                "Clean Package Cache")    pkg_clean_cache ;;
+                "Remove Orphan Packages") pkg_remove_orphans ;;
+                "Clean Journal Logs")     clean_journal ;;
+                "Clean User Cache")       clean_user_cache ;;
+                "Trim SSD")               trim_ssd ;;
+                "Clean Unused Flatpaks")  clean_flatpak ;;
+                "Check Failed Services")  check_failed_services ;;
+            esac
+        done <<< "$selections"
+
+        log_info "Maintenance completed."
+        prompt_continue
+    done
 }

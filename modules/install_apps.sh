@@ -17,6 +17,7 @@ APP_REGISTRY["OBS Studio"]="pkg|obs-studio|com.obsproject.Studio|-"
 APP_REGISTRY["MPV"]="pkg|mpv|-|-"
 APP_REGISTRY["Handbrake"]="pkg|handbrake|fr.handbrake.ghb|-"
 APP_REGISTRY["Kdenlive"]="pkg|kdenlive|org.kde.kdenlive|-"
+APP_REGISTRY["Synergy"]="pkg|synergy|-|-"
 
 APP_REGISTRY["Discord"]="flatpak|-|com.discordapp.Discord|-"
 APP_REGISTRY["Telegram"]="flatpak|-|org.telegram.desktop|-"
@@ -61,6 +62,7 @@ APP_REGISTRY["neofetch"]="pkg|neofetch|-|-"
 APP_REGISTRY["fastfetch"]="pkg|fastfetch|-|-"
 APP_REGISTRY["net-tools"]="pkg|net-tools|-|-"
 APP_REGISTRY["openssh"]="native|-|-|-"
+APP_REGISTRY["Synergy"]="pkg|synergy|-|-"
 
 _fzf_menu() {
     local tmp_in tmp_out
@@ -396,7 +398,7 @@ menu_productivity() {
     _category_menu "Productivity" \
         "LibreOffice" "Obsidian" "Thunderbird" "Bitwarden" \
         "Flameshot" "GIMP" "Inkscape" \
-        "SyncThingy" "Syncthing Tray"
+        "SyncThingy" "Syncthing Tray" "Synergy"
 }
 
 menu_gaming() {
@@ -410,7 +412,7 @@ menu_system_tools() {
         "htop" "btop" "ncdu" "tree" \
         "tmux" "jq" "bat" "ripgrep" "fd" \
         "neofetch" "fastfetch" \
-        "net-tools" "openssh"
+        "net-tools" "openssh" "Synergy"
 }
 
 menu_terminals() {

@@ -349,12 +349,24 @@ _install_native_app() {
         "Synergy")
             case "$DISTRO" in
                 arch)
+                    if command -v yay &>/dev/null; then
+                        log_info "Installing Synergy from AUR via yay..."
+                        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm synergy || die "Failed to install Synergy via AUR."
+                    else
+                        log_info "Downloading Synergy for Arch..."
+                        wget --progress=bar:force "https://symless.com/synergy/download/package/synergy-personal-v3/arch-linux/synergy-3.6.1-linux-noble-x86_64.pkg.tar.zst" -O /tmp/synergy.pkg.tar.zst \
+                            || die "Failed to download Synergy."
 
-                    log_info "Downloading Synergy for Arch..."
-                    wget --progress=bar:force "URL_DO_SYNERGY_PARA_ARCH" -O /tmp/synergy.pkg.tar.zst \
-                        || die "Failed to download Synergy."
-                    sudo pacman -U --noconfirm /tmp/synergy.pkg.tar.zst || die "Failed to install Synergy."
-                    rm -f /tmp/synergy.pkg.tar.zst
+                        # detect if the download returned HTML (redirect/login page)
+                        if file -b --mime-type /tmp/synergy.pkg.tar.zst | grep -q 'text/html'; then
+                            cat /tmp/synergy.pkg.tar.zst | sed -n '1,120p'
+                            rm -f /tmp/synergy.pkg.tar.zst
+                            die "Downloaded file looks like HTML. Symless likely requires an authenticated download. Install 'yay' and try AUR, or provide a direct package URL."
+                        fi
+
+                        sudo pacman -U --noconfirm /tmp/synergy.pkg.tar.zst || die "Failed to install Synergy."
+                        rm -f /tmp/synergy.pkg.tar.zst
+                    fi
                     ;;
                 debian)
                     log_info "Downloading Synergy (.deb)..."

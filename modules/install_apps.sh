@@ -17,7 +17,7 @@ APP_REGISTRY["OBS Studio"]="pkg|obs-studio|com.obsproject.Studio|-"
 APP_REGISTRY["MPV"]="pkg|mpv|-|-"
 APP_REGISTRY["Handbrake"]="pkg|handbrake|fr.handbrake.ghb|-"
 APP_REGISTRY["Kdenlive"]="pkg|kdenlive|org.kde.kdenlive|-"
-APP_REGISTRY["Synergy"]="pkg|synergy|-|-"
+APP_REGISTRY["Synergy"]="native|-|-|-"
 
 APP_REGISTRY["Discord"]="flatpak|-|com.discordapp.Discord|-"
 APP_REGISTRY["Telegram"]="flatpak|-|org.telegram.desktop|-"
@@ -62,7 +62,6 @@ APP_REGISTRY["neofetch"]="pkg|neofetch|-|-"
 APP_REGISTRY["fastfetch"]="pkg|fastfetch|-|-"
 APP_REGISTRY["net-tools"]="pkg|net-tools|-|-"
 APP_REGISTRY["openssh"]="native|-|-|-"
-APP_REGISTRY["Synergy"]="pkg|synergy|-|-"
 
 _fzf_menu() {
     local tmp_in tmp_out
@@ -345,6 +344,36 @@ _install_native_app() {
                 arch)   pkg_install openssh ;;
                 debian) pkg_install openssh-client ;;
                 fedora) pkg_install openssh ;;
+            esac
+            ;;
+        "Synergy")
+            case "$DISTRO" in
+                arch)
+
+                    log_info "Downloading Synergy for Arch..."
+                    wget --progress=bar:force "URL_DO_SYNERGY_PARA_ARCH" -O /tmp/synergy.pkg.tar.zst \
+                        || die "Failed to download Synergy."
+                    sudo pacman -U --noconfirm /tmp/synergy.pkg.tar.zst || die "Failed to install Synergy."
+                    rm -f /tmp/synergy.pkg.tar.zst
+                    ;;
+                debian)
+                    log_info "Downloading Synergy (.deb)..."
+                    wget --progress=bar:force "URL_DO_SYNERGY_DEB" -O /tmp/synergy.deb \
+                        || die "Failed to download Synergy."
+                    sudo dpkg -i /tmp/synergy.deb 2>/dev/null || true
+                    sudo apt-get install -f -y || die "Failed to fix Synergy dependencies."
+                    rm -f /tmp/synergy.deb
+                    ;;
+                fedora)
+                    log_info "Downloading Synergy (.rpm)..."
+                    wget --progress=bar:force "URL_DO_SYNERGY_RPM" -O /tmp/synergy.rpm \
+                        || die "Failed to download Synergy."
+                    sudo dnf install -y /tmp/synergy.rpm || die "Failed to install Synergy."
+                    rm -f /tmp/synergy.rpm
+                    ;;
+                *)
+                    die "Unsupported distro for Synergy: $DISTRO"
+                    ;;
             esac
             ;;
         *)

@@ -1,17 +1,16 @@
 #!/bin/bash
+REPO="https://github.com/csouzape/sober-config" # GitHub repository URL
 
-REPO_URL="https://github.com/csouzape/sober-config.git"
-TMP_DIR="/tmp/sober-optimizer"
+install() {
+    local repo_dir
+    repo_dir=$(basename "$REPO" .git)
 
-run_sober_optimizer() {
-    if [ -d "$TMP_DIR" ]; then
-        rm -rf "$TMP_DIR"
+    if [[ ! -d "$repo_dir" ]]; then
+        git clone "$REPO" "$repo_dir" || return 1
     fi
 
-    git clone "$REPO_URL" "$TMP_DIR"
-
-    chmod +x "$TMP_DIR/install.sh"
-    bash "$TMP_DIR/install.sh"
+    pushd "$repo_dir" >/dev/null || return 1
+    chmod +x install.sh
+    ./install.sh
+    popd >/dev/null || return 1
 }
-
-run_sober_optimizer

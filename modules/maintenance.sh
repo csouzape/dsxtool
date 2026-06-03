@@ -94,14 +94,14 @@ system_maintenance() {
 
         local selections
         selections=$(printf '%s\n' \
-            "Update System" \
-            "Clean Package Cache" \
-            "Remove Orphan Packages" \
-            "Clean Journal Logs" \
-            "Clean User Cache" \
-            "Trim SSD" \
-            "Clean Unused Flatpaks" \
-            "Check Failed Services" \
+            "1 - Update System" \
+            "2 - Clean Package Cache" \
+            "3 - Remove Orphan Packages" \
+            "4 - Clean Journal Logs" \
+            "5 - Clean User Cache" \
+            "6 - Trim SSD" \
+            "7 - Clean Unused Flatpaks" \
+            "8 - Check Failed Services" \
             | _fzf_menu -m \
                   --prompt="Maintenance > " \
                   --header="[TAB] Select  [ENTER] Run  [ESC] Back" \

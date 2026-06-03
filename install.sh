@@ -135,7 +135,7 @@ setup_printer_module()          { source "$BASE_DIR/modules/setup_printer.sh";  
 dsxswap_module()              { source "$BASE_DIR/modules/dsxswap.sh";              main                       || log_warn "Swap configuration finished with errors."; }
 setup_nvidia_module()          { source "$BASE_DIR/modules/nvidia.sh";              setup_nvidia             || log_warn "NVIDIA setup finished with errors."; }
 sober_optimization_module()     { source "$BASE_DIR/modules/sober_optimization.sh";  install       || log_warn "Sober optimization finished with errors."; }
-setup_maintenance_module()         { source "$BASE_DIR/modules/maintenance.sh";         setup_maintenance        || log_warn "Maintenance tasks finished with errors."; }
+setup_maintenance_module()         { source "$BASE_DIR/modules/maintenance.sh";         system_maintenance        || log_warn "Maintenance tasks finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║
@@ -240,8 +240,8 @@ dsxtool_main() {
             "Setup Printer")               clear; setup_printer_module ;;
             "Setup yay (AUR helper)")      clear; install_yay_module ;;
             "Sober Optimization")          clear; sober_optimization_module ;;
-            "Setup NVIDIA Drivers")        clear; nvidia_module ;;
-            "System Maintenance")          clear; maintenance_module ;;
+            "Setup NVIDIA Drivers")        clear; setup_nvidia_module ;;
+            "System Maintenance")          clear; setup_maintenance_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

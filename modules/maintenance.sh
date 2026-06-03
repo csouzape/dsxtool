@@ -126,6 +126,8 @@ system_maintenance() {
                 "Trim SSD")               trim_ssd ;;
                 "Clean Unused Flatpaks")  clean_flatpak ;;
                 "Check Failed Services")  check_failed_services ;;
+                "exit")                    log_info "Exiting"; exit 0 ;;
+                *)                         log_warn "Unknown task: $task" ;;
             esac
         done <<< "$selections"
 

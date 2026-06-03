@@ -119,15 +119,15 @@ system_maintenance() {
         while read -r task; do
             [[ -z "$task" ]] && continue
             case "$task" in
-                "Update System")          pkg_update ;;
-                "Clean Package Cache")    pkg_clean_cache ;;
-                "Remove Orphan Packages") pkg_remove_orphans ;;
-                "Clean Journal Logs")     clean_journal ;;
-                "Clean User Cache")       clean_user_cache ;;
-                "Trim SSD")               trim_ssd ;;
-                "Clean Unused Flatpaks")  clean_flatpak ;;
-                "Check Failed Services")  check_failed_services ;;
-                "Exit"|"exit")            log_info "Exiting"; exit 0 ;;
+                "1 - Update System")          pkg_update ;;
+                "2 - Clean Package Cache")    pkg_clean_cache ;;
+                "3 - Remove Orphan Packages") pkg_remove_orphans ;;
+                "4 - Clean Journal Logs")     clean_journal ;;
+                "5 - Clean User Cache")       clean_user_cache ;;
+                "6 - Trim SSD")               trim_ssd ;;
+                "7 - Clean Unused Flatpaks")  clean_flatpak ;;
+                "8 - Check Failed Services")  check_failed_services ;;
+                "9 - Exit"|"exit")            log_info "Exiting"; exit 0 ;;
                 *)                         log_warn "Unknown task: $task" ;;
             esac
         done <<< "$selections"

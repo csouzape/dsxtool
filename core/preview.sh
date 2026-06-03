@@ -102,6 +102,29 @@ get_preview() {
             echo "  • Adjust swappiness settings"
             echo "  • Monitor swap usage"
             ;;
+        "Setup NVIDIA Drivers")
+            echo "Install proprietary NVIDIA drivers."
+            echo
+            echo "  • Auto-detects GPU via lspci"
+            echo "  • Picks driver series (current / 470xx / 390xx)"
+            echo "  • Installs 32-bit libs + DKMS/akmod"
+            echo "  • Enables DRM modeset (Wayland-ready)"
+            echo "  • Warns on Secure Boot"
+            ;;
+        "System Maintenance")
+            echo "Clean up and tune your system."
+            echo
+            echo "  • Update system packages"
+            echo "  • Clean package manager cache"
+            echo "  • Remove orphan packages"
+            echo "  • Vacuum systemd journal logs"
+            echo "  • Clean user cache (~/.cache)"
+            echo "  • TRIM SSD (fstrim)"
+            echo "  • Remove unused Flatpak runtimes"
+            echo "  • Check failed services"
+            echo
+            echo "  Multi-select with TAB."
+            ;;
         "Exit")
             echo "Exit dsxtool."
             ;;

@@ -17,6 +17,7 @@ APP_REGISTRY["OBS Studio"]="pkg|obs-studio|com.obsproject.Studio|-"
 APP_REGISTRY["MPV"]="pkg|mpv|-|-"
 APP_REGISTRY["Handbrake"]="pkg|handbrake|fr.handbrake.ghb|-"
 APP_REGISTRY["Kdenlive"]="pkg|kdenlive|org.kde.kdenlive|-"
+APP_REGISTRY["Synergy"]="native|-|-|-"
 
 APP_REGISTRY["Discord"]="flatpak|-|com.discordapp.Discord|-"
 APP_REGISTRY["Telegram"]="flatpak|-|org.telegram.desktop|-"
@@ -345,6 +346,48 @@ _install_native_app() {
                 fedora) pkg_install openssh ;;
             esac
             ;;
+        "Synergy")
+            case "$DISTRO" in
+                arch)
+                    if command -v yay &>/dev/null; then
+                        log_info "Installing Synergy from AUR via yay..."
+                        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm synergy || die "Failed to install Synergy via AUR."
+                    else
+                        log_info "Downloading Synergy for Arch..."
+                        wget --progress=bar:force "https://symless.com/synergy/download/package/synergy-personal-v3/arch-linux/synergy-3.6.1-linux-noble-x86_64.pkg.tar.zst" -O /tmp/synergy.pkg.tar.zst \
+                            || die "Failed to download Synergy."
+
+                        # detect if the download returned HTML (redirect/login page)
+                        if file -b --mime-type /tmp/synergy.pkg.tar.zst | grep -q 'text/html'; then
+                            cat /tmp/synergy.pkg.tar.zst | sed -n '1,120p'
+                            rm -f /tmp/synergy.pkg.tar.zst
+                            die "Downloaded file looks like HTML. Symless likely requires an authenticated download. Install 'yay' and try AUR, or provide a direct package URL."
+                        fi
+
+                        sudo pacman -U --noconfirm /tmp/synergy.pkg.tar.zst || die "Failed to install Synergy."
+                        rm -f /tmp/synergy.pkg.tar.zst
+                    fi
+                    ;;
+                debian)
+                    log_info "Downloading Synergy (.deb)..."
+                    wget --progress=bar:force "URL_DO_SYNERGY_DEB" -O /tmp/synergy.deb \
+                        || die "Failed to download Synergy."
+                    sudo dpkg -i /tmp/synergy.deb 2>/dev/null || true
+                    sudo apt-get install -f -y || die "Failed to fix Synergy dependencies."
+                    rm -f /tmp/synergy.deb
+                    ;;
+                fedora)
+                    log_info "Downloading Synergy (.rpm)..."
+                    wget --progress=bar:force "URL_DO_SYNERGY_RPM" -O /tmp/synergy.rpm \
+                        || die "Failed to download Synergy."
+                    sudo dnf install -y /tmp/synergy.rpm || die "Failed to install Synergy."
+                    rm -f /tmp/synergy.rpm
+                    ;;
+                *)
+                    die "Unsupported distro for Synergy: $DISTRO"
+                    ;;
+            esac
+            ;;
         *)
             die "No native install handler defined for: $app"
             ;;
@@ -396,7 +439,7 @@ menu_productivity() {
     _category_menu "Productivity" \
         "LibreOffice" "Obsidian" "Thunderbird" "Bitwarden" \
         "Flameshot" "GIMP" "Inkscape" \
-        "SyncThingy" "Syncthing Tray"
+        "SyncThingy" "Syncthing Tray" "Synergy"
 }
 
 menu_gaming() {
@@ -410,7 +453,7 @@ menu_system_tools() {
         "htop" "btop" "ncdu" "tree" \
         "tmux" "jq" "bat" "ripgrep" "fd" \
         "neofetch" "fastfetch" \
-        "net-tools" "openssh"
+        "net-tools" "openssh" "Synergy"
 }
 
 menu_terminals() {

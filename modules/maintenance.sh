@@ -93,7 +93,8 @@ system_maintenance() {
         clear
 
         local selections
-        selections=$(printf '%s\n' \
+        local menu_items
+        menu_items=( \
             "1 - Update System" \
             "2 - Clean Package Cache" \
             "3 - Remove Orphan Packages" \
@@ -103,7 +104,22 @@ system_maintenance() {
             "7 - Clean Unused Flatpaks" \
             "8 - Check Failed Services" \
             "9 - Exit" \
-            | _fzf_menu -m \
+        )
+
+        read -rp "Enter numbers (e.g. 1,3) or press ENTER for interactive picker: " numsel
+        if [[ -n "$numsel" ]]; then
+            IFS=$' ,\t' read -r -a nums <<< "$numsel"
+            selections=""
+            for n in "${nums[@]}"; do
+                if [[ "$n" =~ ^[0-9]+$ ]]; then
+                    idx=$((n-1))
+                    if (( idx >= 0 && idx < ${#menu_items[@]} )); then
+                        selections+="${menu_items[idx]}"$'\n'
+                    fi
+                fi
+            done
+        else
+            selections=$(printf '%s\n' "${menu_items[@]}" | _fzf_menu -m \
                   --prompt="Maintenance > " \
                   --header="[TAB] Select  [ENTER] Run  [ESC] Back" \
                   --height=18 \
@@ -113,6 +129,7 @@ system_maintenance() {
                   --marker="✓" \
                   --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#f9e2af,border:#2a2a2a" \
                   --no-info)
+        fi
 
         [[ -z "$selections" ]] && return 0
 

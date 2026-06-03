@@ -129,7 +129,6 @@ install_virtualization_module() { source "$BASE_DIR/modules/setup_virtualization
 install_shell_module()          { source "$BASE_DIR/modules/shell_personalization.sh"; setup_shell             || log_warn "Shell setup finished with errors."; }
 change_desktop_module()         { source "$BASE_DIR/modules/change_desktop.sh";       prompt_change_desktop    || log_warn "Desktop setup finished with errors."; }
 setup_gaming_module()           { source "$BASE_DIR/modules/setup_gaming.sh";         setup_gaming             || log_warn "Gaming setup finished with errors."; }
-dsxconfig_module()              { source "$BASE_DIR/modules/dsxconfig.sh";           setup_dsxconfig           || log_warn "DSXConfig setup finished with errors."; }    
 bluetooth_module()              { source "$BASE_DIR/modules/setup_bluetooth.sh";      setup_bluetooth          || log_warn "Bluetooth setup finished with errors."; }
 setup_printer_module()          { source "$BASE_DIR/modules/setup_printer.sh";        setup_printer            || log_warn "Printer setup finished with errors."; }
 dsxswap_module()              { source "$BASE_DIR/modules/dsxswap.sh";              main                       || log_warn "Swap configuration finished with errors."; }
@@ -159,8 +158,7 @@ build_menu() {
         "8 - Setup Virtualization" \
         "9 - Setup Shell" \
         "10 - Setup Gaming" \
-        "11 - DSXConfig" \
-        "12 - Setup Bluetooth" \
+        "11 - Setup Bluetooth" \
         "13 - Setup Printer" \
         "14 - DSXSWAP (BETA)" \
         "15 - Sober Optimization" \
@@ -234,7 +232,6 @@ dsxtool_main() {
             "Setup Virtualization")        clear; install_virtualization_module ;;
             "Setup Shell")                 clear; install_shell_module ;;
             "Setup Gaming")                clear; setup_gaming_module ;;
-            "DSXConfig")                   clear; dsxconfig_module ;;
             "DSXSWAP (BETA)")              clear; dsxswap_module ;;
             "Setup Bluetooth")             clear; bluetooth_module ;;
             "Setup Printer")               clear; setup_printer_module ;;

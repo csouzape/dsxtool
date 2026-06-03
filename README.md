@@ -25,7 +25,6 @@
 | Tool | Description |
 |------|-------------|
 | [dsxtool](https://github.com/csouzape/dsxtool) | Post-install automation with interactive fzf TUI |
-| [dsxconfig](https://github.com/csouzape/dsxconfig) | Backup and restore packages across machines |
 | dsxswap | Configure your swapfile and swaptype |
 
 ---
@@ -68,7 +67,6 @@ curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh 
 | **Setup Virtualization** | KVM/QEMU with virt-manager or VirtualBox |
 | **Setup Shell** | Installs and configures Zsh or Fish with plugins |
 | **Setup Gaming** | Wine, Steam, Lutris, MangoHud, GameMode and gaming libraries |
-| **DSXConfig** | Launch [dsxconfig](https://github.com/csouzape/dsxconfig) to backup or restore your packages |
 | **Setup yay** *(Arch only)* | Installs the yay AUR helper |
 
 ---
@@ -94,7 +92,6 @@ dsxtool/
 └── modules/
     ├── change_desktop.sh
     ├── development_setup.sh
-    ├── dsxconfig.sh
     ├── dsxswap.sh
     ├── flatpak.sh
     ├── fonts.sh

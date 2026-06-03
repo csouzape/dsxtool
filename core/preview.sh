@@ -67,14 +67,6 @@ get_preview() {
             echo "  • Steam + Lutris"
             echo "  • MangoHud + GameMode"
             ;;
-        "DSXConfig")
-            echo "Backup and restore your Linux setup."
-            echo
-            echo "  • Export packages, AUR, Flatpak"
-            echo "  • Restore on any machine"
-            echo "  • Cross-distro support"
-            echo "  • Part of the DSX ecosystem"
-            ;;
         "Setup Bluetooth")
             echo "Installs and configures Bluetooth."
             echo

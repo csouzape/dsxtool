@@ -102,6 +102,7 @@ system_maintenance() {
             "Trim SSD" \
             "Clean Unused Flatpaks" \
             "Check Failed Services" \
+            "Exit" \
             | _fzf_menu -m \
                   --prompt="Maintenance > " \
                   --header="[TAB] Select  [ENTER] Run  [ESC] Back" \
@@ -126,7 +127,7 @@ system_maintenance() {
                 "Trim SSD")               trim_ssd ;;
                 "Clean Unused Flatpaks")  clean_flatpak ;;
                 "Check Failed Services")  check_failed_services ;;
-                "exit")                    log_info "Exiting"; exit 0 ;;
+                "Exit"|"exit")            log_info "Exiting"; exit 0 ;;
                 *)                         log_warn "Unknown task: $task" ;;
             esac
         done <<< "$selections"

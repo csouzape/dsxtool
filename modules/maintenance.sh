@@ -88,11 +88,25 @@ check_failed_services() {
     systemctl --failed --no-pager
 }
 
+BANNER=$(cat <<'EOF'
+███╗   ███╗ █████╗ ██╗███╗   ██╗████████╗███████╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗
+████╗ ████║██╔══██╗██║████╗  ██║╚══██╔══╝██╔════╝████╗  ██║██╔══██╗████╗  ██║██╔════╝██╔════╝
+██╔████╔██║███████║██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║███████║██╔██╗ ██║██║     █████╗  
+██║╚██╔╝██║██╔══██║██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║██╔══██║██║╚██╗██║██║     ██╔══╝  
+██║ ╚═╝ ██║██║  ██║██║██║ ╚████║   ██║   ███████╗██║ ╚████║██║  ██║██║ ╚████║╚██████╗███████╗
+╚═╝     ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚══════╝
+                                                                                             
+EOF
+)
+
 system_maintenance() {
     while true; do
         clear
 
         local selections
+        local fzf_header
+        fzf_header="$BANNER\n\n[TAB] Select  [ENTER] Run  [ESC] Back"
+
         selections=$(printf '%s\n' \
             "1 - Update System" \
             "2 - Clean Package Cache" \
@@ -102,9 +116,10 @@ system_maintenance() {
             "6 - Trim SSD" \
             "7 - Clean Unused Flatpaks" \
             "8 - Check Failed Services" \
+            "9 - Exit" \
             | _fzf_menu -m \
                   --prompt="Maintenance > " \
-                  --header="[TAB] Select  [ENTER] Run  [ESC] Back" \
+                  --header="$fzf_header" \
                   --height=18 \
                   --layout=reverse \
                   --border=rounded \

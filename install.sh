@@ -133,7 +133,9 @@ dsxconfig_module()              { source "$BASE_DIR/modules/dsxconfig.sh";      
 bluetooth_module()              { source "$BASE_DIR/modules/setup_bluetooth.sh";      setup_bluetooth          || log_warn "Bluetooth setup finished with errors."; }
 setup_printer_module()          { source "$BASE_DIR/modules/setup_printer.sh";        setup_printer            || log_warn "Printer setup finished with errors."; }
 dsxswap_module()              { source "$BASE_DIR/modules/dsxswap.sh";              main                       || log_warn "Swap configuration finished with errors."; }
+setup_nvidia_module()          { source "$BASE_DIR/modules/nvidia.sh";              setup_nvidia             || log_warn "NVIDIA setup finished with errors."; }
 sober_optimization_module()     { source "$BASE_DIR/modules/sober_optimization.sh";  install       || log_warn "Sober optimization finished with errors."; }
+setup_maintenance_module()         { source "$BASE_DIR/modules/maintenance.sh";         setup_maintenance        || log_warn "Maintenance tasks finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║

@@ -87,8 +87,7 @@ check_failed_services() {
     log_info "Checking for failed systemd services..."
     systemctl --failed --no-pager
 }
-GREEN='\033[0;32m'
-RESET='\033[0m'
+
 
 BANNER=$(cat <<'EOF'
 ███╗   ███╗ █████╗ ██╗███╗   ██╗████████╗███████╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗
@@ -107,7 +106,7 @@ system_maintenance() {
 
         local selections
         local fzf_header
-        fzf_header="${GREEN}${BANNER}${RESET}\n\n[TAB] Select  [ENTER] Run  [ESC] Back"
+        fzf_header="$BANNER\n\n[TAB] Select  [ENTER] Run  [ESC] Back"
 
         selections=$(printf '%s\n' \
             "1 - Update System" \

@@ -94,6 +94,13 @@ get_preview() {
             echo "  • Adjust swappiness settings"
             echo "  • Monitor swap usage"
             ;;
+        "Sober Optimization")
+            echo "Configura otimizações para o Sober." 
+            echo
+            echo "  • Ajusta modo gráfico para performance"
+            echo "  • Opcional: override FRM, Discord RPC, GameMode, gamepad"
+            echo "  • Salva o arquivo JSON em ~/.var/app/org.vinegarhq.Sober/config/sober/config.json"
+            ;;
         "Setup NVIDIA Drivers")
             echo "Install proprietary NVIDIA drivers."
             echo

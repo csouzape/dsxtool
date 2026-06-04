@@ -1,18 +1,40 @@
-#!/bin/bash
-REPO="https://github.com/csouzape/sober-config" # GitHub repository URL
+#!/usr/bin/env bash
 
 install() {
     local repo_dir
-    repo_dir=$(mktemp -d)
+    local install_script
 
-    git clone "$REPO" "$repo_dir" || return 1
-    pushd "$repo_dir" >/dev/null || return 1
-    chmod +x install.sh
-    if [[ -t 0 && -e /dev/tty ]]; then
-        bash ./install.sh </dev/tty >/dev/tty || return 1
-    else
-        bash ./install.sh || return 1
+    repo_dir=$(mktemp -d) || return 1
+
+    echo "Installing Sober optimization..."
+    git clone "https://github.com/csouzape/sober-config" "$repo_dir" || {
+        echo "Failed to clone sober-config repository." >&2
+        rm -rf "$repo_dir"
+        return 1
+    }
+
+    install_script="$repo_dir/install.sh"
+    if [[ ! -f "$install_script" ]]; then
+        echo "install.sh not found in sober-config repository." >&2
+        rm -rf "$repo_dir"
+        return 1
     fi
-    popd >/dev/null || return 1
+
+    chmod +x "$install_script"
+
+    if [[ -t 0 && -e /dev/tty ]]; then
+        bash "$install_script" </dev/tty >/dev/tty || {
+            echo "Sober optimization installation failed." >&2
+            rm -rf "$repo_dir"
+            return 1
+        }
+    else
+        bash "$install_script" || {
+            echo "Sober optimization installation failed." >&2
+            rm -rf "$repo_dir"
+            return 1
+        }
+    fi
+
     rm -rf "$repo_dir"
 }

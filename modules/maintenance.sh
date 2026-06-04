@@ -131,15 +131,15 @@ system_maintenance() {
                   --no-info \
                   --preview-window="right:40%:wrap" \
                   --preview='case {} in
-    "1 - Update System")          echo "Atualiza todos os pacotes do sistema usando o gerenciador de pacotes da distro (pacman, apt ou dnf)." ;;
-    "2 - Clean Package Cache")    echo "Remove pacotes antigos do cache local, liberando espaço em disco sem afetar os pacotes instalados." ;;
-    "3 - Remove Orphan Packages") echo "Remove pacotes que foram instalados como dependência mas não são mais necessários por nenhum outro pacote." ;;
-    "4 - Clean Journal Logs")     echo "Apaga logs antigos do systemd journal, mantendo apenas as últimas 2 semanas de registros." ;;
-    "5 - Clean User Cache")       echo "Limpa o diretório ~/.cache do usuário atual, removendo arquivos temporários de aplicações." ;;
-    "6 - Trim SSD")               echo "Executa fstrim em todos os sistemas de arquivos montados, otimizando o desempenho e vida útil do SSD." ;;
-    "7 - Clean Unused Flatpaks")  echo "Remove runtimes e extensões Flatpak que não são mais usados por nenhum aplicativo instalado." ;;
-    "8 - Check Failed Services")  echo "Lista todos os serviços do systemd que falharam, útil para diagnosticar problemas no sistema." ;;
-    "9 - Exit")                   echo "Sai do menu de manutenção e retorna ao menu anterior." ;;
+    "1 - Update System")          echo "Updates all system packages using the distro package manager (pacman, apt, or dnf)." ;;
+    "2 - Clean Package Cache")    echo "Removes old packages from the local cache, freeing disk space without affecting installed packages." ;;
+    "3 - Remove Orphan Packages") echo "Removes packages installed as dependencies that are no longer required by any other package." ;;
+    "4 - Clean Journal Logs")     echo "Deletes old systemd journal logs, keeping only the last 2 weeks of records." ;;
+    "5 - Clean User Cache")       echo "Cleans the current user's ~/.cache directory by removing application temporary files." ;;
+    "6 - Trim SSD")               echo "Runs fstrim on all mounted file systems to optimize SSD performance and lifespan." ;;
+    "7 - Clean Unused Flatpaks")  echo "Removes Flatpak runtimes and extensions that are not used by any installed application." ;;
+    "8 - Check Failed Services")  echo "Lists all failed systemd services, useful for diagnosing system issues." ;;
+    "9 - Exit")                   echo "Exits the maintenance menu and returns to the previous menu." ;;
 esac')
 
         [[ -z "$selections" ]] && return 0

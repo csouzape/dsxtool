@@ -88,7 +88,7 @@ check_failed_services() {
     systemctl --failed --no-pager
 }
 
-
+BANNER=$(printf '\e[38;2;249;226;175m')
 BANNER=$(cat <<'EOF'
 ███╗   ███╗ █████╗ ██╗███╗   ██╗████████╗███████╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗
 ████╗ ████║██╔══██╗██║████╗  ██║╚══██╔══╝██╔════╝████╗  ██║██╔══██╗████╗  ██║██╔════╝██╔════╝
@@ -99,15 +99,14 @@ BANNER=$(cat <<'EOF'
                                                                                              
 EOF
 )
-
+BANNER+=$(printf '\e[0m')
 system_maintenance() {
     while true; do
         clear
 
         local selections
         local fzf_header
-        fzf_header="$BANNER\n\n[TAB] Select  [ENTER] Run  [ESC] Back"
-
+         fzf_header="$(printf '%b' "$BANNER\n\n[TAB] Select  [ENTER] Run  [ESC] Back")"
         selections=$(printf '%s\n' \
             "1 - Update System" \
             "2 - Clean Package Cache" \
@@ -122,12 +121,12 @@ system_maintenance() {
                   --ansi \
                   --prompt="Maintenance > " \
                   --header="$fzf_header" \
-                  --height=18 \
+                  --height=100% \
                   --layout=reverse \
                   --border=rounded \
                   --pointer="▶" \
                   --marker="✓" \
-                  --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#f9e2af,border:#2a2a2a" \
+                  --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#f1f1f1,border:#2a2a2a" \
                   --no-info)
 
         [[ -z "$selections" ]] && return 0
@@ -144,7 +143,7 @@ system_maintenance() {
                 "7 - Clean Unused Flatpaks")  clean_flatpak ;;
                 "8 - Check Failed Services")  check_failed_services ;;
                 "9 - Exit"|"exit")            log_info "Exiting"; exit 0 ;;
-                *)                         log_warn "Unknown task: $task" ;;
+                *)                            log_warn "Unknown task: $task" ;;
             esac
         done <<< "$selections"
 

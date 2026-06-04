@@ -100,6 +100,22 @@ BANNER=$(cat <<'EOF'
 EOF
 )
 BANNER+=$(printf '\e[0m')
+
+_maintenance_preview() {
+    case "$1" in
+        "1 - Update System")          echo "Updates all system packages using the distro package manager (pacman, apt, or dnf)." ;;
+        "2 - Clean Package Cache")    echo "Removes old packages from the local cache, freeing disk space without affecting installed packages." ;;
+        "3 - Remove Orphan Packages") echo "Removes packages installed as dependencies that are no longer required by any other package." ;;
+        "4 - Clean Journal Logs")     echo "Deletes old systemd journal logs, keeping only the last 2 weeks of records." ;;
+        "5 - Clean User Cache")       echo "Cleans the current user ~/.cache directory by removing application temporary files." ;;
+        "6 - Trim SSD")               echo "Runs fstrim on all mounted file systems to optimize SSD performance and lifespan." ;;
+        "7 - Clean Unused Flatpaks")  echo "Removes Flatpak runtimes and extensions not used by any installed application." ;;
+        "8 - Check Failed Services")  echo "Lists all failed systemd services, useful for diagnosing system issues." ;;
+        "9 - Exit")                   echo "Exits the maintenance menu and returns to the previous menu." ;;
+    esac
+}
+export -f _maintenance_preview
+
 system_maintenance() {
     while true; do
         clear
@@ -130,17 +146,7 @@ system_maintenance() {
                   --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#f1f1f1,border:#2a2a2a" \
                   --no-info \
                   --preview-window="right:40%:wrap" \
-                  --preview='case {} in
-    "1 - Update System")          echo "Updates all system packages using the distro package manager (pacman, apt, or dnf)." ;;
-    "2 - Clean Package Cache")    echo "Removes old packages from the local cache, freeing disk space without affecting installed packages." ;;
-    "3 - Remove Orphan Packages") echo "Removes packages installed as dependencies that are no longer required by any other package." ;;
-    "4 - Clean Journal Logs")     echo "Deletes old systemd journal logs, keeping only the last 2 weeks of records." ;;
-    "5 - Clean User Cache")       echo "Cleans the current user's ~/.cache directory by removing application temporary files." ;;
-    "6 - Trim SSD")               echo "Runs fstrim on all mounted file systems to optimize SSD performance and lifespan." ;;
-    "7 - Clean Unused Flatpaks")  echo "Removes Flatpak runtimes and extensions that are not used by any installed application." ;;
-    "8 - Check Failed Services")  echo "Lists all failed systemd services, useful for diagnosing system issues." ;;
-    "9 - Exit")                   echo "Exits the maintenance menu and returns to the previous menu." ;;
-esac')
+                  --preview='bash -c "_maintenance_preview {}"')
 
         [[ -z "$selections" ]] && return 0
 

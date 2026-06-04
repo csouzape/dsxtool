@@ -106,7 +106,8 @@ system_maintenance() {
 
         local selections
         local fzf_header
-         fzf_header="$(printf '%b' "$BANNER\n\n[TAB] Select  [ENTER] Run  [ESC] Back")"
+        fzf_header="$(printf '%b' "$BANNER\n\n[TAB] Select  [ENTER] Run  [ESC] Back")"
+
         selections=$(printf '%s\n' \
             "1 - Update System" \
             "2 - Clean Package Cache" \
@@ -127,7 +128,19 @@ system_maintenance() {
                   --pointer="▶" \
                   --marker="✓" \
                   --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#f1f1f1,border:#2a2a2a" \
-                  --no-info)
+                  --no-info \
+                  --preview-window="right:40%:wrap" \
+                  --preview='case {} in
+    "1 - Update System")          echo "Atualiza todos os pacotes do sistema usando o gerenciador de pacotes da distro (pacman, apt ou dnf)." ;;
+    "2 - Clean Package Cache")    echo "Remove pacotes antigos do cache local, liberando espaço em disco sem afetar os pacotes instalados." ;;
+    "3 - Remove Orphan Packages") echo "Remove pacotes que foram instalados como dependência mas não são mais necessários por nenhum outro pacote." ;;
+    "4 - Clean Journal Logs")     echo "Apaga logs antigos do systemd journal, mantendo apenas as últimas 2 semanas de registros." ;;
+    "5 - Clean User Cache")       echo "Limpa o diretório ~/.cache do usuário atual, removendo arquivos temporários de aplicações." ;;
+    "6 - Trim SSD")               echo "Executa fstrim em todos os sistemas de arquivos montados, otimizando o desempenho e vida útil do SSD." ;;
+    "7 - Clean Unused Flatpaks")  echo "Remove runtimes e extensões Flatpak que não são mais usados por nenhum aplicativo instalado." ;;
+    "8 - Check Failed Services")  echo "Lista todos os serviços do systemd que falharam, útil para diagnosticar problemas no sistema." ;;
+    "9 - Exit")                   echo "Sai do menu de manutenção e retorna ao menu anterior." ;;
+esac')
 
         [[ -z "$selections" ]] && return 0
 

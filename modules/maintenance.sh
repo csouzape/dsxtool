@@ -321,7 +321,7 @@ _maintenance_preview() {
         "13 - Check Failed Services")  echo "Lists all failed systemd services, useful for diagnosing system issues." ;;
         "14 - Disk Usage Report")      echo "Shows filesystem usage and the largest directories/caches in your home." ;;
         "15 - Full Cleanup")           echo "Runs every safe cleanup task in sequence and reports the total space reclaimed." ;;
-        "16 - Exit")                   echo "Exits the maintenance menu and returns to the main menu." ;;
+        "0 - Exit")                    echo "Exits the maintenance menu and returns to the main menu." ;;
     esac
 }
 export -f _maintenance_preview
@@ -354,7 +354,7 @@ system_maintenance() {
             "13 - Check Failed Services" \
             "14 - Disk Usage Report" \
             "15 - Full Cleanup" \
-            "16 - Exit" \
+            "0 - Exit" \
             | _fzf_menu -m \
                   --ansi \
                   --prompt="Maintenance > " \
@@ -394,7 +394,7 @@ system_maintenance() {
                 "13 - Check Failed Services") _run_task "Check Failed Services"   check_failed_services ;;
                 "14 - Disk Usage Report")     _run_task "Disk Usage Report"       disk_report ;;
                 "15 - Full Cleanup")          _run_task "Full Cleanup"            full_cleanup ;;
-                "16 - Exit"|"exit")           log_info "Returning to main menu."; return 0 ;;
+                "0 - Exit"|"exit")           log_info "Returning to main menu."; return 0 ;;
                 *)                            log_warn "Unknown task: $task"; continue ;;
             esac
             ran_any=1

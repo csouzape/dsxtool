@@ -1,20 +1,10 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# ---------------------------------------------------------------------------
-# dsxtool · System Maintenance module
-# ---------------------------------------------------------------------------
-# Provides a consolidated, explicit and colorful maintenance menu with live
-# disk usage tracking. Every cleanup step reports how much space it freed and
-# a final summary shows the percentage "profit" gained on the main disk (/).
-# ---------------------------------------------------------------------------
-
-# --- Colors (defined locally so the module is safe even if sourced alone) ---
 RED=$'\033[0;31m';   GREEN=$'\033[0;32m';  YELLOW=$'\033[1;33m'
 BLUE=$'\033[0;34m';  CYAN=$'\033[0;36m';   MAGENTA=$'\033[0;35m'
 BOLD=$'\033[1m';     DIM=$'\033[2m';       RESET=$'\033[0m'
 
-# --- Extended logging helpers (complement core/common.sh) ------------------
 log_step()    { echo -e "${CYAN}${BOLD}[STEP]${RESET} $*"; }
 log_success() { echo -e "${GREEN}${BOLD}[ OK ]${RESET} $*"; }
 log_skip()    { echo -e "${DIM}[SKIP] $*${RESET}"; }
@@ -24,7 +14,6 @@ _section() {
     echo -e "${MAGENTA}${BOLD}━━━━━ $* ━━━━━${RESET}"
 }
 
-# --- fzf helper (avoids fzf reading the parent stdin) ----------------------
 _fzf_menu() {
     local tmp_in tmp_out
     tmp_in=$(mktemp)
@@ -35,14 +24,11 @@ _fzf_menu() {
     rm -f "$tmp_in" "$tmp_out"
 }
 
-# ---------------------------------------------------------------------------
-# Disk usage helpers (all operate on the root filesystem "/")
-# ---------------------------------------------------------------------------
 _disk_used_pct() { df -P /  | awk 'NR==2{gsub(/%/,"",$5); print $5+0}'; }
 _disk_used_kb()  { df -Pk / | awk 'NR==2{print $3+0}'; }
 _disk_avail_kb() { df -Pk / | awk 'NR==2{print $4+0}'; }
 
-# Human-readable size from a kilobyte value.
+
 _fmt_kb() {
     awk -v k="${1:-0}" 'BEGIN{
         b = k * 1024; split("B KB MB GB TB PB", u, " "); i = 1;
@@ -51,7 +37,7 @@ _fmt_kb() {
     }'
 }
 
-# Colored usage bar: _disk_bar <pct> <width>
+
 _disk_bar() {
     local pct=${1:-0} width=${2:-24} filled i color bar=""
     (( pct < 0 )) && pct=0
@@ -67,9 +53,7 @@ _disk_bar() {
     printf '%b%s%b' "$color" "$bar" "$RESET"
 }
 
-# ---------------------------------------------------------------------------
-# Maintenance tasks
-# ---------------------------------------------------------------------------
+
 pkg_clean_cache() {
     log_step "Cleaning package manager cache..."
     case "$DISTRO" in
@@ -207,7 +191,9 @@ check_failed_services() {
     fi
 }
 
-disk_report() {
+DISK_REPORT_LOG_DIR="${DISK_REPORT_LOG_DIR:-$HOME/.local/share/dsxtool/reports}"
+
+_disk_report_body() {
     log_step "Filesystem usage:"
     df -hT -x tmpfs -x devtmpfs -x squashfs 2>/dev/null || df -h
     echo
@@ -218,7 +204,34 @@ disk_report() {
     du -sh "$HOME/.cache" "$HOME/.local/share/Trash" 2>/dev/null || true
 }
 
-# Run every *safe* cleanup in sequence.
+_strip_ansi() { sed -r 's/\x1b\[[0-9;]*m//g'; }
+
+disk_report() {
+    local report
+    report=$(_disk_report_body)
+
+    echo -e "$report"
+    echo
+
+    local confirm
+    read -rp "$(echo -e "${YELLOW}Save this report to a log file? (y/n): ${RESET}")" confirm < /dev/tty
+    if [[ ! "$confirm" =~ ^[YySs]$ ]]; then
+        log_skip "Report not saved."
+        return 0
+    fi
+
+    local stamp logfile
+    stamp=$(date +%Y%m%d-%H%M%S)
+    logfile="$DISK_REPORT_LOG_DIR/disk-report-$stamp.log"
+    mkdir -p "$DISK_REPORT_LOG_DIR"
+    {
+        echo "dsxtool disk usage report — $(date)"
+        echo "============================================================"
+        echo "$report" | _strip_ansi
+    } > "$logfile"
+    log_success "Report saved to ${BOLD}$logfile${RESET}"
+}
+
 full_cleanup() {
     log_warn "Running full safe cleanup — multiple operations will be performed."
     _run_task "Package Cache"     pkg_clean_cache
@@ -233,9 +246,6 @@ full_cleanup() {
     _run_task "SSD Trim"          trim_ssd
 }
 
-# ---------------------------------------------------------------------------
-# Task runner: measures disk delta around a single task and reports it.
-# ---------------------------------------------------------------------------
 _run_task() {
     local label="$1" fn="$2"
     local before after freed
@@ -253,7 +263,6 @@ _run_task() {
     fi
 }
 
-# Final summary box: shows total reclaimed space and the percentage "profit".
 _print_summary() {
     local before_kb=$1 after_kb=$2 before_pct=$3 after_pct=$4
     local freed_kb=$(( before_kb - after_kb ))
@@ -280,11 +289,10 @@ _print_summary() {
     echo -e "${MAGENTA}${BOLD}╚═══════════════════════════════════════════════════════════╝${RESET}"
 }
 
-# ---------------------------------------------------------------------------
-# Banner & menu preview
-# ---------------------------------------------------------------------------
-BANNER=$(printf '\e[38;2;249;226;175m')
-BANNER+=$(cat <<'EOF'
+# Module-private banner. Must NOT clobber the global $BANNER used by the main
+# menu in install.sh, otherwise returning to the main menu shows this ASCII.
+_MAINT_BANNER=$(printf '\e[38;2;249;226;175m')
+_MAINT_BANNER+=$(cat <<'EOF'
 ███╗   ███╗ █████╗ ██╗███╗   ██╗████████╗███████╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗
 ████╗ ████║██╔══██╗██║████╗  ██║╚══██╔══╝██╔════╝████╗  ██║██╔══██╗████╗  ██║██╔════╝██╔════╝
 ██╔████╔██║███████║██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║███████║██╔██╗ ██║██║     █████╗
@@ -294,7 +302,7 @@ BANNER+=$(cat <<'EOF'
 
 EOF
 )
-BANNER+=$(printf '\e[0m')
+_MAINT_BANNER+=$(printf '\e[0m')
 
 _maintenance_preview() {
     case "$1" in
@@ -318,9 +326,7 @@ _maintenance_preview() {
 }
 export -f _maintenance_preview
 
-# ---------------------------------------------------------------------------
-# Main menu loop
-# ---------------------------------------------------------------------------
+
 system_maintenance() {
     while true; do
         clear
@@ -330,7 +336,7 @@ system_maintenance() {
         free_h=$(_fmt_kb "$(_disk_avail_kb)")
         bar=$(_disk_bar "$used_pct" 24)
 
-        fzf_header="$(printf '%b' "$BANNER\n\n${CYAN}${BOLD}Disk /${RESET}  $bar  ${BOLD}${used_pct}%${RESET} used  •  ${free_h} free\n\n[TAB] Select  [ENTER] Run  [ESC] Back")"
+        fzf_header="$(printf '%b' "$_MAINT_BANNER\n\n${CYAN}${BOLD}Disk /${RESET}  $bar  ${BOLD}${used_pct}%${RESET} used  •  ${free_h} free\n\n[TAB] Select  [ENTER] Run  [ESC] Back")"
 
         selections=$(printf '%s\n' \
             "1 - Update System" \
@@ -365,7 +371,6 @@ system_maintenance() {
 
         [[ -z "$selections" ]] && return 0
 
-        # Snapshot disk state before running the selected tasks.
         local before_kb before_pct
         before_kb=$(_disk_used_kb)
         before_pct=$(_disk_used_pct)

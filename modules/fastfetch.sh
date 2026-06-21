@@ -57,6 +57,10 @@ install_fastfetch() {
     fi
 }
 
+# Upstream config (csouzape/bashconfig). Falls back to the embedded default
+# below if it cannot be downloaded.
+FASTFETCH_CONFIG_URL="${FASTFETCH_CONFIG_URL:-https://raw.githubusercontent.com/csouzape/bashconfig/main/fastfetch/config.jsonc}"
+
 setup_fastfetch_config() {
     local config_dir="$HOME/.config/fastfetch"
     local config_file="$config_dir/config.jsonc"
@@ -68,6 +72,14 @@ setup_fastfetch_config() {
     fi
 
     mkdir -p "$config_dir"
+
+    # Prefer the upstream config; fall back to the embedded default on failure.
+    if curl -fsSLo "$config_file" "$FASTFETCH_CONFIG_URL"; then
+        log_info "Fastfetch configuration downloaded to $config_file."
+        return 0
+    fi
+
+    log_warn "Could not download config, writing built-in default instead."
     cat > "$config_file" <<'EOL'
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",

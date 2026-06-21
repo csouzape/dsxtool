@@ -124,6 +124,13 @@ get_preview() {
             echo
             echo "  Multi-select with TAB."
             ;;
+        "Setup Fastfetch")
+            echo "Install and configure Fastfetch."
+            echo
+            echo "  • Installs fastfetch (.deb on Debian/Ubuntu)"
+            echo "  • Deploys a default config (backs up existing)"
+            echo "  • Optional: run on every new shell"
+            ;;
         "Exit")
             echo "Exit dsxtool."
             ;;

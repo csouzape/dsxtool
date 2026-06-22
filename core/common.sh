@@ -60,8 +60,8 @@ module_runner() {
 
     echo -e "${GREEN}[MODULE]${RESET} $module - running (logs saved only on error)."
 
-    # Run command and capture output to a temp file while streaming to stdout
-    bash -lc "set -o pipefail; $cmd" 2>&1 | tee "$tmp_log"
+    # Source common and distro helpers in the subshell before running the module command.
+    bash -lc "set -o pipefail; source \"$BASE_DIR/core/common.sh\"; source \"$BASE_DIR/core/detect.sh\"; detect_distro; source \"$BASE_DIR/core/distros/$DISTRO.sh\"; $cmd" 2>&1 | tee "$tmp_log"
     local rc=${PIPESTATUS[0]:-1}
 
     if [[ $rc -ne 0 ]]; then

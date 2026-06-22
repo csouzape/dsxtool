@@ -136,6 +136,7 @@ setup_nvidia_module()          { source "$BASE_DIR/modules/nvidia.sh";          
 sober_optimization_module()     { source "$BASE_DIR/modules/sober_optimization.sh";  install       || log_warn "Sober optimization finished with errors."; }
 setup_maintenance_module()         { source "$BASE_DIR/modules/maintenance.sh";         system_maintenance        || log_warn "Maintenance tasks finished with errors."; }
 setup_fastfetch_module()           { source "$BASE_DIR/modules/fastfetch.sh";           setup_fastfetch           || log_warn "Fastfetch setup finished with errors."; }
+install_bash_module()              { source "$BASE_DIR/modules/bash.sh";                 main                     || log_warn "Bash setup finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║
@@ -166,9 +167,10 @@ build_menu() {
         "16 - Setup NVIDIA Drivers" \
         "17 - System Maintenance" \
         "18 - Setup Fastfetch" \
+        "20 - Setup Bash" \
 
 
-    [[ "$DISTRO" == "arch" ]] && echo "19 - Setup yay (AUR helper)"
+    [[ "$DISTRO" == "arch" ]] && echo "21 - Setup yay (AUR helper)"
     echo "0 - Exit"
 }
 
@@ -242,6 +244,7 @@ dsxtool_main() {
             "Setup NVIDIA Drivers")        clear; setup_nvidia_module ;;
             "System Maintenance")          clear; setup_maintenance_module ;;
             "Setup Fastfetch")             clear; setup_fastfetch_module ;;
+            "Setup Bash")                  clear; install_bash_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

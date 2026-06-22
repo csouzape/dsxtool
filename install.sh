@@ -119,24 +119,24 @@ setup_alias() {
 verify_fzf_tool
 
 
-update_system_module()          { source "$BASE_DIR/modules/update_system.sh";        update_system            || log_warn "update_system finished with errors."; }
-install_tlp_module()            { source "$BASE_DIR/modules/tlp.sh";                  replace_manager_with_tlp || log_warn "TLP setup finished with errors."; }
-install_apps_module()           { source "$BASE_DIR/modules/install_apps.sh";         setup_apps               || log_warn "Apps setup finished with errors."; }
-install_yay_module()            { source "$BASE_DIR/modules/setupyay.sh";             setup_yay                || log_warn "yay setup finished with errors."; }
-install_fonts_module()          { source "$BASE_DIR/modules/fonts.sh";                setup_fonts              || log_warn "Fonts setup finished with errors."; }
-install_flatpak_module()        { source "$BASE_DIR/modules/flatpak.sh";              setup_flatpak            || log_warn "Flatpak setup finished with errors."; }
-install_virtualization_module() { source "$BASE_DIR/modules/setup_virtualization.sh"; setup_virtualization     || log_warn "Virtualization setup finished with errors."; }
-install_shell_module()          { source "$BASE_DIR/modules/shell_personalization.sh"; setup_shell             || log_warn "Shell setup finished with errors."; }
-change_desktop_module()         { source "$BASE_DIR/modules/change_desktop.sh";       prompt_change_desktop    || log_warn "Desktop setup finished with errors."; }
-setup_gaming_module()           { source "$BASE_DIR/modules/setup_gaming.sh";         setup_gaming             || log_warn "Gaming setup finished with errors."; }
-bluetooth_module()              { source "$BASE_DIR/modules/setup_bluetooth.sh";      setup_bluetooth          || log_warn "Bluetooth setup finished with errors."; }
-setup_printer_module()          { source "$BASE_DIR/modules/setup_printer.sh";        setup_printer            || log_warn "Printer setup finished with errors."; }
-dsxswap_module()              { source "$BASE_DIR/modules/dsxswap.sh";              main                       || log_warn "Swap configuration finished with errors."; }
-setup_nvidia_module()          { source "$BASE_DIR/modules/nvidia.sh";              setup_nvidia             || log_warn "NVIDIA setup finished with errors."; }
-sober_optimization_module()     { source "$BASE_DIR/modules/sober_optimization.sh";  install       || log_warn "Sober optimization finished with errors."; }
-setup_maintenance_module()         { source "$BASE_DIR/modules/maintenance.sh";         system_maintenance        || log_warn "Maintenance tasks finished with errors."; }
-setup_fastfetch_module()           { source "$BASE_DIR/modules/fastfetch.sh";           setup_fastfetch           || log_warn "Fastfetch setup finished with errors."; }
-install_bash_module()              { source "$BASE_DIR/modules/bash.sh";                 main                     || log_warn "Bash setup finished with errors."; }
+update_system_module()          { module_runner "Update System" "source \"$BASE_DIR/modules/update_system.sh\"; update_system" || log_warn "update_system finished with errors."; }
+install_tlp_module()            { module_runner "Install TLP" "source \"$BASE_DIR/modules/tlp.sh\"; replace_manager_with_tlp" || log_warn "TLP setup finished with errors."; }
+install_apps_module()           { module_runner "Install Apps" "source \"$BASE_DIR/modules/install_apps.sh\"; setup_apps" || log_warn "Apps setup finished with errors."; }
+install_yay_module()            { module_runner "Setup yay" "source \"$BASE_DIR/modules/setupyay.sh\"; setup_yay" || log_warn "yay setup finished with errors."; }
+install_fonts_module()          { module_runner "Install Fonts" "source \"$BASE_DIR/modules/fonts.sh\"; setup_fonts" || log_warn "Fonts setup finished with errors."; }
+install_flatpak_module()        { module_runner "Setup Flatpak" "source \"$BASE_DIR/modules/flatpak.sh\"; setup_flatpak" || log_warn "Flatpak setup finished with errors."; }
+install_virtualization_module() { module_runner "Setup Virtualization" "source \"$BASE_DIR/modules/setup_virtualization.sh\"; setup_virtualization" || log_warn "Virtualization setup finished with errors."; }
+install_shell_module()          { module_runner "Setup Shell" "source \"$BASE_DIR/modules/shell_personalization.sh\"; setup_shell" || log_warn "Shell setup finished with errors."; }
+change_desktop_module()         { module_runner "Change Desktop" "source \"$BASE_DIR/modules/change_desktop.sh\"; prompt_change_desktop" || log_warn "Desktop setup finished with errors."; }
+setup_gaming_module()           { module_runner "Setup Gaming" "source \"$BASE_DIR/modules/setup_gaming.sh\"; setup_gaming" || log_warn "Gaming setup finished with errors."; }
+bluetooth_module()              { module_runner "Setup Bluetooth" "source \"$BASE_DIR/modules/setup_bluetooth.sh\"; setup_bluetooth" || log_warn "Bluetooth setup finished with errors."; }
+setup_printer_module()          { module_runner "Setup Printer" "source \"$BASE_DIR/modules/setup_printer.sh\"; setup_printer" || log_warn "Printer setup finished with errors."; }
+dsxswap_module()                { module_runner "DSXSWAP" "source \"$BASE_DIR/modules/dsxswap.sh\"; main" || log_warn "Swap configuration finished with errors."; }
+setup_nvidia_module()           { module_runner "Setup NVIDIA" "source \"$BASE_DIR/modules/nvidia.sh\"; setup_nvidia" || log_warn "NVIDIA setup finished with errors."; }
+sober_optimization_module()     { module_runner "Sober Optimization" "source \"$BASE_DIR/modules/sober_optimization.sh\"; install" || log_warn "Sober optimization finished with errors."; }
+setup_maintenance_module()      { module_runner "System Maintenance" "source \"$BASE_DIR/modules/maintenance.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
+setup_fastfetch_module()        { module_runner "Setup Fastfetch" "source \"$BASE_DIR/modules/fastfetch.sh\"; setup_fastfetch" || log_warn "Fastfetch setup finished with errors."; }
+install_bash_module()           { module_runner "Setup Bash" "source \"$BASE_DIR/modules/bash.sh\"; main" || log_warn "Bash setup finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║

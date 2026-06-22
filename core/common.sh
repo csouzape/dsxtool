@@ -8,6 +8,74 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 RESET='\033[0m'
 
+# Logging defaults (use start_logging to enable capture to file)
+LOG_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dsxtool/logs"
+LOG_FILE=""
+_LOGGING_ACTIVE=0
+
+on_error() {
+    # Called by trap when a command fails (only active if start_logging used)
+    local exit_code=${1:-1}
+    echo -e "${RED}[ERROR]${RESET} A command failed with exit code ${exit_code}."
+    if [[ "$_LOGGING_ACTIVE" -eq 1 && -n "$LOG_FILE" && -f "$LOG_FILE" ]]; then
+        read -rp "Would you like to copy the log file to your home directory for inspection? [Y/n]: " ans < /dev/tty || true
+        ans="${ans:-y}"
+        if [[ "${ans,,}" =~ ^(y|yes)$ ]]; then
+            local dest="$HOME/dsxtool-error-$(date +%Y%m%d-%H%M%S).log"
+            cp -v -- "$LOG_FILE" "$dest" || echo "Failed to copy log file to $dest"
+            echo "Saved logs to: $dest"
+        else
+            echo "Logs are available at: $LOG_FILE"
+        fi
+    else
+        echo "No log file available. To enable logs, call start_logging() before running actions."
+    fi
+}
+
+start_logging() {
+    mkdir -p "$LOG_DIR"
+    LOG_FILE="$LOG_DIR/dsxtool-$(date +%Y%m%d-%H%M%S).log"
+    # Redirect stdout/stderr to tee so output still appears on console
+    exec > >(tee -a "$LOG_FILE") 2>&1
+    _LOGGING_ACTIVE=1
+    echo -e "${GREEN}[INFO]${RESET} Logging started: $LOG_FILE"
+    # Install ERR trap to offer saving logs on error
+    trap 'on_error $?' ERR
+}
+
+is_logging_active() {
+    [[ "$_LOGGING_ACTIVE" -eq 1 ]]
+}
+
+# Run a module command and capture its output to a per-module log file.
+# Usage: module_runner "Module Name" "command to run"
+module_runner() {
+    local module="$1"; shift
+    local cmd="$*"
+    mkdir -p "$LOG_DIR"
+    local safe
+    safe=$(printf '%s' "$module" | tr ' /' '__' | tr -cd 'A-Za-z0-9_.-')
+    local tmp_log
+    tmp_log=$(mktemp)
+
+    echo -e "${GREEN}[MODULE]${RESET} $module - running (logs saved only on error)."
+
+    # Run command and capture output to a temp file while streaming to stdout
+    bash -lc "set -o pipefail; $cmd" 2>&1 | tee "$tmp_log"
+    local rc=${PIPESTATUS[0]:-1}
+
+    if [[ $rc -ne 0 ]]; then
+        local module_log="$LOG_DIR/${safe}_$(date +%Y%m%d-%H%M%S).log"
+        mv "$tmp_log" "$module_log" || cp -f -- "$tmp_log" "$module_log"
+        echo -e "${RED}[MODULE ERROR]${RESET} $module failed (exit $rc). Log saved: $module_log"
+    else
+        rm -f -- "$tmp_log"
+        echo -e "${GREEN}[MODULE]${RESET} $module completed successfully."
+    fi
+
+    return $rc
+}
+
 log_info() {
     echo -e "${GREEN}[INFO]${RESET} $*"
 }
@@ -22,6 +90,10 @@ log_error() {
 
 die() {
     log_error "$*"
+    # If logging active, offer immediate copy before exiting
+    if is_logging_active; then
+        on_error 1
+    fi
     exit 1
 }
 

@@ -353,9 +353,18 @@ _install_native_app() {
                     if ! command -v yay &>/dev/null; then
                         die "yay is not installed. Please run 'Setup yay' first."
                     fi
-                    log_info "Installing YouTube Music Desktop from AUR via yay..."
-                    sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm ytmdesktop-bin \
-                        || die "Failed to install YouTube Music Desktop via AUR."
+                    log_info "Checking if YouTube Music Desktop is installed..."
+                    if ! yay -Q ytmdesktop-bin &>/dev/null; then
+                        log_info "Installing YouTube Music Desktop from AUR via yay..."
+                        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm ytmdesktop-bin \
+                            || die "Failed to install YouTube Music Desktop via AUR."
+                    else
+                        log_info "YouTube Music Desktop is already installed."
+                    else
+                        log_info "Installing YouTube Music Desktop from AUR via yay..."
+                        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm ytmdesktop-bin \
+                            || die "Failed to install YouTube Music Desktop via AUR."
+                    fi
                     ;;
                 debian)
                     log_info "Downloading YouTube Music Desktop (.deb)..."

@@ -456,7 +456,7 @@ menu_browsers() {
 menu_media() {
     _category_menu "Media" \
         "VLC" "MPV" "Spotify" "Celluloid" "Rhythmbox" \
-        "OBS Studio" "Handbrake" "Kdenlive"
+        "OBS Studio" "Handbrake" "Kdenlive" "YouTube Music Desktop"
 }
 
 menu_communication() {
@@ -468,7 +468,7 @@ menu_productivity() {
     _category_menu "Productivity" \
         "LibreOffice" "Obsidian" "Thunderbird" "Bitwarden" \
         "Flameshot" "GIMP" "Inkscape" \
-        "SyncThingy" "Syncthing Tray" "Synergy" "YouTube Music Desktop"
+        "SyncThingy" "Syncthing Tray" "Synergy"
 }
 
 menu_gaming() {

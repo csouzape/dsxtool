@@ -25,6 +25,7 @@ APP_REGISTRY["Signal"]="flatpak|-|org.signal.Signal|-"
 APP_REGISTRY["Slack"]="flatpak|-|com.slack.Slack|-"
 APP_REGISTRY["Zoom"]="flatpak|-|us.zoom.Zoom|-"
 APP_REGISTRY["Teams"]="flatpak|-|com.microsoft.Teams|-"
+APP_REGISTRY["YouTube Music Desktop"]="native|-|-|-"
 
 APP_REGISTRY["LibreOffice"]="pkg|libreoffice|org.libreoffice.LibreOffice|-"
 APP_REGISTRY["Obsidian"]="flatpak|-|md.obsidian.Obsidian|-"
@@ -346,6 +347,34 @@ _install_native_app() {
                 fedora) pkg_install openssh ;;
             esac
             ;;
+        "YouTube Music Desktop")
+            case "$DISTRO" in
+                arch)
+                    if ! command -v yay &>/dev/null; then
+                        die "yay is not installed. Please run 'Setup yay' first."
+                    fi
+                    log_info "Installing YouTube Music Desktop from AUR via yay..."
+                    sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm ytmdesktop-bin \
+                        || die "Failed to install YouTube Music Desktop via AUR."
+                    ;;
+                debian)
+                    log_info "Downloading YouTube Music Desktop (.deb)..."
+                    wget --progress=bar:force "https://github.com/ytmdesktop/ytmdesktop/releases/download/v2.0.11/youtube-music-desktop-app_2.0.11_amd64.deb" \
+                        -O /tmp/ytmdesktop.deb \
+                        || die "Failed to download YouTube Music Desktop."
+                    sudo dpkg -i /tmp/ytmdesktop.deb 2>/dev/null || true
+                    sudo apt-get install -f -y || die "Failed to fix YouTube Music Desktop dependencies."
+                    rm -f /tmp/ytmdesktop.deb
+                    ;;
+                fedora)
+                    log_info "YouTube Music Desktop is available via AUR for Fedora containers or install from releases."
+                    die "YouTube Music Desktop installation not yet supported on Fedora. Please use the AppImage from GitHub releases."
+                    ;;
+                *)
+                    die "Unsupported distro for YouTube Music Desktop: $DISTRO"
+                    ;;
+            esac
+            ;;
         "Synergy")
             case "$DISTRO" in
                 arch)
@@ -439,7 +468,7 @@ menu_productivity() {
     _category_menu "Productivity" \
         "LibreOffice" "Obsidian" "Thunderbird" "Bitwarden" \
         "Flameshot" "GIMP" "Inkscape" \
-        "SyncThingy" "Syncthing Tray" "Synergy"
+        "SyncThingy" "Syncthing Tray" "Synergy" "YouTube Music Desktop"
 }
 
 menu_gaming() {

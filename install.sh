@@ -123,6 +123,7 @@ update_system_module()          { module_runner "Update System" "source \"$BASE_
 install_tlp_module()            { module_runner "Install TLP" "source \"$BASE_DIR/modules/tlp.sh\"; replace_manager_with_tlp" || log_warn "TLP setup finished with errors."; }
 install_apps_module()           { module_runner "Install Apps" "source \"$BASE_DIR/modules/install_apps.sh\"; setup_apps" || log_warn "Apps setup finished with errors."; }
 install_yay_module()            { module_runner "Setup yay" "source \"$BASE_DIR/modules/setupyay.sh\"; setup_yay" || log_warn "yay setup finished with errors."; }
+install_paru_module()           { module_runner "Setup paru" "source \"$BASE_DIR/modules/setupparu.sh\"; setup_paru" || log_warn "paru setup finished with errors."; }
 install_fonts_module()          { module_runner "Install Fonts" "source \"$BASE_DIR/modules/fonts.sh\"; setup_fonts" || log_warn "Fonts setup finished with errors."; }
 install_flatpak_module()        { module_runner "Setup Flatpak" "source \"$BASE_DIR/modules/flatpak.sh\"; setup_flatpak" || log_warn "Flatpak setup finished with errors."; }
 install_virtualization_module() { module_runner "Setup Virtualization" "source \"$BASE_DIR/modules/setup_virtualization.sh\"; setup_virtualization" || log_warn "Virtualization setup finished with errors."; }
@@ -170,7 +171,10 @@ build_menu() {
         "20 - Setup Bash" \
 
 
-    [[ "$DISTRO" == "arch" ]] && echo "21 - Setup yay (AUR helper)"
+    if [[ "$DISTRO" == "arch" ]]; then
+        echo "21 - Setup yay (AUR helper)"
+        echo "22 - Setup paru (AUR helper)"
+    fi
     echo "0 - Exit"
 }
 
@@ -240,8 +244,8 @@ dsxtool_main() {
             "Setup Bluetooth")             clear; bluetooth_module ;;
             "Setup Printer")               clear; setup_printer_module ;;
             "Setup yay (AUR helper)")      clear; install_yay_module ;;
+            "Setup paru (AUR helper)")     clear; install_paru_module ;;
             "Sober Optimization")          clear; sober_optimization_module ;;
-            "Setup NVIDIA Drivers")        clear; setup_nvidia_module ;;
             "System Maintenance")          clear; setup_maintenance_module ;;
             "Setup Fastfetch")             clear; setup_fastfetch_module ;;
             "Setup Bash")                  clear; install_bash_module ;;

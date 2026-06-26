@@ -213,10 +213,8 @@ _install_app() {
                 || die "Failed to install $app via Flatpak."
             ;;
         aur)
-            if ! command -v yay &>/dev/null; then
-                die "yay is not installed. Please run 'Setup yay' first."
-            fi
-            sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm "$aur_pkg" \
+            require_aur_helper
+            aur_install "$aur_pkg" \
                 || die "Failed to install $app via AUR."
             ;;
         terminal)
@@ -301,10 +299,8 @@ _install_native_app() {
         "Google Chrome")
             case "$DISTRO" in
                 arch)
-                    if ! command -v yay &>/dev/null; then
-                        die "yay is not installed. Please run 'Setup yay' first."
-                    fi
-                    sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm google-chrome \
+                    require_aur_helper
+                    aur_install google-chrome \
                         || die "Failed to install Google Chrome via AUR."
                     ;;
                 debian)
@@ -350,20 +346,14 @@ _install_native_app() {
         "YouTube Music Desktop")
             case "$DISTRO" in
                 arch)
-                    if ! command -v yay &>/dev/null; then
-                        die "yay is not installed. Please run 'Setup yay' first."
-                    fi
+                    require_aur_helper
                     log_info "Checking if YouTube Music Desktop is installed..."
-                    if ! yay -Q ytmdesktop-bin &>/dev/null; then
-                        log_info "Installing YouTube Music Desktop from AUR via yay..."
-                        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm ytmdesktop-bin \
+                    if ! aur_query ytmdesktop-bin; then
+                        log_info "Installing YouTube Music Desktop from AUR..."
+                        aur_install ytmdesktop-bin \
                             || die "Failed to install YouTube Music Desktop via AUR."
                     else
                         log_info "YouTube Music Desktop is already installed."
-                    else
-                        log_info "Installing YouTube Music Desktop from AUR via yay..."
-                        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm ytmdesktop-bin \
-                            || die "Failed to install YouTube Music Desktop via AUR."
                     fi
                     ;;
                 debian)
@@ -387,9 +377,9 @@ _install_native_app() {
         "Synergy")
             case "$DISTRO" in
                 arch)
-                    if command -v yay &>/dev/null; then
-                        log_info "Installing Synergy from AUR via yay..."
-                        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm synergy || die "Failed to install Synergy via AUR."
+                    if get_aur_helper >/dev/null 2>&1; then
+                        log_info "Installing Synergy from AUR..."
+                        aur_install synergy || die "Failed to install Synergy via AUR."
                     else
                         log_info "Downloading Synergy for Arch..."
                         wget --progress=bar:force "https://symless.com/synergy/download/package/synergy-personal-v3/arch-linux/synergy-3.6.1-linux-noble-x86_64.pkg.tar.zst" -O /tmp/synergy.pkg.tar.zst \
@@ -399,7 +389,7 @@ _install_native_app() {
                         if file -b --mime-type /tmp/synergy.pkg.tar.zst | grep -q 'text/html'; then
                             cat /tmp/synergy.pkg.tar.zst | sed -n '1,120p'
                             rm -f /tmp/synergy.pkg.tar.zst
-                            die "Downloaded file looks like HTML. Symless likely requires an authenticated download. Install 'yay' and try AUR, or provide a direct package URL."
+                            die "Downloaded file looks like HTML. Symless likely requires an authenticated download. Install 'yay' or 'paru' and try AUR, or provide a direct package URL."
                         fi
 
                         sudo pacman -U --noconfirm /tmp/synergy.pkg.tar.zst || die "Failed to install Synergy."

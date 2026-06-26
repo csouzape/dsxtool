@@ -68,6 +68,7 @@ curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh 
 | **Setup Shell** | Installs and configures Zsh or Fish with plugins |
 | **Setup Gaming** | Wine, Steam, Lutris, MangoHud, GameMode and gaming libraries |
 | **Setup yay** *(Arch only)* | Installs the yay AUR helper |
+| **Setup paru** *(Arch only)* | Installs the paru AUR helper |
 
 ---
 

@@ -13,9 +13,7 @@ _fzf_menu() {
 
 
 _check_yay() {
-    if ! command -v yay &>/dev/null; then
-        die "yay is not installed. Please run 'Setup yay' first."
-    fi
+    require_aur_helper
 }
 
 _install_jetbrains_flatpak() {
@@ -28,8 +26,8 @@ _install_jetbrains_flatpak() {
 _install_jetbrains_aur() {
     local name="$1" aur_pkg="$2"
     _check_not_root "$name"
-    _check_yay
-    sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm "$aur_pkg" \
+    require_aur_helper
+    aur_install "$aur_pkg" \
         && log_info "$name installed successfully." \
         || die "Failed to install $name."
 }
@@ -134,15 +132,15 @@ install_ide() {
             log_info "Installing VS Code..."
             if [[ "$DISTRO" == "arch" ]]; then
                 local method
-                method=$(printf "yay\nflatpak" \
+                method=$(printf "AUR helper\nflatpak" \
                     | _fzf_menu \
                         --prompt="VS Code install method > " \
                         --height=5 --layout=reverse --border=rounded --no-info \
                         --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,prompt:#cba6f7,pointer:#f38ba8,border:#2a2a2a")
                 case "$method" in
-                    yay)
-                        _check_yay
-                        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm visual-studio-code-bin \
+                    "AUR helper")
+                        require_aur_helper
+                        aur_install visual-studio-code-bin \
                             && log_info "VS Code installed successfully." \
                             || die "Failed to install VS Code."
                         ;;
@@ -157,8 +155,8 @@ install_ide() {
         "VSCodium")
             log_info "Installing VSCodium..."
             if [[ "$DISTRO" == "arch" ]]; then
-                _check_yay
-                sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm vscodium-bin \
+                require_aur_helper
+                aur_install vscodium-bin \
                     && log_info "VSCodium installed successfully." \
                     || die "Failed to install VSCodium."
             else
@@ -194,8 +192,8 @@ install_ide() {
         "Cursor")
             log_info "Installing Cursor..."
             if [[ "$DISTRO" == "arch" ]]; then
-                _check_yay
-                sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm cursor-bin \
+                require_aur_helper
+                aur_install cursor-bin \
                     && log_info "Cursor installed successfully." \
                     || die "Failed to install Cursor."
             else
@@ -219,8 +217,8 @@ install_ide() {
             case "$DISTRO" in
                 arch)
                     _check_not_root "Arduino IDE"
-                    _check_yay
-                    sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm arduino-ide-bin \
+                    require_aur_helper
+                    aur_install arduino-ide-bin \
                         && log_info "Arduino IDE installed successfully." \
                         || die "Failed to install Arduino IDE."
                     ;;
@@ -343,8 +341,8 @@ install_devtool() {
             log_info "Installing DBeaver..."
             case "$DISTRO" in
                 arch)
-                    _check_yay
-                    sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm dbeaver-ce \
+                    require_aur_helper
+                    aur_install dbeaver-ce \
                         && log_info "DBeaver installed successfully." \
                         || die "Failed to install DBeaver."
                     ;;

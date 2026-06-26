@@ -85,17 +85,15 @@ _install_nvidia_arch() {
             pkg_install "${pkgs[@]}" || die "Failed to install NVIDIA driver packages."
             ;;
         legacy_470|legacy_390)
-            if ! command -v yay >/dev/null 2>&1; then
-                die "Legacy NVIDIA drivers come from the AUR. Run 'Setup yay' first, then retry."
-            fi
+            require_aur_helper
             local aur_pkg
             if [[ "$NVIDIA_DRIVER_SERIES" == "legacy_470" ]]; then
                 aur_pkg="nvidia-470xx-dkms"
             else
                 aur_pkg="nvidia-390xx-dkms"
             fi
-            log_info "Installing $aur_pkg from AUR via yay..."
-            yay -S --noconfirm --needed "$aur_pkg" linux-headers nvidia-settings || die "Failed to install $aur_pkg."
+            log_info "Installing $aur_pkg from AUR..."
+            aur_install --needed "$aur_pkg" linux-headers nvidia-settings || die "Failed to install $aur_pkg."
             ;;
     esac
 }

@@ -97,6 +97,36 @@ die() {
     exit 1
 }
 
+get_aur_helper() {
+    if command -v paru >/dev/null 2>&1; then
+        printf '%s' "paru"
+        return 0
+    fi
+    if command -v yay >/dev/null 2>&1; then
+        printf '%s' "yay"
+        return 0
+    fi
+    return 1
+}
+
+require_aur_helper() {
+    if ! get_aur_helper >/dev/null 2>&1; then
+        die "AUR helper not installed. Please run 'Setup yay' or 'Setup paru' first."
+    fi
+}
+
+aur_install() {
+    local helper
+    helper=$(get_aur_helper) || die "AUR helper not installed. Please run 'Setup yay' or 'Setup paru' first."
+    sudo -u "${SUDO_USER:-$USER}" "$helper" -S --noconfirm "$@"
+}
+
+aur_query() {
+    local helper
+    helper=$(get_aur_helper) || return 1
+    "$helper" -Q "$1" &>/dev/null
+}
+
 require_sudo() {
     if [[ $EUID -ne 0 ]] && ! sudo -n true 2>/dev/null; then
         die "This command requires root privileges or passwordless sudo."

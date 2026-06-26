@@ -87,6 +87,12 @@ get_preview() {
             echo "  • Arch Linux only"
             echo "  • Requires non-root user"
             ;;
+        "Setup paru (AUR helper)")
+            echo "Builds and installs paru from AUR."
+            echo
+            echo "  • Arch Linux only"
+            echo "  • Requires non-root user"
+            ;;
         "DSXSWAP (BETA)")
             echo "Configure swap space on your system."
             echo

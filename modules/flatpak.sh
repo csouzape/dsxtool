@@ -30,4 +30,6 @@ setup_flatpak() {
     _configure_flatpak
 }
 
-setup_flatpak "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    setup_flatpak "$@"
+fi

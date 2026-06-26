@@ -31,7 +31,7 @@
 
 ## Overview
 
-**dsxtool** is a Bash-based toolbox for automating common Linux post-install tasks. It detects your distribution automatically and provides an interactive `fzf` menu to install and configure tools, desktop environments, power management, virtualization, fonts, and more.
+**dsxtool** is a Bash-based toolbox for automating common Linux post-install tasks. It detects your distribution automatically and provides an interactive `fzf` menu to install and configure tools, desktop environments, power management, virtualization, fonts, AUR helpers, and more.
 
 Supports **Arch Linux**, **Debian/Ubuntu**, and **Fedora**.
 
@@ -67,6 +67,12 @@ curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh 
 | **Setup Virtualization** | KVM/QEMU with virt-manager or VirtualBox |
 | **Setup Shell** | Installs and configures Zsh or Fish with plugins |
 | **Setup Gaming** | Wine, Steam, Lutris, MangoHud, GameMode and gaming libraries |
+| **Setup Bluetooth** | Installs and configures Bluetooth |
+| **Setup Printer** | Installs CUPS and printer drivers |
+| **DSXSWAP (BETA)** | Configure swap files and swap settings |
+| **Setup Fastfetch** | Installs and configures Fastfetch |
+| **Setup Bash** | Installs Bash script utilities and shell setup helpers |
+| **System Maintenance** | Cleans cache, removes orphan packages, trims disks, and prunes package manager data |
 | **Setup yay** *(Arch only)* | Installs the yay AUR helper |
 | **Setup paru** *(Arch only)* | Installs the paru AUR helper |
 
@@ -91,18 +97,24 @@ dsxtool/
 │       ├── debian.sh
 │       └── fedora.sh
 └── modules/
+    ├── bash.sh
     ├── change_desktop.sh
     ├── development_setup.sh
     ├── dsxswap.sh
+    ├── fastfetch.sh
     ├── flatpak.sh
     ├── fonts.sh
     ├── install_apps.sh
+    ├── maintenance.sh
+    ├── nvidia.sh
     ├── setup_bluetooth.sh
     ├── setup_gaming.sh
     ├── setup_printer.sh
     ├── setup_virtualization.sh
     ├── setupyay.sh
+    ├── setupparu.sh
     ├── shell_personalization.sh
+    ├── sober_optimization.sh
     ├── tlp.sh
     └── update_system.sh
 ```

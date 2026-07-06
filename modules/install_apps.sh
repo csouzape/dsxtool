@@ -9,7 +9,7 @@ APP_REGISTRY["Brave"]="flatpak|-|com.brave.Browser|-"
 APP_REGISTRY["Zen Browser"]="flatpak|-|app.zen_browser.zen|-"
 APP_REGISTRY["Google Chrome"]="native|-|-|-"
 APP_REGISTRY["Helium Browser"]="native|-|-|-"
-
+APP_REGISTRY["Opera"]="native|-|-|-"
 
 APP_REGISTRY["VLC"]="pkg|vlc|org.videolan.VLC|-"
 APP_REGISTRY["Spotify"]="flatpak|-|com.spotify.Client|-"
@@ -369,6 +369,48 @@ _install_native_app() {
             sudo install -m 0755 /tmp/helium.AppImage "$binary_path"
             sudo ln -sf "$binary_path" "$launcher_path"
             rm -f /tmp/helium.AppImage
+            ;;
+        "Opera")
+            case "$DISTRO" in
+                arch)
+                    require_aur_helper
+                    aur_install opera-bin \
+                        || die "Failed to install Opera via AUR."
+                    ;;
+                debian)
+                    log_info "Adding Opera APT repository..."
+                    sudo install -d -m 0755 /etc/apt/keyrings
+                    curl -fsSL https://deb.opera.com/archive.key \
+                        | gpg --dearmor \
+                        | sudo tee /etc/apt/keyrings/opera-browser.gpg > /dev/null \
+                        || die "Failed to add Opera signing key."
+                    echo "deb [signed-by=/etc/apt/keyrings/opera-browser.gpg] https://deb.opera.com/opera-stable/ stable non-free" \
+                        | sudo tee /etc/apt/sources.list.d/opera-archive.list > /dev/null \
+                        || die "Failed to add Opera apt source."
+                    sudo apt-get update -y \
+                        || die "Failed to update apt after adding Opera repository."
+                    sudo apt-get install -y opera-stable \
+                        || die "Failed to install Opera."
+                    ;;
+                fedora)
+                    log_info "Adding Opera RPM repository..."
+                    sudo rpm --import https://rpm.opera.com/rpmrepo.key 2>/dev/null || true
+                    sudo tee /etc/yum.repos.d/opera.repo > /dev/null <<'EOF'
+[opera]
+name=Opera packages
+type=rpm-md
+baseurl=https://rpm.opera.com/rpm
+gpgcheck=1
+gpgkey=https://rpm.opera.com/rpmrepo.key
+enabled=1
+EOF
+                    sudo dnf install -y opera-stable || sudo dnf install -y opera-developer \
+                        || die "Failed to install Opera."
+                    ;;
+                *)
+                    die "Unsupported distro for Opera: $DISTRO"
+                    ;;
+            esac
             ;;
         "fd")
             case "$DISTRO" in

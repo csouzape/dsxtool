@@ -8,6 +8,8 @@ APP_REGISTRY["Chromium"]="pkg|chromium|org.chromium.Chromium|-"
 APP_REGISTRY["Brave"]="flatpak|-|com.brave.Browser|-"
 APP_REGISTRY["Zen Browser"]="flatpak|-|app.zen_browser.zen|-"
 APP_REGISTRY["Google Chrome"]="native|-|-|-"
+APP_REGISTRY["Helium Browser"]="native|-|-|-"
+
 
 APP_REGISTRY["VLC"]="pkg|vlc|org.videolan.VLC|-"
 APP_REGISTRY["Spotify"]="flatpak|-|com.spotify.Client|-"
@@ -100,6 +102,7 @@ _is_installed() {
         native)
             case "$app" in
                 "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
+                "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
                 "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                 "openssh")       command -v ssh &>/dev/null ;;
                 *)               return 1 ;;
@@ -146,6 +149,9 @@ _remove_app() {
                         debian) sudo apt-get remove -y google-chrome-stable ;;
                         fedora) sudo dnf remove -y google-chrome-stable ;;
                     esac
+                    ;;
+                "Helium Browser")
+                    sudo rm -f /opt/helium/helium /usr/local/bin/helium /usr/bin/helium 2>/dev/null || true
                     ;;
                 "fd")
                     case "$DISTRO" in
@@ -329,6 +335,41 @@ _install_native_app() {
                     ;;
             esac
             ;;
+        "Helium Browser")
+            local repo="imputnet/helium-linux"
+            local download_url fallback_download_url install_dir binary_path launcher_path
+
+            install_dir="/opt/helium"
+            binary_path="$install_dir/helium"
+            launcher_path="/usr/local/bin/helium"
+            fallback_download_url="https://github.com/imputnet/helium-linux/releases/download/0.14.3.1/helium-0.14.3.1-x86_64.AppImage"
+
+            log_info "Installing Helium Browser..."
+
+            if ! command -v jq &>/dev/null; then
+                log_warn "jq not found. Installing it first..."
+                pkg_install jq || die "Failed to install jq for Helium release detection."
+            fi
+
+            download_url=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" \
+                | jq -r '.assets[] | .browser_download_url' \
+                | grep -iE 'helium-.*(x86_64|amd64).*\.appimage$' \
+                | head -n 1) || die "Failed to retrieve latest Helium release."
+
+            if [[ -z "$download_url" ]]; then
+                log_warn "No x86_64 AppImage asset was found from the GitHub API; using the known fallback URL."
+                download_url="$fallback_download_url"
+            fi
+
+            log_info "Helium download URL: $download_url"
+            wget --progress=bar:force -O /tmp/helium.AppImage "$download_url" \
+                || die "Failed to download Helium Browser."
+
+            sudo mkdir -p "$install_dir"
+            sudo install -m 0755 /tmp/helium.AppImage "$binary_path"
+            sudo ln -sf "$binary_path" "$launcher_path"
+            rm -f /tmp/helium.AppImage
+            ;;
         "fd")
             case "$DISTRO" in
                 arch)   pkg_install fd ;;
@@ -449,7 +490,7 @@ _category_menu() {
 
 menu_browsers() {
     _category_menu "Browsers" \
-        "Firefox" "Chromium" "Brave" "Zen Browser" "Google Chrome"
+        "Firefox" "Chromium" "Brave" "Zen Browser" "Google Chrome" "Helium Browser"
 }
 
 menu_media() {

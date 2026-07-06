@@ -441,16 +441,47 @@ EOF
                     ;;
                 debian)
                     log_info "Downloading YouTube Music Desktop (.deb)..."
-                    wget --progress=bar:force "https://github.com/ytmdesktop/ytmdesktop/releases/download/v2.0.11/youtube-music-desktop-app_2.0.11_amd64.deb" \
-                        -O /tmp/ytmdesktop.deb \
+                    if ! command -v jq &>/dev/null; then
+                        log_warn "jq not found. Installing it first..."
+                        pkg_install jq || die "Failed to install jq for YouTube Music Desktop release detection."
+                    fi
+
+                    release_url="https://api.github.com/repos/ytmdesktop/ytmdesktop/releases/latest"
+                    deb_url=$(curl -fsSL "$release_url" | jq -r '.assets[] | .browser_download_url' | grep -iE 'youtube-music-desktop-app.*\.deb$' | head -n 1) \
+                        || die "Failed to retrieve latest YouTube Music Desktop DEB release."
+
+                    if [[ -z "$deb_url" ]]; then
+                        die "No suitable DEB asset found in the latest YouTube Music Desktop release."
+                    fi
+
+                    log_info "YouTube Music Desktop DEB URL: $deb_url"
+                    wget --progress=bar:force -O /tmp/ytmdesktop.deb "$deb_url" \
                         || die "Failed to download YouTube Music Desktop."
                     sudo dpkg -i /tmp/ytmdesktop.deb 2>/dev/null || true
                     sudo apt-get install -f -y || die "Failed to fix YouTube Music Desktop dependencies."
                     rm -f /tmp/ytmdesktop.deb
                     ;;
                 fedora)
-                    log_info "YouTube Music Desktop is available via AUR for Fedora containers or install from releases."
-                    die "YouTube Music Desktop installation not yet supported on Fedora. Please use the AppImage from GitHub releases."
+                    log_info "Downloading YouTube Music Desktop (.rpm)..."
+                    if ! command -v jq &>/dev/null; then
+                        log_warn "jq not found. Installing it first..."
+                        pkg_install jq || die "Failed to install jq for YouTube Music Desktop release detection."
+                    fi
+
+                    release_url="https://api.github.com/repos/ytmdesktop/ytmdesktop/releases/latest"
+                    rpm_url=$(curl -fsSL "$release_url" | jq -r '.assets[] | .browser_download_url' | grep -iE 'youtube-music-desktop-app-.*\.x86_64\.rpm$' | head -n 1) \
+                        || die "Failed to retrieve latest YouTube Music Desktop RPM release."
+
+                    if [[ -z "$rpm_url" ]]; then
+                        die "No suitable RPM asset found in the latest YouTube Music Desktop release."
+                    fi
+
+                    log_info "YouTube Music Desktop RPM URL: $rpm_url"
+                    wget --progress=bar:force -O /tmp/ytmdesktop.rpm "$rpm_url" \
+                        || die "Failed to download YouTube Music Desktop."
+                    sudo dnf install -y /tmp/ytmdesktop.rpm \
+                        || die "Failed to install YouTube Music Desktop."
+                    rm -f /tmp/ytmdesktop.rpm
                     ;;
                 *)
                     die "Unsupported distro for YouTube Music Desktop: $DISTRO"

@@ -37,7 +37,7 @@ _install_gaming_arch() {
         libjpeg-turbo lib32-libjpeg-turbo
         sqlite lib32-sqlite
         libva lib32-libva
-        gst-plugins-base-libs lib32-gst-plugins-base-libs
+        gst-plugins-base-libs 
         sdl2 lib32-sdl2
         v4l-utils lib32-v4l-utils
         vulkan-icd-loader lib32-vulkan-icd-loader

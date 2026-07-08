@@ -136,7 +136,6 @@ setup_nvidia_module()           { module_runner "Setup NVIDIA" "source \"$BASE_D
 sober_optimization_module()     { module_runner "Sober Optimization" "source \"$BASE_DIR/modules/sober_optimization.sh\"; install" || log_warn "Sober optimization finished with errors."; }
 setup_maintenance_module()      { module_runner "System Maintenance" "source \"$BASE_DIR/modules/maintenance.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
 setup_fastfetch_module()        { module_runner "Setup Fastfetch" "source \"$BASE_DIR/modules/fastfetch.sh\"; setup_fastfetch" || log_warn "Fastfetch setup finished with errors."; }
-install_bash_module()           { module_runner "Setup Bash" "source \"$BASE_DIR/modules/bash.sh\"; main" || log_warn "Bash setup finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║
@@ -166,7 +165,6 @@ build_menu() {
         "16 - Setup NVIDIA Drivers" \
         "17 - System Maintenance" \
         "18 - Setup Fastfetch" \
-        "20 - Setup Bash" \
 
 
     if [[ "$DISTRO" == "arch" ]]; then
@@ -245,7 +243,6 @@ dsxtool_main() {
             "Sober Optimization")          clear; sober_optimization_module ;;
             "System Maintenance")          clear; setup_maintenance_module ;;
             "Setup Fastfetch")             clear; setup_fastfetch_module ;;
-            "Setup Bash")                  clear; install_bash_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

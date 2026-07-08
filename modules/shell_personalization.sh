@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 install_zsh() {
     log_info "Installing zsh..."
     pkg_install zsh || die "Failed to install zsh."
@@ -62,6 +64,13 @@ install_fish() {
     log_info "fish installed successfully."
 }
 
+install_bash(){
+    log_info "Installing Bash..."
+    bash "$BASE_DIR/modules/bash.sh" || die "Failed to execute bash module."
+    log_info "Bash installation completed successfully."
+}
+
+
 set_default_shell() {
     local shell_path="$1"
     local target_user="${SUDO_USER:-$USER}"
@@ -80,7 +89,7 @@ set_default_shell() {
 
 setup_shell() {
     local choice
-    choice=$(printf '%s\n' "zsh" "fish" "Cancel" \
+    choice=$(printf '%s\n' "bash" "zsh" "fish" "Cancel" \
         | fzf \
               --prompt="Shell > " \
               --header="Select a shell to install" \
@@ -92,6 +101,10 @@ setup_shell() {
               --no-info)
 
     case "$choice" in
+        bash)
+            install_bash
+            set_default_shell "$(command -v bash)"
+            ;;
         zsh)
             install_zsh
             set_default_shell "$(command -v zsh)"

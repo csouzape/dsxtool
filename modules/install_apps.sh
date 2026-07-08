@@ -2,69 +2,98 @@
 set -uo pipefail
 
 declare -A APP_REGISTRY
+declare -A APP_CATEGORY
+declare -A APP_SELECTED_METHODS
 
-APP_REGISTRY["Firefox"]="pkg|firefox|org.mozilla.firefox|-"
-APP_REGISTRY["Chromium"]="pkg|chromium|org.chromium.Chromium|-"
-APP_REGISTRY["Brave"]="flatpak|-|com.brave.Browser|-"
-APP_REGISTRY["Zen Browser"]="flatpak|-|app.zen_browser.zen|-"
-APP_REGISTRY["Google Chrome"]="native|-|-|-"
-APP_REGISTRY["Helium Browser"]="native|-|-|-"
-APP_REGISTRY["Opera"]="native|-|-|-"
+register_app() {
+    local app="$1"
+    local category="$2"
+    local entry="$3"
+    APP_REGISTRY["$app"]="$entry"
+    APP_CATEGORY["$app"]="$category"
+}
 
-APP_REGISTRY["VLC"]="pkg|vlc|org.videolan.VLC|-"
-APP_REGISTRY["Spotify"]="flatpak|-|com.spotify.Client|-"
-APP_REGISTRY["Celluloid"]="pkg|celluloid|io.github.celluloid_player.Celluloid|-"
-APP_REGISTRY["Rhythmbox"]="pkg|rhythmbox|org.gnome.Rhythmbox3|-"
-APP_REGISTRY["OBS Studio"]="pkg|obs-studio|com.obsproject.Studio|-"
-APP_REGISTRY["MPV"]="pkg|mpv|-|-"
-APP_REGISTRY["Handbrake"]="pkg|handbrake|fr.handbrake.ghb|-"
-APP_REGISTRY["Kdenlive"]="pkg|kdenlive|org.kde.kdenlive|-"
-APP_REGISTRY["Synergy"]="native|-|-|-"
+register_category_apps() {
+    local category="$1"
+    shift
 
-APP_REGISTRY["Discord"]="flatpak|-|com.discordapp.Discord|-"
-APP_REGISTRY["Telegram"]="flatpak|-|org.telegram.desktop|-"
-APP_REGISTRY["Signal"]="flatpak|-|org.signal.Signal|-"
-APP_REGISTRY["Slack"]="flatpak|-|com.slack.Slack|-"
-APP_REGISTRY["Zoom"]="flatpak|-|us.zoom.Zoom|-"
-APP_REGISTRY["Teams"]="flatpak|-|com.microsoft.Teams|-"
-APP_REGISTRY["YouTube Music Desktop"]="native|-|-|-"
+    local app entry
+    while (($#)); do
+        app="$1"
+        entry="$2"
+        shift 2
+        register_app "$app" "$category" "$entry"
+    done
+}
 
-APP_REGISTRY["LibreOffice"]="pkg|libreoffice|org.libreoffice.LibreOffice|-"
-APP_REGISTRY["Obsidian"]="flatpak|-|md.obsidian.Obsidian|-"
-APP_REGISTRY["Thunderbird"]="pkg|thunderbird|org.mozilla.Thunderbird|-"
-APP_REGISTRY["Bitwarden"]="flatpak|-|com.bitwarden.desktop|-"
-APP_REGISTRY["SyncThingy"]="flatpak|-|com.github.zocker_160.SyncThingy|-"
-APP_REGISTRY["Syncthing Tray"]="flatpak|-|io.github.martchus.syncthingtray|-"
-APP_REGISTRY["Flameshot"]="pkg|flameshot|org.flameshot.Flameshot|-"
-APP_REGISTRY["GIMP"]="pkg|gimp|org.gimp.GIMP|-"
-APP_REGISTRY["Inkscape"]="pkg|inkscape|org.inkscape.Inkscape|-"
+register_category_apps "Browsers" \
+    "Firefox" "pkg|firefox|org.mozilla.firefox|-" \
+    "Chromium" "pkg|chromium|org.chromium.Chromium|-" \
+    "Brave" "flatpak|-|com.brave.Browser|-" \
+    "Zen Browser" "flatpak|-|app.zen_browser.zen|-" \
+    "Google Chrome" "native|-|-|-" \
+    "Helium Browser" "native|-|-|-" \
+    "Opera" "native|-|-|-"
 
-APP_REGISTRY["Steam"]="pkg|steam|com.valvesoftware.Steam|-"
-APP_REGISTRY["Lutris"]="pkg|lutris|net.lutris.Lutris|-"
-APP_REGISTRY["Heroic Games Launcher"]="flatpak|-|com.heroicgameslauncher.hgl|-"
-APP_REGISTRY["ProtonUp-Qt"]="flatpak|-|net.davidotek.pupgui2|-"
-APP_REGISTRY["MangoHud"]="pkg|mangohud|-|-"
-APP_REGISTRY["Sober"]="flatpak|-|org.vinegarhq.Sober|-"
-APP_REGISTRY["Bottles"]="flatpak|-|com.usebottles.bottles|-"
+register_category_apps "Media" \
+    "VLC" "pkg|vlc|org.videolan.VLC|-" \
+    "Spotify" "flatpak|-|com.spotify.Client|-" \
+    "Celluloid" "pkg|celluloid|io.github.celluloid_player.Celluloid|-" \
+    "Rhythmbox" "pkg|rhythmbox|org.gnome.Rhythmbox3|-" \
+    "OBS Studio" "pkg|obs-studio|com.obsproject.Studio|-" \
+    "MPV" "pkg|mpv|-|-" \
+    "Handbrake" "pkg|handbrake|fr.handbrake.ghb|-" \
+    "Kdenlive" "pkg|kdenlive|org.kde.kdenlive|-" \
+    "Synergy" "native|-|-|-" \
+    "EasyEffects" "pkg|easyeffects|-|-;flatpak|-|com.github.wwmm.easyeffects|-;aur|-|-|easyeffects"
 
-APP_REGISTRY["Alacritty"]="pkg|alacritty|-|-"
-APP_REGISTRY["Kitty"]="pkg|kitty|-|-"
-APP_REGISTRY["Konsole"]="pkg|konsole|-|-"
-APP_REGISTRY["Ghostty"]="terminal|ghostty|-|-"
+register_category_apps "Communication" \
+    "Discord" "flatpak|-|com.discordapp.Discord|-" \
+    "Telegram" "flatpak|-|org.telegram.desktop|-" \
+    "Signal" "flatpak|-|org.signal.Signal|-" \
+    "Slack" "flatpak|-|com.slack.Slack|-" \
+    "Zoom" "flatpak|-|us.zoom.Zoom|-" \
+    "Teams" "flatpak|-|com.microsoft.Teams|-" \
+    "YouTube Music Desktop" "native|-|-|-"
 
-APP_REGISTRY["htop"]="pkg|htop|-|-"
-APP_REGISTRY["btop"]="pkg|btop|-|-"
-APP_REGISTRY["ncdu"]="pkg|ncdu|-|-"
-APP_REGISTRY["tree"]="pkg|tree|-|-"
-APP_REGISTRY["tmux"]="pkg|tmux|-|-"
-APP_REGISTRY["jq"]="pkg|jq|-|-"
-APP_REGISTRY["bat"]="pkg|bat|-|-"
-APP_REGISTRY["ripgrep"]="pkg|ripgrep|-|-"
-APP_REGISTRY["fd"]="native|-|-|-"
-APP_REGISTRY["neofetch"]="pkg|neofetch|-|-"
-APP_REGISTRY["fastfetch"]="pkg|fastfetch|-|-"
-APP_REGISTRY["net-tools"]="pkg|net-tools|-|-"
-APP_REGISTRY["openssh"]="native|-|-|-"
+register_category_apps "Productivity" \
+    "LibreOffice" "pkg|libreoffice|org.libreoffice.LibreOffice|-" \
+    "Obsidian" "flatpak|-|md.obsidian.Obsidian|-" \
+    "Thunderbird" "pkg|thunderbird|org.mozilla.Thunderbird|-" \
+    "Bitwarden" "flatpak|-|com.bitwarden.desktop|-" \
+    "SyncThingy" "flatpak|-|com.github.zocker_160.SyncThingy|-" \
+    "Syncthing Tray" "flatpak|-|io.github.martchus.syncthingtray|-" \
+    "Flameshot" "pkg|flameshot|org.flameshot.Flameshot|-" \
+    "GIMP" "pkg|gimp|org.gimp.GIMP|-" \
+    "Inkscape" "pkg|inkscape|org.inkscape.Inkscape|-"
+
+register_category_apps "Gaming" \
+    "Steam" "pkg|steam|com.valvesoftware.Steam|-" \
+    "Lutris" "pkg|lutris|net.lutris.Lutris|-" \
+    "Heroic Games Launcher" "flatpak|-|com.heroicgameslauncher.hgl|-" \
+    "ProtonUp-Qt" "flatpak|-|net.davidotek.pupgui2|-" \
+    "MangoHud" "pkg|mangohud|-|-" \
+    "Sober" "flatpak|-|org.vinegarhq.Sober|-" \
+    "Bottles" "flatpak|-|com.usebottles.bottles|-"
+
+register_category_apps "System Tools" \
+    "Alacritty" "pkg|alacritty|-|-" \
+    "Kitty" "pkg|kitty|-|-" \
+    "Konsole" "pkg|konsole|-|-" \
+    "Ghostty" "terminal|ghostty|-|-" \
+    "htop" "pkg|htop|-|-" \
+    "btop" "pkg|btop|-|-" \
+    "ncdu" "pkg|ncdu|-|-" \
+    "tree" "pkg|tree|-|-" \
+    "tmux" "pkg|tmux|-|-" \
+    "jq" "pkg|jq|-|-" \
+    "bat" "pkg|bat|-|-" \
+    "ripgrep" "pkg|ripgrep|-|-" \
+    "fd" "native|-|-|-" \
+    "neofetch" "pkg|neofetch|-|-" \
+    "fastfetch" "pkg|fastfetch|-|-" \
+    "net-tools" "pkg|net-tools|-|-" \
+    "openssh" "native|-|-|-"
 
 _fzf_menu() {
     local tmp_in tmp_out
@@ -76,47 +105,197 @@ _fzf_menu() {
     rm -f "$tmp_in" "$tmp_out"
 }
 
-_is_installed() {
-    local app="$1"
-    local entry="${APP_REGISTRY[$app]:-}"
+_target_label() {
+    local target="$1"
     local method pkg_name flatpak_id aur_pkg
-    IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$entry"
+    IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
 
     case "$method" in
         pkg)
             case "$DISTRO" in
-                arch)   pacman -Q "$pkg_name" &>/dev/null ;;
-                debian) dpkg -s "$pkg_name" &>/dev/null ;;
-                fedora) rpm -q "$pkg_name" &>/dev/null ;;
+                arch) printf 'Pacman (%s)' "$pkg_name" ;;
+                debian) printf 'APT (%s)' "$pkg_name" ;;
+                fedora) printf 'DNF (%s)' "$pkg_name" ;;
+                *) printf 'Package (%s)' "$pkg_name" ;;
             esac
             ;;
-        flatpak)
-            flatpak list --app 2>/dev/null | grep -q "$flatpak_id"
-            ;;
-        aur)
-            pacman -Q "$aur_pkg" &>/dev/null
-            ;;
-        terminal)
-            command -v "$pkg_name" &>/dev/null
-            ;;
-        native)
-            case "$app" in
-                "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
-                "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
-                "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
-                "openssh")       command -v ssh &>/dev/null ;;
-                *)               return 1 ;;
-            esac
-            ;;
-        *) return 1 ;;
+        flatpak) printf 'Flatpak (%s)' "${flatpak_id:-$pkg_name}" ;;
+        aur) printf 'AUR (%s)' "${aur_pkg:-$pkg_name}" ;;
+        terminal) printf 'Terminal (%s)' "$pkg_name" ;;
+        native) printf 'Native (%s)' "$pkg_name" ;;
+        *) printf 'Unknown (%s)' "$target" ;;
     esac
+}
+
+_get_available_targets() {
+    local entry="$1"
+    local -a targets=()
+    local target method pkg_name flatpak_id aur_pkg
+
+    IFS=';' read -r -a targets <<< "$entry"
+
+    for target in "${targets[@]}"; do
+        [[ -z "${target//[[:space:]]/}" ]] && continue
+        IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
+
+        case "$method" in
+            pkg|flatpak|terminal|native)
+                printf '%s\n' "$target"
+                ;;
+            aur)
+                if [[ "$DISTRO" == "arch" ]] && get_aur_helper >/dev/null 2>&1; then
+                    printf '%s\n' "$target"
+                fi
+                ;;
+        esac
+    done
+}
+
+_can_use_flatpak() {
+    command -v flatpak >/dev/null 2>&1
+}
+
+_select_install_target() {
+    local app="$1"
+    local entry="$2"
+    local -a options=()
+    local -a labels=()
+    local target selection label
+    local index=0
+
+    mapfile -t options < <(_get_available_targets "$entry")
+
+    if [[ ${#options[@]} -eq 0 ]]; then
+        return 1
+    fi
+
+    if [[ ${#options[@]} -eq 1 ]]; then
+        printf '%s\n' "${options[0]}"
+        return 0
+    fi
+
+    for target in "${options[@]}"; do
+        labels+=("$(_target_label "$target")")
+    done
+
+    selection=$(printf '%s\n' "${labels[@]}" \
+        | _fzf_menu \
+            --prompt="Install method for $app > " \
+            --header="[ENTER] select" \
+            --height=8 \
+            --layout=reverse \
+            --border=rounded \
+            --no-info)
+
+    [[ -z "$selection" ]] && return 1
+
+    for index in "${!labels[@]}"; do
+        label="${labels[$index]}"
+        if [[ "$label" == "$selection" ]]; then
+            printf '%s\n' "${options[$index]}"
+            return 0
+        fi
+    done
+
+    printf '%s\n' "${options[0]}"
+}
+
+_is_installed() {
+    local app="$1"
+    local entry="${APP_REGISTRY[$app]:-}"
+    local -a targets=()
+    local target method pkg_name flatpak_id aur_pkg
+
+    IFS=';' read -r -a targets <<< "$entry"
+
+    for target in "${targets[@]}"; do
+        [[ -z "${target//[[:space:]]/}" ]] && continue
+        IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
+
+        case "$method" in
+            pkg)
+                case "$DISTRO" in
+                    arch)   pacman -Q "$pkg_name" &>/dev/null ;;
+                    debian) dpkg -s "$pkg_name" &>/dev/null ;;
+                    fedora) rpm -q "$pkg_name" &>/dev/null ;;
+                esac
+                ;;
+            flatpak)
+                flatpak list --app 2>/dev/null | grep -q "$flatpak_id"
+                ;;
+            aur)
+                pacman -Q "$aur_pkg" &>/dev/null
+                ;;
+            terminal)
+                command -v "$pkg_name" &>/dev/null
+                ;;
+            native)
+                case "$app" in
+                    "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
+                    "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
+                    "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
+                    "openssh")       command -v ssh &>/dev/null ;;
+                    *)               return 1 ;;
+                esac
+                ;;
+            *) return 1 ;;
+        esac
+
+        if [[ $? -eq 0 ]]; then
+            return 0
+        fi
+    done
+
+    return 1
 }
 
 _remove_app() {
     local app="$1"
     local entry="${APP_REGISTRY[$app]:-}"
-    local method pkg_name flatpak_id aur_pkg
-    IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$entry"
+    local selected_target="${APP_SELECTED_METHODS[$app]:-}"
+    local -a targets=()
+    local target method pkg_name flatpak_id aur_pkg
+
+    if [[ -z "$selected_target" ]]; then
+        IFS=';' read -r -a targets <<< "$entry"
+        for target in "${targets[@]}"; do
+            [[ -z "${target//[[:space:]]/}" ]] && continue
+            IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
+            case "$method" in
+                pkg)
+                    case "$DISTRO" in
+                        arch)   pacman -Q "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
+                        debian) dpkg -s "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
+                        fedora) rpm -q "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
+                    esac
+                    ;;
+                flatpak)
+                    flatpak list --app 2>/dev/null | grep -q "$flatpak_id" && selected_target="$target" && break
+                    ;;
+                aur)
+                    pacman -Q "$aur_pkg" &>/dev/null && selected_target="$target" && break
+                    ;;
+                terminal)
+                    command -v "$pkg_name" &>/dev/null && selected_target="$target" && break
+                    ;;
+                native)
+                    case "$app" in
+                        "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
+                        "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
+                        "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
+                        "openssh")       command -v ssh &>/dev/null ;;
+                        *)               false ;;
+                    esac
+                    if [[ $? -eq 0 ]]; then
+                        selected_target="$target"
+                        break
+                    fi
+                    ;;
+            esac
+        done
+    fi
+
+    IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$selected_target"
 
     log_info "Removing $app..."
 
@@ -199,10 +378,14 @@ _install_app() {
         return
     fi
 
-    local method pkg_name flatpak_id aur_pkg
-    IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$entry"
+    local selected_target
+    selected_target=$(_select_install_target "$app" "$entry") || die "No install target available for $app."
+    APP_SELECTED_METHODS["$app"]="$selected_target"
 
-    log_info "Installing $app..."
+    local method pkg_name flatpak_id aur_pkg
+    IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$selected_target"
+
+    log_info "Installing $app using $(_target_label "$selected_target")..."
 
     case "$method" in
         pkg)
@@ -561,46 +744,56 @@ _category_menu() {
     done <<< "$selections"
 }
 
+_get_apps_for_category() {
+    local category="$1"
+    local app
+    for app in "${!APP_CATEGORY[@]}"; do
+        if [[ "${APP_CATEGORY[$app]}" == "$category" ]]; then
+            printf '%s\n' "$app"
+        fi
+    done | sort
+}
+
 menu_browsers() {
-    _category_menu "Browsers" \
-        "Firefox" "Chromium" "Brave" "Zen Browser" "Google Chrome" "Helium Browser"
+    local -a apps=()
+    mapfile -t apps < <(_get_apps_for_category "Browsers")
+    _category_menu "Browsers" "${apps[@]}"
 }
 
 menu_media() {
-    _category_menu "Media" \
-        "VLC" "MPV" "Spotify" "Celluloid" "Rhythmbox" \
-        "OBS Studio" "Handbrake" "Kdenlive" "YouTube Music Desktop"
+    local -a apps=()
+    mapfile -t apps < <(_get_apps_for_category "Media")
+    _category_menu "Media" "${apps[@]}"
 }
 
 menu_communication() {
-    _category_menu "Communication" \
-        "Discord" "Telegram" "Signal" "Slack" "Zoom" "Teams"
+    local -a apps=()
+    mapfile -t apps < <(_get_apps_for_category "Communication")
+    _category_menu "Communication" "${apps[@]}"
 }
 
 menu_productivity() {
-    _category_menu "Productivity" \
-        "LibreOffice" "Obsidian" "Thunderbird" "Bitwarden" \
-        "Flameshot" "GIMP" "Inkscape" \
-        "SyncThingy" "Syncthing Tray" "Synergy"
+    local -a apps=()
+    mapfile -t apps < <(_get_apps_for_category "Productivity")
+    _category_menu "Productivity" "${apps[@]}"
 }
 
 menu_gaming() {
-    _category_menu "Gaming" \
-        "Steam" "Lutris" "Heroic Games Launcher" \
-        "ProtonUp-Qt" "MangoHud" "Sober" "Bottles"
+    local -a apps=()
+    mapfile -t apps < <(_get_apps_for_category "Gaming")
+    _category_menu "Gaming" "${apps[@]}"
 }
 
 menu_system_tools() {
-    _category_menu "System Tools" \
-        "htop" "btop" "ncdu" "tree" \
-        "tmux" "jq" "bat" "ripgrep" "fd" \
-        "neofetch" "fastfetch" \
-        "net-tools" "openssh" "Synergy"
+    local -a apps=()
+    mapfile -t apps < <(_get_apps_for_category "System Tools")
+    _category_menu "System Tools" "${apps[@]}"
 }
 
 menu_terminals() {
-    _category_menu "Terminals" \
-        "Alacritty" "Kitty" "Konsole" "Ghostty"
+    local -a apps=()
+    mapfile -t apps < <(_get_apps_for_category "Terminals")
+    _category_menu "Terminals" "${apps[@]}"
 }
 
 setup_apps() {

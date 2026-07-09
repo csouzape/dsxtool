@@ -29,7 +29,7 @@ register_category_apps() {
 register_category_apps "Browsers" \
     "Firefox" "pkg|firefox|org.mozilla.firefox|-" \
     "Chromium" "pkg|chromium|org.chromium.Chromium|-" \
-    "Brave" "flatpak|-|com.brave.Browser|-" \
+    "Brave" "native|-|-|-;flatpak|-|com.brave.Browser|-;aur|-|-|brave-bin" \
     "Zen Browser" "flatpak|-|app.zen_browser.zen|-" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
@@ -120,29 +120,33 @@ _target_label() {
             esac
             ;;
         flatpak)
-            if [[ "$app" == "Google Chrome" ]]; then
-                printf 'Flatpak (Google Chrome)'
-            else
-                printf 'Flatpak (%s)' "${flatpak_id:-$pkg_name}"
-            fi
+            case "$app" in
+                "Google Chrome") printf 'Flatpak (Google Chrome)' ;;
+                "Brave") printf 'Flatpak (Brave)' ;;
+                *) printf 'Flatpak (%s)' "${flatpak_id:-$pkg_name}" ;;
+            esac
             ;;
         aur)
-            if [[ "$app" == "Google Chrome" ]]; then
-                printf 'AUR (Google Chrome)'
-            else
-                printf 'AUR (%s)' "${aur_pkg:-$pkg_name}"
-            fi
+            case "$app" in
+                "Google Chrome") printf 'AUR (Google Chrome)' ;;
+                "Brave") printf 'AUR (Brave)' ;;
+                *) printf 'AUR (%s)' "${aur_pkg:-$pkg_name}" ;;
+            esac
             ;;
         terminal) printf 'Terminal (%s)' "$pkg_name" ;;
         native)
-            if [[ "$app" == "Google Chrome" ]]; then
-                printf 'Official (Google Chrome)'
-            else
-                printf 'Native (%s)' "$pkg_name"
-            fi
+            case "$app" in
+                "Google Chrome") printf 'Official (Google Chrome)' ;;
+                "Brave") printf 'Official (Brave)' ;;
+                *) printf 'Native (%s)' "$pkg_name" ;;
+            esac
             ;;
         *) printf 'Unknown (%s)' "$target" ;;
     esac
+}
+
+_can_use_aur() {
+    [[ "$DISTRO" == "arch" ]] && get_aur_helper >/dev/null 2>&1
 }
 
 _get_available_targets() {
@@ -161,7 +165,7 @@ _get_available_targets() {
                 printf '%s\n' "$target"
                 ;;
             aur)
-                if [[ "$DISTRO" == "arch" ]] && get_aur_helper >/dev/null 2>&1; then
+                if _can_use_aur; then
                     printf '%s\n' "$target"
                 fi
                 ;;
@@ -299,6 +303,7 @@ _remove_app() {
                 native)
                     case "$app" in
                         "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
+                        "Brave") command -v brave-browser &>/dev/null || command -v brave &>/dev/null ;;
                         "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
@@ -342,9 +347,16 @@ _remove_app() {
             case "$app" in
                 "Google Chrome")
                     case "$DISTRO" in
-                        arch)   sudo pacman -Rns --noconfirm google-chrome ;;
+                        arch)   sudo pacman -Rns --noconfirm google-chrome-bin google-chrome 2>/dev/null || true ;;
                         debian) sudo apt-get remove -y google-chrome-stable ;;
                         fedora) sudo dnf remove -y google-chrome-stable ;;
+                    esac
+                    ;;
+                "Brave")
+                    case "$DISTRO" in
+                        arch)   sudo pacman -Rns --noconfirm brave-bin brave 2>/dev/null || true ;;
+                        debian) sudo apt-get remove -y brave-browser brave 2>/dev/null || true ;;
+                        fedora) sudo dnf remove -y brave-browser brave 2>/dev/null || true ;;
                     esac
                     ;;
                 "Helium Browser")
@@ -525,7 +537,7 @@ _install_native_app() {
             case "$DISTRO" in
                 arch)
                     require_aur_helper
-                    aur_install google-chrome \
+                    aur_install google-chrome-bin \
                         || die "Failed to install Google Chrome via AUR."
                     ;;
                 debian)
@@ -551,6 +563,28 @@ _install_native_app() {
                     ;;
                 *)
                     die "Unsupported distro for Google Chrome: $DISTRO"
+                    ;;
+            esac
+            ;;
+        "Brave")
+            case "$DISTRO" in
+                arch)
+                    require_aur_helper
+                    aur_install brave-bin \
+                        || die "Failed to install Brave via AUR."
+                    ;;
+                debian)
+                    log_info "Installing Brave via official script..."
+                    curl -fsS https://dl.brave.com/install.sh | sh \
+                        || die "Failed to install Brave via official script."
+                    ;;
+                fedora)
+                    log_info "Installing Brave via official script..."
+                    curl -fsS https://dl.brave.com/install.sh | sh \
+                        || die "Failed to install Brave via official script."
+                    ;;
+                *)
+                    die "Unsupported distro for Brave: $DISTRO"
                     ;;
             esac
             ;;

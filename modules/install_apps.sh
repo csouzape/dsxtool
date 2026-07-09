@@ -31,7 +31,7 @@ register_category_apps "Browsers" \
     "Chromium" "pkg|chromium|org.chromium.Chromium|-" \
     "Brave" "flatpak|-|com.brave.Browser|-" \
     "Zen Browser" "flatpak|-|app.zen_browser.zen|-" \
-    "Google Chrome" "native|-|-|-" \
+    "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
     "Opera" "native|-|-|-"
 
@@ -119,10 +119,28 @@ _target_label() {
                 *) printf 'Package (%s)' "$pkg_name" ;;
             esac
             ;;
-        flatpak) printf 'Flatpak (%s)' "${flatpak_id:-$pkg_name}" ;;
-        aur) printf 'AUR (%s)' "${aur_pkg:-$pkg_name}" ;;
+        flatpak)
+            if [[ "$app" == "Google Chrome" ]]; then
+                printf 'Flatpak (Google Chrome)'
+            else
+                printf 'Flatpak (%s)' "${flatpak_id:-$pkg_name}"
+            fi
+            ;;
+        aur)
+            if [[ "$app" == "Google Chrome" ]]; then
+                printf 'AUR (Google Chrome)'
+            else
+                printf 'AUR (%s)' "${aur_pkg:-$pkg_name}"
+            fi
+            ;;
         terminal) printf 'Terminal (%s)' "$pkg_name" ;;
-        native) printf 'Native (%s)' "$pkg_name" ;;
+        native)
+            if [[ "$app" == "Google Chrome" ]]; then
+                printf 'Official (Google Chrome)'
+            else
+                printf 'Native (%s)' "$pkg_name"
+            fi
+            ;;
         *) printf 'Unknown (%s)' "$target" ;;
     esac
 }
@@ -482,6 +500,24 @@ EOF
     log_info "Configuration saved to ~/.config/alacritty/alacritty.yml"
 }
 
+_download_file() {
+    local url="$1"
+    local output_path="$2"
+
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL --retry 3 --retry-delay 2 -o "$output_path" "$url" \
+            || return 1
+    elif command -v wget >/dev/null 2>&1; then
+        wget --progress=bar:force -O "$output_path" "$url" \
+            || return 1
+    else
+        log_warn "Neither curl nor wget is available. Installing curl first..."
+        pkg_install curl || return 1
+        curl -fsSL --retry 3 --retry-delay 2 -o "$output_path" "$url" \
+            || return 1
+    fi
+}
+
 _install_native_app() {
     local app="$1"
     case "$app" in
@@ -493,10 +529,10 @@ _install_native_app() {
                         || die "Failed to install Google Chrome via AUR."
                     ;;
                 debian)
-                    log_info "Downloading Google Chrome (.deb)..."
-                    wget --progress=bar:force \
+                    log_info "Downloading Google Chrome (.deb) from Google's direct repository..."
+                    _download_file \
                         "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
-                        -O /tmp/google-chrome.deb \
+                        /tmp/google-chrome.deb \
                         || die "Failed to download Google Chrome."
                     sudo dpkg -i /tmp/google-chrome.deb 2>/dev/null || true
                     sudo apt-get install -f -y \
@@ -504,10 +540,10 @@ _install_native_app() {
                     rm -f /tmp/google-chrome.deb
                     ;;
                 fedora)
-                    log_info "Downloading Google Chrome (.rpm)..."
-                    wget --progress=bar:force \
+                    log_info "Downloading Google Chrome (.rpm) from Google's direct repository..."
+                    _download_file \
                         "https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm" \
-                        -O /tmp/google-chrome.rpm \
+                        /tmp/google-chrome.rpm \
                         || die "Failed to download Google Chrome."
                     sudo dnf install -y /tmp/google-chrome.rpm \
                         || die "Failed to install Google Chrome."

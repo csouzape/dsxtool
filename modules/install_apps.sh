@@ -30,7 +30,7 @@ register_category_apps "Browsers" \
     "Firefox" "pkg|firefox|org.mozilla.firefox|-" \
     "Chromium" "pkg|chromium|org.chromium.Chromium|-" \
     "Brave" "native|-|-|-;flatpak|-|com.brave.Browser|-;aur|-|-|brave-bin" \
-    "Zen Browser" "flatpak|-|app.zen_browser.zen|-" \
+    "Zen Browser" "native|-|-|-" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
     "Opera" "native|-|-|-"
@@ -138,6 +138,7 @@ _target_label() {
             case "$app" in
                 "Google Chrome") printf 'Official (Google Chrome)' ;;
                 "Brave") printf 'Official (Brave)' ;;
+                "Zen Browser") printf 'Official (Zen Browser)' ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
             esac
             ;;
@@ -254,6 +255,7 @@ _is_installed() {
             native)
                 case "$app" in
                     "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
+                    "Zen Browser") command -v zen-browser &>/dev/null || command -v zen &>/dev/null || command -v zen-browser-bin &>/dev/null || [[ -x "$HOME/.local/bin/zen" ]] || [[ -x "$HOME/.local/bin/zen-browser" ]] ;;
                     "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
@@ -304,6 +306,7 @@ _remove_app() {
                     case "$app" in
                         "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
                         "Brave") command -v brave-browser &>/dev/null || command -v brave &>/dev/null ;;
+                        "Zen Browser") command -v zen-browser &>/dev/null || command -v zen &>/dev/null || command -v zen-browser-bin &>/dev/null || [[ -x "$HOME/.local/bin/zen" ]] || [[ -x "$HOME/.local/bin/zen-browser" ]] ;;
                         "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
@@ -358,6 +361,9 @@ _remove_app() {
                         debian) sudo apt-get remove -y brave-browser brave 2>/dev/null || true ;;
                         fedora) sudo dnf remove -y brave-browser brave 2>/dev/null || true ;;
                     esac
+                    ;;
+                "Zen Browser")
+                    rm -rf "$HOME/.local/bin/zen" "$HOME/.local/bin/zen-browser" "$HOME/.local/share/zen-browser" "$HOME/.zen-browser" "$HOME/.config/zen-browser" /opt/zen-browser 2>/dev/null || true
                     ;;
                 "Helium Browser")
                     sudo rm -f /opt/helium/helium /usr/local/bin/helium /usr/bin/helium 2>/dev/null || true
@@ -587,6 +593,11 @@ _install_native_app() {
                     die "Unsupported distro for Brave: $DISTRO"
                     ;;
             esac
+            ;;
+        "Zen Browser")
+            log_info "Installing Zen Browser via official script..."
+            curl -fsSL https://github.com/zen-browser/updates-server/raw/refs/heads/main/install.sh | bash \
+                || die "Failed to install Zen Browser."
             ;;
         "Helium Browser")
             local repo="imputnet/helium-linux"

@@ -30,7 +30,7 @@ register_category_apps "Browsers" \
     "Firefox" "pkg|firefox|org.mozilla.firefox|-" \
     "Chromium" "pkg|chromium|org.chromium.Chromium|-" \
     "Brave" "native|-|-|-;flatpak|-|com.brave.Browser|-;aur|-|-|brave-bin" \
-    "Zen Browser" "native|-|-|-" \
+    "Zen Browser" "native|-|-|-;flatpak|-|org.zenbrowser.ZenBrowser|-;aur|-|-|zen-browser-bin" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
     "Opera" "native|-|-|-"
@@ -595,8 +595,15 @@ _install_native_app() {
             esac
             ;;
         "Zen Browser")
-            log_info "Installing Zen Browser via official script..."
-            curl -fsSL https://github.com/zen-browser/updates-server/raw/refs/heads/main/install.sh | bash \
+            case "$DISTRO" in
+                arch)
+                    require_aur_helper
+                    aur_install zen-browser-bin \
+                        || die "Failed to install Zen Browser via AUR."
+                    ;;
+                debian|fedora)
+                    log_info "Installing Zen Browser via official script..."
+                    curl -fsSL https://github.com/zen-browser/updates-server/raw/refs/heads/main/install.sh | bash \
                 || die "Failed to install Zen Browser."
             ;;
         "Helium Browser")

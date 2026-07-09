@@ -119,7 +119,6 @@ setup_alias() {
 verify_fzf_tool
 
 
-update_system_module()          { module_runner "Update System" "source \"$BASE_DIR/modules/update_system.sh\"; update_system" || log_warn "update_system finished with errors."; }
 install_tlp_module()            { module_runner "Install TLP" "source \"$BASE_DIR/modules/tlp.sh\"; replace_manager_with_tlp" || log_warn "TLP setup finished with errors."; }
 install_apps_module()           { module_runner "Install Apps" "source \"$BASE_DIR/modules/install_apps.sh\"; setup_apps" || log_warn "Apps setup finished with errors."; }
 install_yay_module()            { module_runner "Setup yay" "source \"$BASE_DIR/modules/setupyay.sh\"; setup_yay" || log_warn "yay setup finished with errors."; }
@@ -137,7 +136,6 @@ setup_nvidia_module()           { module_runner "Setup NVIDIA" "source \"$BASE_D
 sober_optimization_module()     { module_runner "Sober Optimization" "source \"$BASE_DIR/modules/sober_optimization.sh\"; install" || log_warn "Sober optimization finished with errors."; }
 setup_maintenance_module()      { module_runner "System Maintenance" "source \"$BASE_DIR/modules/maintenance.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
 setup_fastfetch_module()        { module_runner "Setup Fastfetch" "source \"$BASE_DIR/modules/fastfetch.sh\"; setup_fastfetch" || log_warn "Fastfetch setup finished with errors."; }
-install_bash_module()           { module_runner "Setup Bash" "source \"$BASE_DIR/modules/bash.sh\"; main" || log_warn "Bash setup finished with errors."; }
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║
@@ -152,7 +150,6 @@ EOF
 build_menu() {
     printf '%s\n' \
         "1 - Setup Alias" \
-        "2 - Update System" \
         "3 - Install TLP" \
         "4 - Install Apps" \
         "5 - Change Desktop Environment" \
@@ -168,7 +165,6 @@ build_menu() {
         "16 - Setup NVIDIA Drivers" \
         "17 - System Maintenance" \
         "18 - Setup Fastfetch" \
-        "20 - Setup Bash" \
 
 
     if [[ "$DISTRO" == "arch" ]]; then
@@ -231,7 +227,6 @@ dsxtool_main() {
 
         case "$item" in
             "Setup Alias")                 clear; setup_alias ;;
-            "Update System")               clear; update_system_module ;;
             "Install TLP")                 clear; install_tlp_module ;;
             "Install Apps")                clear; install_apps_module ;;
             "Change Desktop Environment")  clear; change_desktop_module ;;
@@ -248,7 +243,6 @@ dsxtool_main() {
             "Sober Optimization")          clear; sober_optimization_module ;;
             "System Maintenance")          clear; setup_maintenance_module ;;
             "Setup Fastfetch")             clear; setup_fastfetch_module ;;
-            "Setup Bash")                  clear; install_bash_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

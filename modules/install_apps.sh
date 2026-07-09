@@ -604,7 +604,12 @@ _install_native_app() {
                 debian|fedora)
                     log_info "Installing Zen Browser via official script..."
                     curl -fsSL https://github.com/zen-browser/updates-server/raw/refs/heads/main/install.sh | bash \
-                || die "Failed to install Zen Browser."
+                        || die "Failed to install Zen Browser."
+                    ;;
+                *)
+                    die "Unsupported distro for Zen Browser: $DISTRO"
+                    ;;
+            esac
             ;;
         "Helium Browser")
             local repo="imputnet/helium-linux"

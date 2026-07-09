@@ -30,7 +30,7 @@ register_category_apps "Browsers" \
     "Firefox" "pkg|firefox|org.mozilla.firefox|-" \
     "Chromium" "pkg|chromium|org.chromium.Chromium|-" \
     "Brave" "native|-|-|-;flatpak|-|com.brave.Browser|-;aur|-|-|brave-bin" \
-    "Zen Browser" "native|-|-|-;flatpak|-|org.zenbrowser.ZenBrowser|-;aur|-|-|zen-browser-bin" \
+    "Zen Browser" "native|-|-|-;flatpak|-|app.zen_browser.zen|-;aur|-|-|zen-browser-bin" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
     "Opera" "native|-|-|-"
@@ -123,6 +123,7 @@ _target_label() {
             case "$app" in
                 "Google Chrome") printf 'Flatpak (Google Chrome)' ;;
                 "Brave") printf 'Flatpak (Brave)' ;;
+                "Zen Browser") printf 'Flatpak (Zen Browser)' ;;
                 *) printf 'Flatpak (%s)' "${flatpak_id:-$pkg_name}" ;;
             esac
             ;;

@@ -33,7 +33,7 @@ register_category_apps "Browsers" \
     "Zen Browser" "native|-|-|-;flatpak|-|app.zen_browser.zen|-;aur|-|-|zen-browser-bin" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
-    "Opera" "native|-|-|-"
+    "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin"
 
 register_category_apps "Media" \
     "VLC" "pkg|vlc|org.videolan.VLC|-" \
@@ -106,7 +106,8 @@ _fzf_menu() {
 }
 
 _target_label() {
-    local target="$1"
+    local app="$1"
+    local target="$2"
     local method pkg_name flatpak_id aur_pkg
     IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
 
@@ -140,6 +141,14 @@ _target_label() {
                 "Google Chrome") printf 'Official (Google Chrome)' ;;
                 "Brave") printf 'Official (Brave)' ;;
                 "Zen Browser") printf 'Official (Zen Browser)' ;;
+                "Opera")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Opera)' ;;
+                    esac
+                    ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
             esac
             ;;
@@ -151,8 +160,13 @@ _can_use_aur() {
     [[ "$DISTRO" == "arch" ]] && get_aur_helper >/dev/null 2>&1
 }
 
+_can_use_snap() {
+    command -v snap >/dev/null 2>&1 && snap version >/dev/null 2>&1
+}
+
 _get_available_targets() {
-    local entry="$1"
+    local app="$1"
+    local entry="$2"
     local -a targets=()
     local target method pkg_name flatpak_id aur_pkg
 
@@ -163,8 +177,20 @@ _get_available_targets() {
         IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
 
         case "$method" in
-            pkg|flatpak|terminal|native)
+            pkg|flatpak|terminal)
                 printf '%s\n' "$target"
+                ;;
+            native)
+                if [[ "$app" == "Opera" ]]; then
+                    case "$pkg_name" in
+                        deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
+                        rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
+                        snap) [[ "$DISTRO" == "debian" ]] && _can_use_snap && printf '%s\n' "$target" ;;
+                        *) printf '%s\n' "$target" ;;
+                    esac
+                else
+                    printf '%s\n' "$target"
+                fi
                 ;;
             aur)
                 if _can_use_aur; then
@@ -187,7 +213,7 @@ _select_install_target() {
     local target selection label
     local index=0
 
-    mapfile -t options < <(_get_available_targets "$entry")
+    mapfile -t options < <(_get_available_targets "$app" "$entry")
 
     if [[ ${#options[@]} -eq 0 ]]; then
         return 1
@@ -199,7 +225,7 @@ _select_install_target() {
     fi
 
     for target in "${options[@]}"; do
-        labels+=("$(_target_label "$target")")
+        labels+=("$(_target_label "$app" "$target")")
     done
 
     selection=$(printf '%s\n' "${labels[@]}" \
@@ -258,6 +284,14 @@ _is_installed() {
                     "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
                     "Zen Browser") command -v zen-browser &>/dev/null || command -v zen &>/dev/null || command -v zen-browser-bin &>/dev/null || [[ -x "$HOME/.local/bin/zen" ]] || [[ -x "$HOME/.local/bin/zen-browser" ]] ;;
                     "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
+                    "Opera")
+                        case "$pkg_name" in
+                            deb) dpkg -s opera-stable &>/dev/null || dpkg -s opera-developer &>/dev/null ;;
+                            rpm) rpm -q opera-stable &>/dev/null || rpm -q opera-developer &>/dev/null ;;
+                            snap) snap list opera &>/dev/null ;;
+                            *) return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -309,6 +343,14 @@ _remove_app() {
                         "Brave") command -v brave-browser &>/dev/null || command -v brave &>/dev/null ;;
                         "Zen Browser") command -v zen-browser &>/dev/null || command -v zen &>/dev/null || command -v zen-browser-bin &>/dev/null || [[ -x "$HOME/.local/bin/zen" ]] || [[ -x "$HOME/.local/bin/zen-browser" ]] ;;
                         "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
+                        "Opera")
+                            case "$pkg_name" in
+                                deb) dpkg -s opera-stable &>/dev/null || dpkg -s opera-developer &>/dev/null ;;
+                                rpm) rpm -q opera-stable &>/dev/null || rpm -q opera-developer &>/dev/null ;;
+                                snap) snap list opera &>/dev/null ;;
+                                *) false ;;
+                            esac
+                            ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
                         *)               false ;;
@@ -648,44 +690,37 @@ _install_native_app() {
             rm -f /tmp/helium.AppImage
             ;;
         "Opera")
-            case "$DISTRO" in
-                arch)
-                    require_aur_helper
-                    aur_install opera-bin \
-                        || die "Failed to install Opera via AUR."
+            case "$pkg_name" in
+                deb)
+                    log_info "Downloading Opera .deb from official source..."
+                    _download_file \
+                        "https://download.opera.com/download/get/?partner=www&opsys=Linux" \
+                        /tmp/opera.deb \
+                        || die "Failed to download Opera .deb."
+                    sudo dpkg -i /tmp/opera.deb 2>/dev/null || true
+                    sudo apt-get install -f -y \
+                        || die "Failed to fix Opera dependencies."
+                    rm -f /tmp/opera.deb
                     ;;
-                debian)
-                    log_info "Adding Opera APT repository..."
-                    sudo install -d -m 0755 /etc/apt/keyrings
-                    curl -fsSL https://deb.opera.com/archive.key \
-                        | gpg --dearmor \
-                        | sudo tee /etc/apt/keyrings/opera-browser.gpg > /dev/null \
-                        || die "Failed to add Opera signing key."
-                    echo "deb [signed-by=/etc/apt/keyrings/opera-browser.gpg] https://deb.opera.com/opera-stable/ stable non-free" \
-                        | sudo tee /etc/apt/sources.list.d/opera-archive.list > /dev/null \
-                        || die "Failed to add Opera apt source."
-                    sudo apt-get update -y \
-                        || die "Failed to update apt after adding Opera repository."
-                    sudo apt-get install -y opera-stable \
+                rpm)
+                    log_info "Downloading Opera .rpm from official source..."
+                    _download_file \
+                        "https://download.opera.com/download/get/?partner=www&opsys=Linux&package=RPM" \
+                        /tmp/opera.rpm \
+                        || die "Failed to download Opera .rpm."
+                    sudo dnf install -y /tmp/opera.rpm \
                         || die "Failed to install Opera."
+                    rm -f /tmp/opera.rpm
                     ;;
-                fedora)
-                    log_info "Adding Opera RPM repository..."
-                    sudo rpm --import https://rpm.opera.com/rpmrepo.key 2>/dev/null || true
-                    sudo tee /etc/yum.repos.d/opera.repo > /dev/null <<'EOF'
-[opera]
-name=Opera packages
-type=rpm-md
-baseurl=https://rpm.opera.com/rpm
-gpgcheck=1
-gpgkey=https://rpm.opera.com/rpmrepo.key
-enabled=1
-EOF
-                    sudo dnf install -y opera-stable || sudo dnf install -y opera-developer \
-                        || die "Failed to install Opera."
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install opera \
+                        || die "Failed to install Opera via Snap."
                     ;;
                 *)
-                    die "Unsupported distro for Opera: $DISTRO"
+                    die "Unsupported Opera package source: $pkg_name"
                     ;;
             esac
             ;;

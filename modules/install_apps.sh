@@ -697,6 +697,12 @@ _install_native_app() {
                         "https://download.opera.com/download/get/?partner=www&opsys=Linux&package=deb" \
                         /tmp/opera.deb \
                         || die "Failed to download Opera .deb."
+
+                    if file -b --mime-type /tmp/opera.deb | grep -q 'text/html'; then
+                        rm -f /tmp/opera.deb
+                        die "O download retornou uma página HTML em vez do .deb. Servidor da Opera provavelmente bloqueou o User-Agent do curl."
+                    fi
+
                     sudo dpkg -i /tmp/opera.deb || true
                     sudo apt-get install -f -y \
                         || die "Failed to fix Opera dependencies."

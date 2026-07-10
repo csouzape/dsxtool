@@ -690,46 +690,53 @@ _install_native_app() {
             rm -f /tmp/helium.AppImage
             ;;
         "Opera")
-            case "$pkg_name" in
-                deb)
-                    log_info "Downloading Opera .deb from official source..."
-                    _download_file \
-                        "https://download.opera.com/download/get/?partner=www&opsys=Linux&package=deb" \
-                        /tmp/opera.deb \
-                        || die "Failed to download Opera .deb."
+    case "$pkg_name" in
+        deb)
+            log_info "Adding Opera's official APT repository..."
+            if ! command -v gpg >/dev/null 2>&1; then
+                pkg_install gnupg || die "Failed to install gnupg for Opera's signing key."
+            fi
+            sudo mkdir -p /usr/share/keyrings
+            curl -fsSL https://deb.opera.com/archive.key \
+                | sudo gpg --dearmor --yes -o /usr/share/keyrings/opera-browser.gpg \
+                || die "Failed to import Opera's GPG key."
 
-                    if file -b --mime-type /tmp/opera.deb | grep -q 'text/html'; then
-                        rm -f /tmp/opera.deb
-                        die "O download retornou uma página HTML em vez do .deb. Servidor da Opera provavelmente bloqueou o User-Agent do curl."
-                    fi
+            echo "deb [signed-by=/usr/share/keyrings/opera-browser.gpg] https://deb.opera.com/opera-stable/ stable non-free" \
+                | sudo tee /etc/apt/sources.list.d/opera-stable.list > /dev/null
 
-                    sudo dpkg -i /tmp/opera.deb || true
-                    sudo apt-get install -f -y \
-                        || die "Failed to fix Opera dependencies."
-                    sudo dpkg -i /tmp/opera.deb \
-                        || die "Failed to install Opera package after resolving dependencies."
-                    rm -f /tmp/opera.deb
-                    ;;
-                rpm)
-                    log_info "Downloading Opera .rpm from official source..."
-                    _download_file \
-                        "https://download.opera.com/download/get/?partner=www&opsys=Linux&package=RPM" \
-                        /tmp/opera.rpm \
-                        || die "Failed to download Opera .rpm."
-                    sudo dnf install -y /tmp/opera.rpm \
-                        || die "Failed to install Opera."
-                    rm -f /tmp/opera.rpm
-                    ;;
-                snap)
-                    if ! _can_use_snap; then
-                        die "Snap is not installed or enabled. Install snapd and enable it first."
-                    fi
-                    sudo snap install opera \
-                        || die "Failed to install Opera via Snap."
-                    ;;
-                *)
-                    die "Unsupported Opera package source: $pkg_name"
-                    ;;
+            sudo apt-get update \
+                || die "Failed to refresh APT after adding Opera's repository."
+            sudo apt-get install -y opera-stable \
+                || die "Failed to install Opera via APT."
+            ;;
+        rpm)
+            log_info "Adding Opera's official DNF repository..."
+            sudo rpm --import https://rpm.opera.com/rpmrepo.key \
+                || die "Failed to import Opera's RPM signing key."
+
+            sudo tee /etc/yum.repos.d/opera.repo > /dev/null << 'EOF'
+[opera]
+name=Opera packages
+type=rpm-md
+baseurl=https://rpm.opera.com/rpm
+gpgcheck=1
+gpgkey=https://rpm.opera.com/rpmrepo.key
+enabled=1
+EOF
+
+            sudo dnf install -y opera-stable \
+                || die "Failed to install Opera via DNF."
+            ;;
+        snap)
+            if ! _can_use_snap; then
+                die "Snap is not installed or enabled. Install snapd and enable it first."
+            fi
+            sudo snap install opera \
+                || die "Failed to install Opera via Snap."
+            ;;
+        *)
+            die "Unsupported Opera package source: $pkg_name"
+            ;;
             esac
             ;;
         "fd")

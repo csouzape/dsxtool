@@ -694,12 +694,14 @@ _install_native_app() {
                 deb)
                     log_info "Downloading Opera .deb from official source..."
                     _download_file \
-                        "https://download.opera.com/download/get/?partner=www&opsys=Linux" \
+                        "https://download.opera.com/download/get/?partner=www&opsys=Linux&package=deb" \
                         /tmp/opera.deb \
                         || die "Failed to download Opera .deb."
-                    sudo dpkg -i /tmp/opera.deb 2>/dev/null || true
+                    sudo dpkg -i /tmp/opera.deb || true
                     sudo apt-get install -f -y \
                         || die "Failed to fix Opera dependencies."
+                    sudo dpkg -i /tmp/opera.deb \
+                        || die "Failed to install Opera package after resolving dependencies."
                     rm -f /tmp/opera.deb
                     ;;
                 rpm)

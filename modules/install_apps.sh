@@ -33,7 +33,7 @@ register_category_apps "Browsers" \
     "Zen Browser" "native|-|-|-;flatpak|-|app.zen_browser.zen|-;aur|-|-|zen-browser-bin" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
-    "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin"
+    "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin"
 
 register_category_apps "Media" \
     "VLC" "pkg|vlc|org.videolan.VLC|-" \

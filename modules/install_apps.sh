@@ -464,7 +464,7 @@ _install_app() {
     local method pkg_name flatpak_id aur_pkg
     IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$selected_target"
 
-    log_info "Installing $app using $(_target_label "$selected_target")..."
+    log_info "Installing $app using $(_target_label "$app" "$selected_target")..."
 
     case "$method" in
         pkg)

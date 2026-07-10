@@ -564,21 +564,21 @@ EOF
 _download_file() {
     local url="$1"
     local output_path="$2"
-
+    local ua="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+ 
     if command -v curl >/dev/null 2>&1; then
-        curl -fsSL --retry 3 --retry-delay 2 -o "$output_path" "$url" \
+        curl -fsSL -A "$ua" --retry 3 --retry-delay 2 -o "$output_path" "$url" \
             || return 1
     elif command -v wget >/dev/null 2>&1; then
-        wget --progress=bar:force -O "$output_path" "$url" \
+        wget --user-agent="$ua" --progress=bar:force -O "$output_path" "$url" \
             || return 1
     else
         log_warn "Neither curl nor wget is available. Installing curl first..."
         pkg_install curl || return 1
-        curl -fsSL --retry 3 --retry-delay 2 -o "$output_path" "$url" \
+        curl -fsSL -A "$ua" --retry 3 --retry-delay 2 -o "$output_path" "$url" \
             || return 1
     fi
 }
-
 _install_native_app() {
     local app="$1"
     case "$app" in
@@ -689,32 +689,32 @@ _install_native_app() {
             sudo ln -sf "$binary_path" "$launcher_path"
             rm -f /tmp/helium.AppImage
             ;;
-        "Opera")
-    case "$pkg_name" in
-        deb)
-            log_info "Adding Opera's official APT repository..."
-            if ! command -v gpg >/dev/null 2>&1; then
-                pkg_install gnupg || die "Failed to install gnupg for Opera's signing key."
-            fi
-            sudo mkdir -p /usr/share/keyrings
-            curl -fsSL https://deb.opera.com/archive.key \
-                | sudo gpg --dearmor --yes -o /usr/share/keyrings/opera-browser.gpg \
-                || die "Failed to import Opera's GPG key."
-
-            echo "deb [signed-by=/usr/share/keyrings/opera-browser.gpg] https://deb.opera.com/opera-stable/ stable non-free" \
-                | sudo tee /etc/apt/sources.list.d/opera-stable.list > /dev/null
-
-            sudo apt-get update \
-                || die "Failed to refresh APT after adding Opera's repository."
-            sudo apt-get install -y opera-stable \
-                || die "Failed to install Opera via APT."
-            ;;
-        rpm)
-            log_info "Adding Opera's official DNF repository..."
-            sudo rpm --import https://rpm.opera.com/rpmrepo.key \
-                || die "Failed to import Opera's RPM signing key."
-
-            sudo tee /etc/yum.repos.d/opera.repo > /dev/null << 'EOF'
+                "Opera")
+            case "$pkg_name" in
+                deb)
+                    log_info "Adding Opera's official APT repository..."
+                    if ! command -v gpg >/dev/null 2>&1; then
+                        pkg_install gnupg || die "Failed to install gnupg for Opera's signing key."
+                    fi
+                    sudo mkdir -p /usr/share/keyrings
+                    curl -fsSL https://deb.opera.com/archive.key \
+                        | sudo gpg --dearmor --yes -o /usr/share/keyrings/opera-browser.gpg \
+                        || die "Failed to import Opera's GPG key."
+ 
+                    echo "deb [signed-by=/usr/share/keyrings/opera-browser.gpg] https://deb.opera.com/opera-stable/ stable non-free" \
+                        | sudo tee /etc/apt/sources.list.d/opera-stable.list > /dev/null
+ 
+                    sudo DEBIAN_FRONTEND=noninteractive apt-get update \
+                        || die "Failed to refresh APT after adding Opera's repository."
+                    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y opera-stable \
+                        || die "Failed to install Opera via APT."
+                    ;;
+                rpm)
+                    log_info "Adding Opera's official DNF repository..."
+                    sudo rpm --import https://rpm.opera.com/rpmrepo.key \
+                        || die "Failed to import Opera's RPM signing key."
+ 
+                    sudo tee /etc/yum.repos.d/opera.repo > /dev/null << 'EOF'
 [opera]
 name=Opera packages
 type=rpm-md
@@ -723,20 +723,20 @@ gpgcheck=1
 gpgkey=https://rpm.opera.com/rpmrepo.key
 enabled=1
 EOF
-
-            sudo dnf install -y opera-stable \
-                || die "Failed to install Opera via DNF."
-            ;;
-        snap)
-            if ! _can_use_snap; then
-                die "Snap is not installed or enabled. Install snapd and enable it first."
-            fi
-            sudo snap install opera \
-                || die "Failed to install Opera via Snap."
-            ;;
-        *)
-            die "Unsupported Opera package source: $pkg_name"
-            ;;
+ 
+                    sudo dnf install -y opera-stable \
+                        || die "Failed to install Opera via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install opera \
+                        || die "Failed to install Opera via Snap."
+                    ;;
+                *)
+                    die "Unsupported Opera package source: $pkg_name"
+                    ;;
             esac
             ;;
         "fd")

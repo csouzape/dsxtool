@@ -40,7 +40,7 @@ register_category_apps "Media" \
     "Spotify" "flatpak|-|com.spotify.Client|-" \
     "Celluloid" "pkg|celluloid|io.github.celluloid_player.Celluloid|-" \
     "Rhythmbox" "pkg|rhythmbox|org.gnome.Rhythmbox3|-" \
-    "OBS Studio" "pkg|obs-studio|com.obsproject.Studio|-" \
+    "OBS Studio" "pkg|obs-studio|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.obsproject.OBS|-;aur|-|-|obs-studio-bin" \
     "MPV" "pkg|mpv|-|-" \
     "Handbrake" "pkg|handbrake|fr.handbrake.ghb|-" \
     "Kdenlive" "pkg|kdenlive|org.kde.kdenlive|-" \
@@ -177,11 +177,18 @@ _get_available_targets() {
         IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
 
         case "$method" in
-            pkg|flatpak|terminal)
-                printf '%s\n' "$target"
-                ;;
+            flatpak|terminal)
+                 printf '%s\n' "$target"
+                 ;;
++            pkg)
++                if [[ "$app" == "OBS Studio" ]]; then
++                    [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
++                else
++                    printf '%s\n' "$target"
++                fi
++                ;;
             native)
-                if [[ "$app" == "Opera" ]]; then
+                if [[ "$app" == "Opera" || "$app" == "OBS Studio" ]]; then
                     case "$pkg_name" in
                         deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
                         rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
@@ -192,6 +199,7 @@ _get_available_targets() {
                     printf '%s\n' "$target"
                 fi
                 ;;
+                
             aur)
                 if _can_use_aur; then
                     printf '%s\n' "$target"
@@ -292,6 +300,14 @@ _is_installed() {
                             *) return 1 ;;
                         esac
                         ;;
+                    "OBS Studio")
+                        case "$pkg_name" in
+                            deb) dpkg -s obs-studio &>/dev/null || dpkg -s obs-studio-bin &>/dev/null ;;
+                            rpm) rpm -q obs-studio &>/dev/null || rpm -q obs-studio-bin &>/dev/null ;;
+                            snap) snap list obs-studio &>/dev/null ;;
+                            *) return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -348,6 +364,14 @@ _remove_app() {
                                 deb) dpkg -s opera-stable &>/dev/null || dpkg -s opera-developer &>/dev/null ;;
                                 rpm) rpm -q opera-stable &>/dev/null || rpm -q opera-developer &>/dev/null ;;
                                 snap) snap list opera &>/dev/null ;;
+                                *) false ;;
+                            esac
+                            ;;
+                        "OBS Studio")
+                            case "$pkg_name" in
+                                deb) dpkg -s obs-studio &>/dev/null || dpkg -s obs-studio-bin &>/dev/null ;;
+                                rpm) rpm -q obs-studio &>/dev/null || rpm -q obs-studio-bin &>/dev/null ;;
+                                snap) snap list obs-studio &>/dev/null ;;
                                 *) false ;;
                             esac
                             ;;
@@ -410,6 +434,20 @@ _remove_app() {
                     ;;
                 "Helium Browser")
                     sudo rm -f /opt/helium/helium /usr/local/bin/helium /usr/bin/helium 2>/dev/null || true
+                    ;;
+                "Opera")
+                    case "$pkg_name" in
+                        deb) sudo apt-get remove -y opera-stable opera-developer ;;
+                        rpm) sudo dnf remove -y opera-stable opera-developer ;;
+                        snap) sudo snap remove opera ;;
+                    esac
+                    ;;
+                "OBS Studio")
+                    case "$pkg_name" in
+                        deb) sudo apt-get remove -y obs-studio obs-studio-bin ;;
+                        rpm) sudo dnf remove -y obs-studio obs-studio-bin ;;
+                        snap) sudo snap remove obs-studio ;;
+                    esac
                     ;;
                 "fd")
                     case "$DISTRO" in
@@ -736,6 +774,32 @@ EOF
                     ;;
                 *)
                     die "Unsupported Opera package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "OBS Studio")
+            case "$pkg_name" in
+                deb)
+                    log_info "Installing OBS Studio via APT..."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT before installing OBS Studio."
+                    sudo apt-get install -y obs-studio \
+                        || die "Failed to install OBS Studio via APT."
+                    ;;
+                rpm)
+                    log_info "Installing OBS Studio via DNF..."
+                    sudo dnf install -y obs-studio \
+                        || die "Failed to install OBS Studio via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install obs-studio \
+                        || die "Failed to install OBS Studio via Snap."
+                    ;;
+                *)
+                    die "Unsupported OBS Studio package source: $pkg_name"
                     ;;
             esac
             ;;

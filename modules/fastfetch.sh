@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# ---------------------------------------------------------------------------
-# dsxtool · Fastfetch module
-# ---------------------------------------------------------------------------
-# Installs fastfetch, deploys a default configuration (backing up any existing
-# one) and optionally wires it into the user's shell startup file.
-# ---------------------------------------------------------------------------
-
 install_fastfetch() {
     if command -v fastfetch &>/dev/null; then
         log_info "Fastfetch is already installed."
@@ -57,8 +50,7 @@ install_fastfetch() {
     fi
 }
 
-# Upstream config (csouzape/bashconfig). Falls back to the embedded default
-# below if it cannot be downloaded.
+
 FASTFETCH_CONFIG_URL="${FASTFETCH_CONFIG_URL:-https://raw.githubusercontent.com/csouzape/bashconfig/main/fastfetch/config.jsonc}"
 
 setup_fastfetch_config() {
@@ -73,7 +65,6 @@ setup_fastfetch_config() {
 
     mkdir -p "$config_dir"
 
-    # Prefer the upstream config; fall back to the embedded default on failure.
     if curl -fsSLo "$config_file" "$FASTFETCH_CONFIG_URL"; then
         log_info "Fastfetch configuration downloaded to $config_file."
         return 0

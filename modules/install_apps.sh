@@ -180,13 +180,13 @@ _get_available_targets() {
             flatpak|terminal)
                  printf '%s\n' "$target"
                  ;;
-+            pkg)
-+                if [[ "$app" == "OBS Studio" ]]; then
-+                    [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
-+                else
-+                    printf '%s\n' "$target"
-+                fi
-+                ;;
+            pkg)
+                if [[ "$app" == "OBS Studio" ]]; then
+                    [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
+                else
+                    printf '%s\n' "$target"
+                fi
+                ;;
             native)
                 if [[ "$app" == "Opera" || "$app" == "OBS Studio" ]]; then
                     case "$pkg_name" in

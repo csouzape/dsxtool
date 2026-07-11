@@ -37,7 +37,7 @@ register_category_apps "Browsers" \
 
 register_category_apps "Media" \
     "VLC" "pkg|vlc|org.videolan.VLC|-" \
-    "Spotify" "flatpak|-|com.spotify.Client|-" \
+    "Spotify" "pkg|spotify|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.spotify.Client|-;aur|-|-|spotify" \
     "Celluloid" "pkg|celluloid|io.github.celluloid_player.Celluloid|-" \
     "Rhythmbox" "pkg|rhythmbox|org.gnome.Rhythmbox3|-" \
     "OBS Studio" "pkg|obs-studio|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.obsproject.OBS|-;aur|-|-|obs-studio-bin" \
@@ -181,14 +181,14 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
                 fi
                 ;;
             native)
-                if [[ "$app" == "Opera" || "$app" == "OBS Studio" ]]; then
+                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" ]]; then
                     case "$pkg_name" in
                         deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
                         rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
@@ -308,6 +308,14 @@ _is_installed() {
                             *) return 1 ;;
                         esac
                         ;;
+                    "Spotify")
+                        case "$pkg_name" in
+                            deb) dpkg -s spotify-client &>/dev/null ;;
+                            rpm) rpm -q spotify-client &>/dev/null ;;
+                            snap) snap list spotify &>/dev/null ;;
+                            *) return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -372,6 +380,14 @@ _remove_app() {
                                 deb) dpkg -s obs-studio &>/dev/null || dpkg -s obs-studio-bin &>/dev/null ;;
                                 rpm) rpm -q obs-studio &>/dev/null || rpm -q obs-studio-bin &>/dev/null ;;
                                 snap) snap list obs-studio &>/dev/null ;;
+                                *) false ;;
+                            esac
+                            ;;
+                        "Spotify")
+                            case "$pkg_name" in
+                                deb) dpkg -s spotify-client &>/dev/null ;;
+                                rpm) rpm -q spotify-client &>/dev/null ;;
+                                snap) snap list spotify &>/dev/null ;;
                                 *) false ;;
                             esac
                             ;;
@@ -447,6 +463,13 @@ _remove_app() {
                         deb) sudo apt-get remove -y obs-studio obs-studio-bin ;;
                         rpm) sudo dnf remove -y obs-studio obs-studio-bin ;;
                         snap) sudo snap remove obs-studio ;;
+                    esac
+                    ;;
+                "Spotify")
+                    case "$pkg_name" in
+                        deb) sudo apt-get remove -y spotify-client ;;
+                        rpm) sudo dnf remove -y spotify-client ;;
+                        snap) sudo snap remove spotify ;;
                     esac
                     ;;
                 "fd")
@@ -800,6 +823,34 @@ EOF
                     ;;
                 *)
                     die "Unsupported OBS Studio package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Spotify")
+            case "$pkg_name" in 
+                deb)
+                    log_info "Adding Spotify's official APT repository..."
+                    curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg \
+                        | sudo gpg --dearmor --yes -o /usr/share/keyrings/spotify-archive-keyring.gpg \
+                        || die "Failed to import Spotify's GPG key."
+                    echo "deb [signed-by=/usr/share/keyrings/spotify-archive-keyring.gpg] http://repository.spotify.com stable non-free" \
+                        | sudo tee /etc/apt/sources.list.d/spotify.list > /dev/null
+                    sudo apt-get update || die "Failed to refresh APT."
+                    sudo apt-get install -y spotify-client || die "Failed to install Spotify via APT."
+                    ;;
+                rpm)
+                    log_info "Adding Spotify's official DNF repository..."
+                    sudo dnf config-manager --add-repo=https://negativo17.org/repos/spotify
+                    sudo dnf install -y spotify-client || die "Failed to install Spotify via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install spotify || die "Failed to install Spotify via Snap."
+                    ;;
+                *)
+                    die "Unsupported Spotify package source: $pkg_name"
                     ;;
             esac
             ;;

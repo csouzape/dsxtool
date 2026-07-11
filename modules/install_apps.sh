@@ -45,7 +45,8 @@ register_category_apps "Media" \
     "Handbrake" "pkg|handbrake|fr.handbrake.ghb|-" \
     "Kdenlive" "pkg|kdenlive|org.kde.kdenlive|-" \
     "Synergy" "native|-|-|-" \
-    "EasyEffects" "pkg|easyeffects|-|-;flatpak|-|com.github.wwmm.easyeffects|-;aur|-|-|easyeffects"
+    "EasyEffects" "pkg|easyeffects|-|-;flatpak|-|com.github.wwmm.easyeffects|-;aur|-|-|easyeffects" \
+    "YouTube Music Desktop" "native|-|-|-"
 
 register_category_apps "Communication" \
     "Discord" "flatpak|-|com.discordapp.Discord|-" \
@@ -54,7 +55,6 @@ register_category_apps "Communication" \
     "Slack" "flatpak|-|com.slack.Slack|-" \
     "Zoom" "flatpak|-|us.zoom.Zoom|-" \
     "Teams" "flatpak|-|com.microsoft.Teams|-" \
-    "YouTube Music Desktop" "native|-|-|-"
 
 register_category_apps "Productivity" \
     "LibreOffice" "pkg|libreoffice|org.libreoffice.LibreOffice|-" \

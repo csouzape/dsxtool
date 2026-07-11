@@ -555,6 +555,22 @@ install_devtool() {
             esac
             log_info "Terraform installed successfully."
             ;;
+        "Github Desktop")
+            log_info "Installing GitHub Desktop..."
+            case "$DISTRO" in
+                arch)
+                    require_aur_helper
+                    aur_install github-desktop-bin \
+                        && log_info "GitHub Desktop installed successfully." \
+                        || die "Failed to install GitHub Desktop."
+                    ;;
+                debian|fedora)
+                    flatpak install -y flathub io.github.shiftey.Desktop \
+                        && log_info "GitHub Desktop installed successfully." \
+                        || die "Failed to install GitHub Desktop."
+                    ;;
+            esac
+            ;;
     esac
 }
 

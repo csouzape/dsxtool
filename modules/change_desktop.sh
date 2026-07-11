@@ -108,12 +108,12 @@ install_budgie()    { _install_desktop "Budgie"      "budgie"; }
 install_hyprland_csouzape() {
     local repo_url="https://github.com/csouzape/hyprdots"
 
-    log_info "Instalando Hyprland (csouzape edition)..."
-    _fzf_confirm "Prosseguir com a instalação do Hyprland csouzape edition?" \
-        || { log_warn "Instalação cancelada."; return 0; }
+    log_info "Installing hyprland (csouzape edition) from $repo_url..."
+    _fzf_confirm "You want to install the csouzape edition of Hyprland?" \
+        || { log_warn "Instalation cancelled."; return 0; }
 
     if ! command -v git &>/dev/null; then
-        die "Git não está instalado."
+        die "Git not installed."
     fi
 
     local tmp_dir
@@ -122,19 +122,19 @@ install_hyprland_csouzape() {
     log_info "Clonando $repo_url..."
     git clone "$repo_url" "$tmp_dir" || {
         rm -rf "$tmp_dir"
-        die "Falha ao clonar repositório."
+        die "Failed to clone repository."
     }
 
-    chmod +x "$tmp_dir/hyprdots.sh"
+    chmod +x "$tmp_dir/install.sh"
 
-    if ! sudo bash "$tmp_dir/hyprdots.sh" < /dev/tty; then
+    if ! sudo bash "$tmp_dir/install.sh" < /dev/tty; then
         rm -rf "$tmp_dir"
-        log_warn "hyprdots.sh encerrou com erro ou foi cancelado."
+        log_warn "install.sh failed with exit code $?."
         return 1
     fi
 
     rm -rf "$tmp_dir"
-    log_info "Config Hyprland do csouzape instalada com sucesso."
+    log_info "Hyprland config was installed sucessfull."
 }
 
 prompt_change_desktop() {

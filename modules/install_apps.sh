@@ -43,7 +43,7 @@ register_category_apps "Media" \
     "OBS Studio" "pkg|obs-studio|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.obsproject.OBS|-;aur|-|-|obs-studio-bin" \
     "MPV" "pkg|mpv|-|-" \
     "Handbrake" "pkg|handbrake|fr.handbrake.ghb|-" \
-    "Kdenlive" "pkg|kdenlive|org.kde.kdenlive|-" \
+    "kdenlive" "pkg|kdenlive|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.kde.kdenlive|-;aur|-|-|kdenlive" \
     "Synergy" "native|-|-|-" \
     "EasyEffects" "pkg|easyeffects|-|-;flatpak|-|com.github.wwmm.easyeffects|-;aur|-|-|easyeffects" \
     "YouTube Music Desktop" "native|-|-|-"
@@ -181,14 +181,14 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
                 fi
                 ;;
             native)
-                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" ]]; then
+                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" ]]; then
                     case "$pkg_name" in
                         deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
                         rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
@@ -316,6 +316,14 @@ _is_installed() {
                             *) return 1 ;;
                         esac
                         ;;
+                    "kdenlive")
+                        case "$pkg_name" in
+                            deb)  dpkg -s kdenlive &>/dev/null ;;
+                            rpm)  rpm -q kdenlive &>/dev/null ;;
+                            snap) snap list kdenlive &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -389,6 +397,13 @@ _remove_app() {
                                 rpm) rpm -q spotify-client &>/dev/null ;;
                                 snap) snap list spotify &>/dev/null ;;
                                 *) false ;;
+                            esac
+                            ;;
+                        "kdenlive")
+                            case "$pkg_name" in
+                                deb)  sudo apt-get remove -y kdenlive ;;
+                                rpm)  sudo dnf remove -y kdenlive ;;
+                                snap) sudo snap remove kdenlive ;;
                             esac
                             ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
@@ -835,7 +850,6 @@ EOF
                         || die "Failed to import Spotify's GPG key."
                     echo "deb [signed-by=/usr/share/keyrings/spotify-archive-keyring.gpg] http://repository.spotify.com stable non-free" \
                         | sudo tee /etc/apt/sources.list.d/spotify.list > /dev/null
-                    sudo apt-get update || die "Failed to refresh APT."
                     sudo apt-get install -y spotify-client || die "Failed to install Spotify via APT."
                     ;;
                 rpm)
@@ -851,6 +865,27 @@ EOF
                     ;;
                 *)
                     die "Unsupported Spotify package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "kdenlive")
+            case "$pkg_name" in
+                deb)
+                    log_info "Installing kdenlive via APT..."
+                    sudo apt-get install -y kdenlive || die "Failed to install kdenlive via APT."
+                    ;;
+                rpm)
+                    log_info "Installing kdenlive via DNF..."
+                    sudo dnf install -y kdenlive || die "Failed to install kdenlive via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install kdenlive || die "Failed to install kdenlive via Snap."
+                    ;;
+                *)
+                    die "Unsupported kdenlive package source: $pkg_name"
                     ;;
             esac
             ;;

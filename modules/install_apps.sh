@@ -38,7 +38,7 @@ register_category_apps "Browsers" \
 register_category_apps "Media" \
     "VLC" "pkg|vlc|-|-;flatpak|-|org.videolan.VLC|-" \
     "Spotify" "pkg|spotify|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.spotify.Client|-;aur|-|-|spotify" \
-    "Celluloid" "pkg|celluloid|-|-;flatpak|-|org.gnome.Celluloid|-|-;native|snap|-|-|;aur|-|-|celluloid" \
+    "Celluloid" "pkg|celluloid|-|-;flatpak|-|io.github.celluloid_player.Celluloid|-|-;native|snap|-|-|;aur|-|-|celluloid" \
     "Rhythmbox" "pkg|rhythmbox|org.gnome.Rhythmbox3|-" \
     "OBS Studio" "pkg|obs-studio|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.obsproject.OBS|-;aur|-|-|obs-studio-bin" \
     "MPV" "pkg|mpv|-|-" \

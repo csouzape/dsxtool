@@ -188,18 +188,14 @@ _get_available_targets() {
                 fi
                 ;;
             native)
-                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" ]]; then
-                    case "$pkg_name" in
-                        deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
-                        rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
-                        snap) [[ "$DISTRO" == "debian" ]] && _can_use_snap && printf '%s\n' "$target" ;;
-                        *) printf '%s\n' "$target" ;;
-                    esac
-                else
-                    printf '%s\n' "$target"
-                fi
+                case "$pkg_name" in
+                    deb)  [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
+                    rpm)  [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
+                    snap) _can_use_snap && printf '%s\n' "$target" ;;
+                    *)    printf '%s\n' "$target" ;;
+                esac
                 ;;
-                
+
             aur)
                 if _can_use_aur; then
                     printf '%s\n' "$target"

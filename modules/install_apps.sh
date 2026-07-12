@@ -54,7 +54,7 @@ register_category_apps "Communication" \
     "Signal" "flatpak|-|org.signal.Signal|-" \
     "Slack" "flatpak|-|com.slack.Slack|-" \
     "Zoom" "flatpak|-|us.zoom.Zoom|-" \
-    "Teams" "flatpak|-|com.microsoft.Teams|-" \
+    "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin"
 
 register_category_apps "Productivity" \
     "LibreOffice" "pkg|libreoffice|org.libreoffice.LibreOffice|-" \
@@ -147,6 +147,14 @@ _target_label() {
                         rpm) printf 'Official (.rpm)' ;;
                         snap) printf 'Snap' ;;
                         *) printf 'Official (Opera)' ;;
+                    esac
+                    ;;
+                "Teams")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Teams)' ;;
                     esac
                     ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
@@ -328,6 +336,14 @@ _is_installed() {
                             *)    return 1 ;;
                         esac
                         ;;
+                    "Teams")
+                        case "$pkg_name" in 
+                            deb)  dpkg -s teams-for-linux &>/dev/null ;;
+                            rpm)  rpm -q teams-for-linux &>/dev/null ;;
+                            snap) snap list teams-for-linux &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -416,6 +432,14 @@ _remove_app() {
                                 deb)  dpkg -s discord &>/dev/null ;;
                                 rpm)  rpm -q discord &>/dev/null ;;
                                 snap) snap list discord &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
+                        "Teams")
+                            case "$pkg_name" in 
+                                deb) dpkg -s teams-for-linux &>/dev/null ;;
+                                rpm) rpm -q teams-for-linux &>/dev/null ;;
+                                snap) snap list teams-for-linux &>/dev/null ;;
                                 *)    false ;;
                             esac
                             ;;
@@ -956,6 +980,42 @@ EOF
                 debian) pkg_install thunderbird ;;
                 fedora) pkg_install thunderbird ;;
                 snap)  sudo snap install thunderbird || die "Failed to install Thunderbird via Snap." ;;            
+            esac
+            ;;
+        "Teams")
+            case "$pkg_name" in
+                deb)
+                    log_info "Adding teams-for-linux's official APT repository..."
+                    sudo mkdir -p /etc/apt/keyrings
+                    curl -fsSL https://repo.teamsforlinux.de/teams-for-linux.asc \
+                        | sudo tee /etc/apt/keyrings/teams-for-linux.asc > /dev/null \
+                        || die "Failed to import teams-for-linux's signing key."
+                    echo "deb [signed-by=/etc/apt/keyrings/teams-for-linux.asc arch=$(dpkg --print-architecture)] https://repo.teamsforlinux.de/debian/ stable main" \
+                        | sudo tee /etc/apt/sources.list.d/teams-for-linux.list > /dev/null
+                    sudo apt-get update \
+                        || die "Failed to refresh APT after adding teams-for-linux's repository."
+                    sudo apt-get install -y teams-for-linux || die "Failed to install teams-for-linux via APT."
+                    ;;
+                rpm)
+                    log_info "Adding teams-for-linux's official DNF repository..."
+                    curl -fsSL https://repo.teamsforlinux.de/teams-for-linux.asc -o /tmp/teams-for-linux.asc \
+                        || die "Failed to download teams-for-linux's signing key."
+                    sudo rpm --import /tmp/teams-for-linux.asc \
+                        || die "Failed to import teams-for-linux's signing key."
+                    rm -f /tmp/teams-for-linux.asc
+                    sudo curl -fsSL -o /etc/yum.repos.d/teams-for-linux.repo https://repo.teamsforlinux.de/rpm/teams-for-linux.repo \
+                        || die "Failed to add teams-for-linux's DNF repository."
+                    sudo dnf install -y teams-for-linux || die "Failed to install teams-for-linux via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install teams-for-linux || die "Failed to install teams-for-linux via Snap."
+                    ;;
+                *)
+                    die "Unsupported Teams package source: $pkg_name"
+                    ;;
             esac
             ;;
         "fd")

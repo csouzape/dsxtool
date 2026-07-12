@@ -36,7 +36,7 @@ register_category_apps "Browsers" \
     "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin"
 
 register_category_apps "Media" \
-    "VLC" "pkg|vlc|org.videolan.VLC|-" \
+    "VLC" "pkg|vlc|-|-;flatpak|-|org.videolan.VLC|-" \
     "Spotify" "pkg|spotify|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.spotify.Client|-;aur|-|-|spotify" \
     "Celluloid" "pkg|celluloid|io.github.celluloid_player.Celluloid|-" \
     "Rhythmbox" "pkg|rhythmbox|org.gnome.Rhythmbox3|-" \

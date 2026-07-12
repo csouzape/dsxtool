@@ -49,7 +49,7 @@ register_category_apps "Media" \
     "YouTube Music Desktop" "native|-|-|-"
 
 register_category_apps "Communication" \
-    "Discord" "flatpak|-|com.discordapp.Discord|-" \
+    "Discord" "pkg|discord|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.discordapp.Discord|-;aur|-|-|discord-latest-bin" \
     "Telegram" "flatpak|-|org.telegram.desktop|-" \
     "Signal" "flatpak|-|org.signal.Signal|-" \
     "Slack" "flatpak|-|com.slack.Slack|-" \
@@ -181,14 +181,14 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
                 fi
                 ;;
             native)
-                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" ]]; then
+                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" ]]; then
                     case "$pkg_name" in
                         deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
                         rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
@@ -324,6 +324,14 @@ _is_installed() {
                             *)    return 1 ;;
                         esac
                         ;;
+                    "Discord")
+                        case "$pkg_name" in
+                            deb)  dpkg -s discord &>/dev/null ;;
+                            rpm)  rpm -q discord &>/dev/null ;;
+                            snap) snap list discord &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -401,9 +409,18 @@ _remove_app() {
                             ;;
                         "kdenlive")
                             case "$pkg_name" in
-                                deb)  sudo apt-get remove -y kdenlive ;;
-                                rpm)  sudo dnf remove -y kdenlive ;;
-                                snap) sudo snap remove kdenlive ;;
+                                deb)  dpkg -s kdenlive &>/dev/null ;;
+                                rpm)  rpm -q kdenlive &>/dev/null ;;
+                                snap) snap list kdenlive &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
+                        "Discord")
+                            case "$pkg_name" in
+                                deb)  dpkg -s discord &>/dev/null ;;
+                                rpm)  rpm -q discord &>/dev/null ;;
+                                snap) snap list discord &>/dev/null ;;
+                                *)    false ;;
                             esac
                             ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
@@ -485,6 +502,20 @@ _remove_app() {
                         deb) sudo apt-get remove -y spotify-client ;;
                         rpm) sudo dnf remove -y spotify-client ;;
                         snap) sudo snap remove spotify ;;
+                    esac
+                    ;;
+                "kdenlive")
+                    case "$pkg_name" in
+                        deb)  sudo apt-get remove -y kdenlive ;;
+                        rpm)  sudo dnf remove -y kdenlive ;;
+                        snap) sudo snap remove kdenlive ;;
+                    esac
+                    ;;
+                "Discord")
+                    case "$pkg_name" in
+                        deb)  sudo apt-get remove -y discord ;;
+                        rpm)  sudo dnf remove -y discord ;;
+                        snap) sudo snap remove discord ;;
                     esac
                     ;;
                 "fd")
@@ -886,6 +917,40 @@ EOF
                     ;;
                 *)
                     die "Unsupported kdenlive package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Discord")
+            case "$pkg_name" in
+                deb)
+            log_info "Downloading Discord (.deb) from Discord's official servers..."
+            _download_file \
+                "https://discord.com/api/download?platform=linux&format=deb" \
+                /tmp/discord.deb \
+                || die "Failed to download Discord."
+            sudo dpkg -i /tmp/discord.deb 2>/dev/null || true
+            sudo apt-get install -f -y \
+                || die "Failed to fix Discord dependencies."
+            rm -f /tmp/discord.deb
+            ;;
+                rpm)
+            log_info "Downloading Discord (.rpm) from Discord's official servers..."
+            _download_file \
+                "https://discord.com/api/download?platform=linux&format=rpm" \
+                /tmp/discord.rpm \
+                || die "Failed to download Discord."
+            sudo dnf install -y /tmp/discord.rpm \
+                || die "Failed to install Discord."
+            rm -f /tmp/discord.rpm
+            ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install discord || die "Failed to install Discord via Snap."
+            ;;
+                *)
+                    die "Unsupported Discord package source: $pkg_name"
                     ;;
             esac
             ;;

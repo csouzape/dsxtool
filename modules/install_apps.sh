@@ -36,30 +36,30 @@ register_category_apps "Browsers" \
     "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin"
 
 register_category_apps "Media" \
-    "VLC" "pkg|vlc|org.videolan.VLC|-" \
+    "VLC" "pkg|vlc|-|-;flatpak|-|org.videolan.VLC|-" \
     "Spotify" "pkg|spotify|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.spotify.Client|-;aur|-|-|spotify" \
-    "Celluloid" "pkg|celluloid|io.github.celluloid_player.Celluloid|-" \
+    "Celluloid" "pkg|celluloid|-|-;flatpak|-|io.github.celluloid_player.Celluloid|-|-;native|snap|-|-|;aur|-|-|celluloid" \
     "Rhythmbox" "pkg|rhythmbox|org.gnome.Rhythmbox3|-" \
     "OBS Studio" "pkg|obs-studio|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.obsproject.OBS|-;aur|-|-|obs-studio-bin" \
     "MPV" "pkg|mpv|-|-" \
     "Handbrake" "pkg|handbrake|fr.handbrake.ghb|-" \
-    "Kdenlive" "pkg|kdenlive|org.kde.kdenlive|-" \
+    "kdenlive" "pkg|kdenlive|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.kde.kdenlive|-;aur|-|-|kdenlive" \
     "Synergy" "native|-|-|-" \
     "EasyEffects" "pkg|easyeffects|-|-;flatpak|-|com.github.wwmm.easyeffects|-;aur|-|-|easyeffects" \
     "YouTube Music Desktop" "native|-|-|-"
 
 register_category_apps "Communication" \
-    "Discord" "flatpak|-|com.discordapp.Discord|-" \
+    "Discord" "pkg|discord|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.discordapp.Discord|-;aur|-|-|discord-latest-bin" \
     "Telegram" "flatpak|-|org.telegram.desktop|-" \
     "Signal" "flatpak|-|org.signal.Signal|-" \
     "Slack" "flatpak|-|com.slack.Slack|-" \
     "Zoom" "flatpak|-|us.zoom.Zoom|-" \
-    "Teams" "flatpak|-|com.microsoft.Teams|-" \
+    "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin"
 
 register_category_apps "Productivity" \
     "LibreOffice" "pkg|libreoffice|org.libreoffice.LibreOffice|-" \
     "Obsidian" "flatpak|-|md.obsidian.Obsidian|-" \
-    "Thunderbird" "pkg|thunderbird|org.mozilla.Thunderbird|-" \
+    "Thunderbird" "pkg|thunderbird|-|-;native|snap|-|-;flatpak|-|org.mozilla.Thunderbird|-" \
     "Bitwarden" "flatpak|-|com.bitwarden.desktop|-" \
     "SyncThingy" "flatpak|-|com.github.zocker_160.SyncThingy|-" \
     "Syncthing Tray" "flatpak|-|io.github.martchus.syncthingtray|-" \
@@ -149,6 +149,14 @@ _target_label() {
                         *) printf 'Official (Opera)' ;;
                     esac
                     ;;
+                "Teams")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Teams)' ;;
+                    esac
+                    ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
             esac
             ;;
@@ -181,25 +189,21 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
                 fi
                 ;;
             native)
-                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" ]]; then
-                    case "$pkg_name" in
-                        deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
-                        rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
-                        snap) [[ "$DISTRO" == "debian" ]] && _can_use_snap && printf '%s\n' "$target" ;;
-                        *) printf '%s\n' "$target" ;;
-                    esac
-                else
-                    printf '%s\n' "$target"
-                fi
+                case "$pkg_name" in
+                    deb)  [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
+                    rpm)  [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
+                    snap) _can_use_snap && printf '%s\n' "$target" ;;
+                    *)    printf '%s\n' "$target" ;;
+                esac
                 ;;
-                
+
             aur)
                 if _can_use_aur; then
                     printf '%s\n' "$target"
@@ -316,6 +320,30 @@ _is_installed() {
                             *) return 1 ;;
                         esac
                         ;;
+                    "kdenlive")
+                        case "$pkg_name" in
+                            deb)  dpkg -s kdenlive &>/dev/null ;;
+                            rpm)  rpm -q kdenlive &>/dev/null ;;
+                            snap) snap list kdenlive &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
+                    "Discord")
+                        case "$pkg_name" in
+                            deb)  dpkg -s discord &>/dev/null ;;
+                            rpm)  rpm -q discord &>/dev/null ;;
+                            snap) snap list discord &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
+                    "Teams")
+                        case "$pkg_name" in 
+                            deb)  dpkg -s teams-for-linux &>/dev/null ;;
+                            rpm)  rpm -q teams-for-linux &>/dev/null ;;
+                            snap) snap list teams-for-linux &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -389,6 +417,30 @@ _remove_app() {
                                 rpm) rpm -q spotify-client &>/dev/null ;;
                                 snap) snap list spotify &>/dev/null ;;
                                 *) false ;;
+                            esac
+                            ;;
+                        "kdenlive")
+                            case "$pkg_name" in
+                                deb)  dpkg -s kdenlive &>/dev/null ;;
+                                rpm)  rpm -q kdenlive &>/dev/null ;;
+                                snap) snap list kdenlive &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
+                        "Discord")
+                            case "$pkg_name" in
+                                deb)  dpkg -s discord &>/dev/null ;;
+                                rpm)  rpm -q discord &>/dev/null ;;
+                                snap) snap list discord &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
+                        "Teams")
+                            case "$pkg_name" in 
+                                deb) dpkg -s teams-for-linux &>/dev/null ;;
+                                rpm) rpm -q teams-for-linux &>/dev/null ;;
+                                snap) snap list teams-for-linux &>/dev/null ;;
+                                *)    false ;;
                             esac
                             ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
@@ -470,6 +522,20 @@ _remove_app() {
                         deb) sudo apt-get remove -y spotify-client ;;
                         rpm) sudo dnf remove -y spotify-client ;;
                         snap) sudo snap remove spotify ;;
+                    esac
+                    ;;
+                "kdenlive")
+                    case "$pkg_name" in
+                        deb)  sudo apt-get remove -y kdenlive ;;
+                        rpm)  sudo dnf remove -y kdenlive ;;
+                        snap) sudo snap remove kdenlive ;;
+                    esac
+                    ;;
+                "Discord")
+                    case "$pkg_name" in
+                        deb)  sudo apt-get remove -y discord ;;
+                        rpm)  sudo dnf remove -y discord ;;
+                        snap) sudo snap remove discord ;;
                     esac
                     ;;
                 "fd")
@@ -835,7 +901,6 @@ EOF
                         || die "Failed to import Spotify's GPG key."
                     echo "deb [signed-by=/usr/share/keyrings/spotify-archive-keyring.gpg] http://repository.spotify.com stable non-free" \
                         | sudo tee /etc/apt/sources.list.d/spotify.list > /dev/null
-                    sudo apt-get update || die "Failed to refresh APT."
                     sudo apt-get install -y spotify-client || die "Failed to install Spotify via APT."
                     ;;
                 rpm)
@@ -851,6 +916,105 @@ EOF
                     ;;
                 *)
                     die "Unsupported Spotify package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "kdenlive")
+            case "$pkg_name" in
+                deb)
+                    log_info "Installing kdenlive via APT..."
+                    sudo apt-get install -y kdenlive || die "Failed to install kdenlive via APT."
+                    ;;
+                rpm)
+                    log_info "Installing kdenlive via DNF..."
+                    sudo dnf install -y kdenlive || die "Failed to install kdenlive via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install kdenlive || die "Failed to install kdenlive via Snap."
+                    ;;
+                *)
+                    die "Unsupported kdenlive package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Discord")
+            case "$pkg_name" in
+                deb)
+            log_info "Downloading Discord (.deb) from Discord's official servers..."
+            _download_file \
+                "https://discord.com/api/download?platform=linux&format=deb" \
+                /tmp/discord.deb \
+                || die "Failed to download Discord."
+            sudo dpkg -i /tmp/discord.deb 2>/dev/null || true
+            sudo apt-get install -f -y \
+                || die "Failed to fix Discord dependencies."
+            rm -f /tmp/discord.deb
+            ;;
+                rpm)
+            log_info "Downloading Discord (.rpm) from Discord's official servers..."
+            _download_file \
+                "https://discord.com/api/download?platform=linux&format=rpm" \
+                /tmp/discord.rpm \
+                || die "Failed to download Discord."
+            sudo dnf install -y /tmp/discord.rpm \
+                || die "Failed to install Discord."
+            rm -f /tmp/discord.rpm
+            ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install discord || die "Failed to install Discord via Snap."
+            ;;
+                *)
+                    die "Unsupported Discord package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Thunderbird")
+            case "$DISTRO" in
+                arch)   pkg_install thunderbird ;;
+                debian) pkg_install thunderbird ;;
+                fedora) pkg_install thunderbird ;;
+                snap)  sudo snap install thunderbird || die "Failed to install Thunderbird via Snap." ;;            
+            esac
+            ;;
+        "Teams")
+            case "$pkg_name" in
+                deb)
+                    log_info "Adding teams-for-linux's official APT repository..."
+                    sudo mkdir -p /etc/apt/keyrings
+                    curl -fsSL https://repo.teamsforlinux.de/teams-for-linux.asc \
+                        | sudo tee /etc/apt/keyrings/teams-for-linux.asc > /dev/null \
+                        || die "Failed to import teams-for-linux's signing key."
+                    echo "deb [signed-by=/etc/apt/keyrings/teams-for-linux.asc arch=$(dpkg --print-architecture)] https://repo.teamsforlinux.de/debian/ stable main" \
+                        | sudo tee /etc/apt/sources.list.d/teams-for-linux.list > /dev/null
+                    sudo apt-get update \
+                        || die "Failed to refresh APT after adding teams-for-linux's repository."
+                    sudo apt-get install -y teams-for-linux || die "Failed to install teams-for-linux via APT."
+                    ;;
+                rpm)
+                    log_info "Adding teams-for-linux's official DNF repository..."
+                    curl -fsSL https://repo.teamsforlinux.de/teams-for-linux.asc -o /tmp/teams-for-linux.asc \
+                        || die "Failed to download teams-for-linux's signing key."
+                    sudo rpm --import /tmp/teams-for-linux.asc \
+                        || die "Failed to import teams-for-linux's signing key."
+                    rm -f /tmp/teams-for-linux.asc
+                    sudo curl -fsSL -o /etc/yum.repos.d/teams-for-linux.repo https://repo.teamsforlinux.de/rpm/teams-for-linux.repo \
+                        || die "Failed to add teams-for-linux's DNF repository."
+                    sudo dnf install -y teams-for-linux || die "Failed to install teams-for-linux via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install teams-for-linux || die "Failed to install teams-for-linux via Snap."
+                    ;;
+                *)
+                    die "Unsupported Teams package source: $pkg_name"
                     ;;
             esac
             ;;

@@ -181,14 +181,14 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" || "$app" == "Celluloid" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
                 fi
                 ;;
             native)
-                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" || "$app" == "Celluloid" ]]; then
+                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" ]]; then
                     case "$pkg_name" in
                         deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
                         rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;

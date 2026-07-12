@@ -59,7 +59,7 @@ register_category_apps "Communication" \
 register_category_apps "Productivity" \
     "LibreOffice" "pkg|libreoffice|org.libreoffice.LibreOffice|-" \
     "Obsidian" "flatpak|-|md.obsidian.Obsidian|-" \
-    "Thunderbird" "pkg|thunderbird|org.mozilla.Thunderbird|-" \
+    "Thunderbird" "pkg|thunderbird|-|-;native|snap|-|-;flatpak|-|org.mozilla.Thunderbird|-" \
     "Bitwarden" "flatpak|-|com.bitwarden.desktop|-" \
     "SyncThingy" "flatpak|-|com.github.zocker_160.SyncThingy|-" \
     "Syncthing Tray" "flatpak|-|io.github.martchus.syncthingtray|-" \
@@ -181,14 +181,14 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
                 fi
                 ;;
             native)
-                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" ]]; then
+                if [[ "$app" == "Opera" || "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" ]]; then
                     case "$pkg_name" in
                         deb) [[ "$DISTRO" == "debian" ]] && printf '%s\n' "$target" ;;
                         rpm) [[ "$DISTRO" == "fedora" ]] && printf '%s\n' "$target" ;;
@@ -952,6 +952,14 @@ EOF
                 *)
                     die "Unsupported Discord package source: $pkg_name"
                     ;;
+            esac
+            ;;
+        "Thunderbird")
+            case "$DISTRO" in
+                arch)   pkg_install thunderbird ;;
+                debian) pkg_install thunderbird ;;
+                fedora) pkg_install thunderbird ;;
+                snap)  sudo snap install thunderbird || die "Failed to install Thunderbird via Snap." ;;            
             esac
             ;;
         "fd")

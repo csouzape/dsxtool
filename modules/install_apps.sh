@@ -53,7 +53,7 @@ register_category_apps "Communication" \
     "Telegram" "pkg|telegram-desktop|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;native|tarball|-|-;flatpak|-|org.telegram.desktop|-;aur|-|-|telegram-desktop-bin" \
     "Signal" "flatpak|-|org.signal.Signal|-" \
    "Slack" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.slack.Slack|-;aur|-|-|slack-desktop" \
-    "Zoom" "flatpak|-|us.zoom.Zoom|-" \
+    "Zoom" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|us.zoom.Zoom|-;aur|-|-|zoom" \
     "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin"
 
 register_category_apps "Productivity" \
@@ -172,6 +172,14 @@ _target_label() {
                         snap)    printf 'Snap' ;;
                         tarball) printf 'Official (tarball, static)' ;;
                         *)       printf 'Official (Telegram)' ;;
+                    esac
+                    ;;
+                "Zoom")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Zoom)' ;;
                     esac
                     ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
@@ -378,6 +386,14 @@ _is_installed() {
                             *)       return 1 ;;
                         esac
                         ;;
+                    "Zoom")
+                        case "$pkg_name" in
+                            deb)  dpkg -s zoom &>/dev/null ;;
+                            rpm)  rpm -q zoom &>/dev/null ;;
+                            snap) snap list zoom-client &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -494,6 +510,14 @@ _remove_app() {
                                 *)       false ;;
                             esac
                             ;;
+                        "Zoom")
+                            case "$pkg_name" in
+                                deb)  dpkg -s zoom &>/dev/null ;;
+                                rpm)  rpm -q zoom &>/dev/null ;;
+                                snap) snap list zoom-client &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
                         *)               false ;;
@@ -602,6 +626,13 @@ _remove_app() {
                         rpm)     sudo dnf remove -y telegram-desktop ;;
                         snap)    sudo snap remove telegram-desktop ;;
                         tarball) sudo rm -rf /opt/telegram-desktop /usr/local/bin/telegram ;;
+                    esac
+                    ;;
+                "Zoom")
+                    case "$pkg_name" in
+                        deb)  sudo apt-get remove -y zoom ;;
+                        rpm)  sudo dnf remove -y zoom ;;
+                        snap) sudo snap remove zoom-client ;;
                     esac
                     ;;
                 "fd")
@@ -1154,6 +1185,39 @@ EOF
                     ;;
                 *)
                     die "Unsupported Telegram package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Zoom")
+            case "$pkg_name" in
+                deb)
+                    log_info "Downloading Zoom (.deb) from Zoom's official servers..."
+                    _download_file \
+                        "https://zoom.us/client/latest/zoom_amd64.deb" \
+                        /tmp/zoom_amd64.deb \
+                        || die "Failed to download Zoom."
+                    sudo apt-get install -y /tmp/zoom_amd64.deb \
+                        || die "Failed to install Zoom via APT."
+                    rm -f /tmp/zoom_amd64.deb
+                    ;;
+                rpm)
+                    log_info "Downloading Zoom (.rpm) from Zoom's official servers..."
+                    _download_file \
+                     "https://zoom.us/client/latest/zoom_x86_64.rpm" \
+                        /tmp/zoom_x86_64.rpm \
+                        || die "Failed to download Zoom."
+                    sudo dnf install -y /tmp/zoom_x86_64.rpm \
+                        || die "Failed to install Zoom via DNF."
+                    rm -f /tmp/zoom_x86_64.rpm
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install --classic zoom-client || die "Failed to install Zoom via Snap."
+                    ;;
+                *)
+                    die "Unsupported Zoom package source: $pkg_name"
                     ;;
             esac
             ;;

@@ -50,7 +50,7 @@ register_category_apps "Media" \
 
 register_category_apps "Communication" \
     "Discord" "pkg|discord|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.discordapp.Discord|-;aur|-|-|discord-latest-bin" \
-    "Telegram" "flatpak|-|org.telegram.desktop|-" \
+    "Telegram" "pkg|telegram-desktop|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;native|tarball|-|-;flatpak|-|org.telegram.desktop|-;aur|-|-|telegram-desktop-bin" \
     "Signal" "flatpak|-|org.signal.Signal|-" \
    "Slack" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.slack.Slack|-;aur|-|-|slack-desktop" \
     "Zoom" "flatpak|-|us.zoom.Zoom|-" \
@@ -165,6 +165,15 @@ _target_label() {
                         *) printf 'Official (Slack)' ;;
                     esac
                     ;;
+                "Telegram")
+                    case "$pkg_name" in
+                        deb)     printf 'Official (.deb)' ;;
+                        rpm)     printf 'Official (.rpm, RPM Fusion)' ;;
+                        snap)    printf 'Snap' ;;
+                        tarball) printf 'Official (tarball, static)' ;;
+                        *)       printf 'Official (Telegram)' ;;
+                    esac
+                    ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
             esac
             ;;
@@ -197,7 +206,7 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" || "$app" == "Telegram" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
@@ -360,6 +369,15 @@ _is_installed() {
                             *)    return 1 ;;
                         esac
                         ;;
+                    "Telegram")
+                        case "$pkg_name" in
+                            deb)     dpkg -s telegram-desktop &>/dev/null ;;
+                            rpm)     rpm -q telegram-desktop &>/dev/null ;;
+                            snap)    snap list telegram-desktop &>/dev/null ;;
+                            tarball) [[ -x /opt/telegram-desktop/Telegram ]] || command -v telegram &>/dev/null ;;
+                            *)       return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -467,6 +485,15 @@ _remove_app() {
                                 *)    false ;;
                             esac
                             ;;
+                        "Telegram")
+                            case "$pkg_name" in
+                                deb)     dpkg -s telegram-desktop &>/dev/null ;;
+                                rpm)     rpm -q telegram-desktop &>/dev/null ;;
+                                snap)    snap list telegram-desktop &>/dev/null ;;
+                                tarball) [[ -x /opt/telegram-desktop/Telegram ]] || command -v telegram &>/dev/null ;;
+                                *)       false ;;
+                            esac
+                            ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
                         *)               false ;;
@@ -567,6 +594,14 @@ _remove_app() {
                         deb)  sudo apt-get remove -y slack-desktop ;;
                         rpm)  sudo dnf remove -y slack ;;
                         snap) sudo snap remove slack ;;
+                    esac
+                    ;;
+                "Telegram")
+                    case "$pkg_name" in
+                        deb)     sudo apt-get remove -y telegram-desktop ;;
+                        rpm)     sudo dnf remove -y telegram-desktop ;;
+                        snap)    sudo snap remove telegram-desktop ;;
+                        tarball) sudo rm -rf /opt/telegram-desktop /usr/local/bin/telegram ;;
                     esac
                     ;;
                 "fd")
@@ -1082,6 +1117,43 @@ EOF
                     ;;
                 *)
                     die "Unsupported Slack package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Telegram")
+            case "$pkg_name" in
+                deb)
+                    log_info "Installing telegram-desktop via APT..."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT before installing Telegram."
+                    sudo apt-get install -y telegram-desktop \
+                        || die "Failed to install Telegram via APT (package may be unavailable on this release — try the tarball or Snap option instead)."
+                    ;;
+                rpm)
+                    log_info "Enabling RPM Fusion Free and installing telegram-desktop via DNF..."
+                    sudo dnf install -y "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+                        || die "Failed to enable RPM Fusion Free."
+                    sudo dnf install -y telegram-desktop || die "Failed to install Telegram via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install telegram-desktop || die "Failed to install Telegram via Snap."
+                    ;;
+                tarball)
+                    log_info "Downloading the official Telegram Desktop tarball..."
+                    _download_file "https://telegram.org/dl/desktop/linux" /tmp/tsetup.tar.xz \
+                        || die "Failed to download Telegram."
+                    rm -rf /tmp/Telegram
+                    tar -xf /tmp/tsetup.tar.xz -C /tmp || die "Failed to extract Telegram."
+                    sudo mkdir -p /opt/telegram-desktop
+                    sudo cp -r /tmp/Telegram/. /opt/telegram-desktop/
+                    sudo ln -sf /opt/telegram-desktop/Telegram /usr/local/bin/telegram
+                    rm -rf /tmp/tsetup.tar.xz /tmp/Telegram
+                    ;;
+                *)
+                    die "Unsupported Telegram package source: $pkg_name"
                     ;;
             esac
             ;;

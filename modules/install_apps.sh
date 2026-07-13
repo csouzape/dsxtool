@@ -50,10 +50,10 @@ register_category_apps "Media" \
 
 register_category_apps "Communication" \
     "Discord" "pkg|discord|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.discordapp.Discord|-;aur|-|-|discord-latest-bin" \
-    "Telegram" "flatpak|-|org.telegram.desktop|-" \
+    "Telegram" "pkg|telegram-desktop|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;native|tarball|-|-;flatpak|-|org.telegram.desktop|-;aur|-|-|telegram-desktop-bin" \
     "Signal" "flatpak|-|org.signal.Signal|-" \
-    "Slack" "flatpak|-|com.slack.Slack|-" \
-    "Zoom" "flatpak|-|us.zoom.Zoom|-" \
+   "Slack" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.slack.Slack|-;aur|-|-|slack-desktop" \
+    "Zoom" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|us.zoom.Zoom|-;aur|-|-|zoom" \
     "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin"
 
 register_category_apps "Productivity" \
@@ -157,6 +157,31 @@ _target_label() {
                         *) printf 'Official (Teams)' ;;
                     esac
                     ;;
+                "Slack")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Slack)' ;;
+                    esac
+                    ;;
+                "Telegram")
+                    case "$pkg_name" in
+                        deb)     printf 'Official (.deb)' ;;
+                        rpm)     printf 'Official (.rpm, RPM Fusion)' ;;
+                        snap)    printf 'Snap' ;;
+                        tarball) printf 'Official (tarball, static)' ;;
+                        *)       printf 'Official (Telegram)' ;;
+                    esac
+                    ;;
+                "Zoom")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Zoom)' ;;
+                    esac
+                    ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
             esac
             ;;
@@ -189,7 +214,7 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" || "$app" == "Telegram" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
@@ -344,6 +369,31 @@ _is_installed() {
                             *)    return 1 ;;
                         esac
                         ;;
+                    "Slack")
+                        case "$pkg_name" in
+                            deb)  dpkg -s slack-desktop &>/dev/null ;;
+                            rpm)  rpm -q slack &>/dev/null ;;
+                            snap) snap list slack &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
+                    "Telegram")
+                        case "$pkg_name" in
+                            deb)     dpkg -s telegram-desktop &>/dev/null ;;
+                            rpm)     rpm -q telegram-desktop &>/dev/null ;;
+                            snap)    snap list telegram-desktop &>/dev/null ;;
+                            tarball) [[ -x /opt/telegram-desktop/Telegram ]] || command -v telegram &>/dev/null ;;
+                            *)       return 1 ;;
+                        esac
+                        ;;
+                    "Zoom")
+                        case "$pkg_name" in
+                            deb)  dpkg -s zoom &>/dev/null ;;
+                            rpm)  rpm -q zoom &>/dev/null ;;
+                            snap) snap list zoom-client &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -443,6 +493,31 @@ _remove_app() {
                                 *)    false ;;
                             esac
                             ;;
+                        "Slack")
+                            case "$pkg_name" in
+                                deb)  dpkg -s slack-desktop &>/dev/null ;;
+                                rpm)  rpm -q slack &>/dev/null ;;
+                                snap) snap list slack &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
+                        "Telegram")
+                            case "$pkg_name" in
+                                deb)     dpkg -s telegram-desktop &>/dev/null ;;
+                                rpm)     rpm -q telegram-desktop &>/dev/null ;;
+                                snap)    snap list telegram-desktop &>/dev/null ;;
+                                tarball) [[ -x /opt/telegram-desktop/Telegram ]] || command -v telegram &>/dev/null ;;
+                                *)       false ;;
+                            esac
+                            ;;
+                        "Zoom")
+                            case "$pkg_name" in
+                                deb)  dpkg -s zoom &>/dev/null ;;
+                                rpm)  rpm -q zoom &>/dev/null ;;
+                                snap) snap list zoom-client &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
                         *)               false ;;
@@ -536,6 +611,28 @@ _remove_app() {
                         deb)  sudo apt-get remove -y discord ;;
                         rpm)  sudo dnf remove -y discord ;;
                         snap) sudo snap remove discord ;;
+                    esac
+                    ;;
+                "Slack")
+                    case "$pkg_name" in
+                        deb)  sudo apt-get remove -y slack-desktop ;;
+                        rpm)  sudo dnf remove -y slack ;;
+                        snap) sudo snap remove slack ;;
+                    esac
+                    ;;
+                "Telegram")
+                    case "$pkg_name" in
+                        deb)     sudo apt-get remove -y telegram-desktop ;;
+                        rpm)     sudo dnf remove -y telegram-desktop ;;
+                        snap)    sudo snap remove telegram-desktop ;;
+                        tarball) sudo rm -rf /opt/telegram-desktop /usr/local/bin/telegram ;;
+                    esac
+                    ;;
+                "Zoom")
+                    case "$pkg_name" in
+                        deb)  sudo apt-get remove -y zoom ;;
+                        rpm)  sudo dnf remove -y zoom ;;
+                        snap) sudo snap remove zoom-client ;;
                     esac
                     ;;
                 "fd")
@@ -1015,6 +1112,112 @@ EOF
                     ;;
                 *)
                     die "Unsupported Teams package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Slack")
+            case "$pkg_name" in
+                deb)
+                    log_info "Adding Slack's official APT repository..."
+                    curl -fsSL https://packagecloud.io/slacktechnologies/slack/gpgkey \
+                        | sudo gpg --dearmor --yes -o /usr/share/keyrings/slack-archive-keyring.gpg \
+                        || die "Failed to import Slack's GPG key."
+                    echo "deb [signed-by=/usr/share/keyrings/slack-archive-keyring.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" \
+                        | sudo tee /etc/apt/sources.list.d/slack.list > /dev/null
+                    sudo apt-get update \
+                        || die "Failed to refresh APT after adding Slack's repository."
+                    sudo apt-get install -y slack-desktop || die "Failed to install Slack via APT."
+                    ;;
+                rpm)
+                    log_info "Adding Slack's official DNF repository..."
+                    sudo tee /etc/yum.repos.d/slack.repo > /dev/null << 'EOF'
+[slack]
+name=Slack
+baseurl=https://packagecloud.io/slacktechnologies/slack/fedora/21/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://packagecloud.io/slacktechnologies/slack/gpgkey
+EOF
+                    sudo dnf install -y slack || die "Failed to install Slack via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                        sudo snap install slack || die "Failed to install Slack via Snap."
+                    ;;
+                *)
+                    die "Unsupported Slack package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Telegram")
+            case "$pkg_name" in
+                deb)
+                    log_info "Installing telegram-desktop via APT..."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT before installing Telegram."
+                    sudo apt-get install -y telegram-desktop \
+                        || die "Failed to install Telegram via APT (package may be unavailable on this release — try the tarball or Snap option instead)."
+                    ;;
+                rpm)
+                    log_info "Enabling RPM Fusion Free and installing telegram-desktop via DNF..."
+                    sudo dnf install -y "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+                        || die "Failed to enable RPM Fusion Free."
+                    sudo dnf install -y telegram-desktop || die "Failed to install Telegram via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install telegram-desktop || die "Failed to install Telegram via Snap."
+                    ;;
+                tarball)
+                    log_info "Downloading the official Telegram Desktop tarball..."
+                    _download_file "https://telegram.org/dl/desktop/linux" /tmp/tsetup.tar.xz \
+                        || die "Failed to download Telegram."
+                    rm -rf /tmp/Telegram
+                    tar -xf /tmp/tsetup.tar.xz -C /tmp || die "Failed to extract Telegram."
+                    sudo mkdir -p /opt/telegram-desktop
+                    sudo cp -r /tmp/Telegram/. /opt/telegram-desktop/
+                    sudo ln -sf /opt/telegram-desktop/Telegram /usr/local/bin/telegram
+                    rm -rf /tmp/tsetup.tar.xz /tmp/Telegram
+                    ;;
+                *)
+                    die "Unsupported Telegram package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Zoom")
+            case "$pkg_name" in
+                deb)
+                    log_info "Downloading Zoom (.deb) from Zoom's official servers..."
+                    _download_file \
+                        "https://zoom.us/client/latest/zoom_amd64.deb" \
+                        /tmp/zoom_amd64.deb \
+                        || die "Failed to download Zoom."
+                    sudo apt-get install -y /tmp/zoom_amd64.deb \
+                        || die "Failed to install Zoom via APT."
+                    rm -f /tmp/zoom_amd64.deb
+                    ;;
+                rpm)
+                    log_info "Downloading Zoom (.rpm) from Zoom's official servers..."
+                    _download_file \
+                     "https://zoom.us/client/latest/zoom_x86_64.rpm" \
+                        /tmp/zoom_x86_64.rpm \
+                        || die "Failed to download Zoom."
+                    sudo dnf install -y /tmp/zoom_x86_64.rpm \
+                        || die "Failed to install Zoom via DNF."
+                    rm -f /tmp/zoom_x86_64.rpm
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install --classic zoom-client || die "Failed to install Zoom via Snap."
+                    ;;
+                *)
+                    die "Unsupported Zoom package source: $pkg_name"
                     ;;
             esac
             ;;

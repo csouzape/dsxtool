@@ -52,7 +52,7 @@ register_category_apps "Communication" \
     "Discord" "pkg|discord|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.discordapp.Discord|-;aur|-|-|discord-latest-bin" \
     "Telegram" "flatpak|-|org.telegram.desktop|-" \
     "Signal" "flatpak|-|org.signal.Signal|-" \
-    "Slack" "flatpak|-|com.slack.Slack|-" \
+   "Slack" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.slack.Slack|-;aur|-|-|slack-desktop" \
     "Zoom" "flatpak|-|us.zoom.Zoom|-" \
     "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin"
 
@@ -155,6 +155,14 @@ _target_label() {
                         rpm) printf 'Official (.rpm)' ;;
                         snap) printf 'Snap' ;;
                         *) printf 'Official (Teams)' ;;
+                    esac
+                    ;;
+                "Slack")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Slack)' ;;
                     esac
                     ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
@@ -344,6 +352,14 @@ _is_installed() {
                             *)    return 1 ;;
                         esac
                         ;;
+                    "Slack")
+                        case "$pkg_name" in
+                            deb)  dpkg -s slack-desktop &>/dev/null ;;
+                            rpm)  rpm -q slack &>/dev/null ;;
+                            snap) snap list slack &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -443,6 +459,14 @@ _remove_app() {
                                 *)    false ;;
                             esac
                             ;;
+                        "Slack")
+                            case "$pkg_name" in
+                                deb)  dpkg -s slack-desktop &>/dev/null ;;
+                                rpm)  rpm -q slack &>/dev/null ;;
+                                snap) snap list slack &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
                         *)               false ;;
@@ -536,6 +560,13 @@ _remove_app() {
                         deb)  sudo apt-get remove -y discord ;;
                         rpm)  sudo dnf remove -y discord ;;
                         snap) sudo snap remove discord ;;
+                    esac
+                    ;;
+                "Slack")
+                    case "$pkg_name" in
+                        deb)  sudo apt-get remove -y slack-desktop ;;
+                        rpm)  sudo dnf remove -y slack ;;
+                        snap) sudo snap remove slack ;;
                     esac
                     ;;
                 "fd")
@@ -1015,6 +1046,42 @@ EOF
                     ;;
                 *)
                     die "Unsupported Teams package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Slack")
+            case "$pkg_name" in
+                deb)
+                    log_info "Adding Slack's official APT repository..."
+                    curl -fsSL https://packagecloud.io/slacktechnologies/slack/gpgkey \
+                        | sudo gpg --dearmor --yes -o /usr/share/keyrings/slack-archive-keyring.gpg \
+                        || die "Failed to import Slack's GPG key."
+                    echo "deb [signed-by=/usr/share/keyrings/slack-archive-keyring.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" \
+                        | sudo tee /etc/apt/sources.list.d/slack.list > /dev/null
+                    sudo apt-get update \
+                        || die "Failed to refresh APT after adding Slack's repository."
+                    sudo apt-get install -y slack-desktop || die "Failed to install Slack via APT."
+                    ;;
+                rpm)
+                    log_info "Adding Slack's official DNF repository..."
+                    sudo tee /etc/yum.repos.d/slack.repo > /dev/null << 'EOF'
+[slack]
+name=Slack
+baseurl=https://packagecloud.io/slacktechnologies/slack/fedora/21/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://packagecloud.io/slacktechnologies/slack/gpgkey
+EOF
+                    sudo dnf install -y slack || die "Failed to install Slack via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                        sudo snap install slack || die "Failed to install Slack via Snap."
+                    ;;
+                *)
+                    die "Unsupported Slack package source: $pkg_name"
                     ;;
             esac
             ;;

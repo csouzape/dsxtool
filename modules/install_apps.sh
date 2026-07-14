@@ -33,7 +33,8 @@ register_category_apps "Browsers" \
     "Zen Browser" "native|-|-|-;flatpak|-|app.zen_browser.zen|-;aur|-|-|zen-browser-bin" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
-    "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin"
+    "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin" \
+    "LibreWolf" "native|deb|-|-;native|rpm|-|-;flatpak|-|io.gitlab.librewolf-community|-;aur|-|-|librewolf-bin" \
 
 register_category_apps "Media" \
     "VLC" "pkg|vlc|-|-;flatpak|-|org.videolan.VLC|-" \
@@ -149,6 +150,13 @@ _target_label() {
                         rpm) printf 'Official (.rpm)' ;;
                         snap) printf 'Snap' ;;
                         *) printf 'Official (Opera)' ;;
+                    esac
+                    ;;
+                "LibreWolf")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb, extrepo)' ;;
+                        rpm) printf 'Official (.rpm, repo)' ;;
+                        *)   printf 'Official (LibreWolf)' ;;
                     esac
                     ;;
                 "Teams")
@@ -353,6 +361,13 @@ _is_installed() {
                             *) return 1 ;;
                         esac
                         ;;
+                    "LibreWolf")
+                        case "$pkg_name" in
+                            deb) dpkg -s librewolf &>/dev/null ;;
+                            rpm) rpm -q librewolf &>/dev/null ;;
+                            *)   return 1 ;;
+                        esac
+                        ;;
                     "OBS Studio")
                         case "$pkg_name" in
                             deb) dpkg -s obs-studio &>/dev/null || dpkg -s obs-studio-bin &>/dev/null ;;
@@ -497,6 +512,13 @@ _remove_app() {
                                 rpm) rpm -q opera-stable &>/dev/null || rpm -q opera-developer &>/dev/null ;;
                                 snap) snap list opera &>/dev/null ;;
                                 *) false ;;
+                            esac
+                            ;;
+                        "LibreWolf")
+                            case "$pkg_name" in
+                                deb) dpkg -s librewolf &>/dev/null ;;
+                                rpm) rpm -q librewolf &>/dev/null ;;
+                                *)   false ;;
                             esac
                             ;;
                         "OBS Studio")
@@ -651,6 +673,12 @@ _remove_app() {
                         deb) sudo apt-get remove -y opera-stable opera-developer ;;
                         rpm) sudo dnf remove -y opera-stable opera-developer ;;
                         snap) sudo snap remove opera ;;
+                    esac
+                    ;;
+                "LibreWolf")
+                    case "$pkg_name" in
+                        deb) sudo apt-get remove -y librewolf ;;
+                        rpm) sudo dnf remove -y librewolf && sudo rm -f /etc/yum.repos.d/librewolf.repo ;;
                     esac
                     ;;
                 "OBS Studio")
@@ -1047,6 +1075,33 @@ EOF
                     ;;
                 *)
                     die "Unsupported Opera package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "LibreWolf")
+            case "$pkg_name" in
+                deb)
+                    log_info "Enabling LibreWolf's official repo via extrepo..."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT before enabling extrepo."
+                    sudo apt-get install -y extrepo \
+                        || die "Failed to install extrepo."
+                    sudo extrepo enable librewolf \
+                        || die "Failed to enable LibreWolf's extrepo repository."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT after enabling LibreWolf's repository."
+                    sudo apt-get install -y librewolf \
+                        || die "Failed to install LibreWolf via APT."
+                    ;;
+                rpm)
+                    log_info "Adding LibreWolf's official DNF repository..."
+                    sudo dnf config-manager addrepo --from-repofile=https://repo.librewolf.net/librewolf.repo \
+                        || die "Failed to add LibreWolf's DNF repository."
+                    sudo dnf install -y librewolf \
+                        || die "Failed to install LibreWolf via DNF."
+                    ;;
+                *)
+                    die "Unsupported LibreWolf package source: $pkg_name"
                     ;;
             esac
             ;;

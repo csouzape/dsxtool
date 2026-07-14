@@ -34,6 +34,7 @@ register_category_apps "Browsers" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
     "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin" \
+    "OperaGx" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.opera-gx|-|;aur|-|-|opera-gx-bin" \
     "LibreWolf" "native|deb|-|-;native|rpm|-|-;flatpak|-|io.gitlab.librewolf-community|-;aur|-|-|librewolf-bin" \
 
 register_category_apps "Media" \
@@ -146,6 +147,14 @@ _target_label() {
                 "Zen Browser") printf 'Official (Zen Browser)' ;;
                 "Opera")
                     case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Opera)' ;;
+                    esac
+                    ;;
+                "OperaGx")
+                    case "$pkg_name" in 
                         deb) printf 'Official (.deb)' ;;
                         rpm) printf 'Official (.rpm)' ;;
                         snap) printf 'Snap' ;;
@@ -361,6 +370,14 @@ _is_installed() {
                             *) return 1 ;;
                         esac
                         ;;
+                    "OperaGx")
+                        case "$pkg_name" in 
+                            deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
+                            rpm) rpm -q opera-gx-stable &>/dev/null || rpm -q opera-gx-developer &>/dev/null ;;
+                            snap) snap list opera-gx &>/dev/null ;;
+                            *) return 1 ;;
+                        esac
+                        ;;
                     "LibreWolf")
                         case "$pkg_name" in
                             deb) dpkg -s librewolf &>/dev/null ;;
@@ -513,6 +530,14 @@ _remove_app() {
                                 snap) snap list opera &>/dev/null ;;
                                 *) false ;;
                             esac
+                            ;;
+                        "OperaGx")
+                            case "$pkg_name" in
+                                deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
+                                rpm) rpm -q opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
+                                snap) snap list opera-gx-stable &>/dev/null ;;
+                                *) false ;; 
+                            esac 
                             ;;
                         "LibreWolf")
                             case "$pkg_name" in
@@ -673,6 +698,13 @@ _remove_app() {
                         deb) sudo apt-get remove -y opera-stable opera-developer ;;
                         rpm) sudo dnf remove -y opera-stable opera-developer ;;
                         snap) sudo snap remove opera ;;
+                    esac
+                    ;;
+                "OperaGx")
+                    case "$pkg_name" in
+                        deb) sudo apt-get remove -y opera-gx-stable opera-gx-developer ;;
+                        rpm) sudo dnf remove -y opera-gx-stable opera-gx-developer ;;
+                        snap) sudo snap remove opera-gx ;;
                     esac
                     ;;
                 "LibreWolf")
@@ -992,6 +1024,50 @@ _install_native_app() {
                     die "Unsupported distro for Zen Browser: $DISTRO"
                     ;;
             esac
+            ;;
+        "OperaGx")
+            case "$DISTRO" in
+               deb)
+                    log_info "Installing Opera GX via native way"
+                    tmpfile="$(mktemp --suffix=.deb)"
+                    curl -fsSL \
+                        "https://download.opera.com/download/get/?partner=www&opsys=Linux&product=Opera+GX" \
+                        -o "$tmpfile" \
+                        || die "Failed to download Opera GX."
+                    sudo dpkg -i "$tmpfile" \
+                        || sudo apt-get install -f -y \
+                        || die "Failed to install Opera GX."
+                    rm -f "$tmpfile"
+                    ;;
+                rpm)
+                    log_info "Installing Opera GX via native way"
+
+                    tmpfile="$(mktemp --suffix=.rpm)"
+
+                    curl -fsSL \
+                        "https://download.opera.com/download/get/?partner=www&opsys=Linux&product=Opera+GX&package=RPM" \
+                        -o "$tmpfile" \
+                        || die "Failed to download Opera GX."
+
+                    if command -v dnf >/dev/null 2>&1; then
+                        sudo dnf install -y "$tmpfile"
+                    elif command -v zypper >/dev/null 2>&1; then
+                        sudo zypper --non-interactive install "$tmpfile"
+                    else
+                        sudo rpm -Uvh "$tmpfile"
+                    fi || die "Failed to install Opera GX."
+
+                    rm -f "$tmpfile"
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    log_info "Installing Opera GX via Snap..."
+                    sudo snap install opera-gx \
+                        || die "Failed to install Opera GX via Snap."
+                    ;;
+            esac 
             ;;
         "Helium Browser")
             local repo="imputnet/helium-linux"

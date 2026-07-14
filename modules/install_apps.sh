@@ -33,7 +33,9 @@ register_category_apps "Browsers" \
     "Zen Browser" "native|-|-|-;flatpak|-|app.zen_browser.zen|-;aur|-|-|zen-browser-bin" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Helium Browser" "native|-|-|-" \
-    "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin"
+    "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin" \
+    "OperaGx" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.opera-gx|-|;aur|-|-|opera-gx-bin" \
+    "LibreWolf" "native|deb|-|-;native|rpm|-|-;flatpak|-|io.gitlab.librewolf-community|-;aur|-|-|librewolf-bin" \
 
 register_category_apps "Media" \
     "VLC" "pkg|vlc|-|-;flatpak|-|org.videolan.VLC|-" \
@@ -57,15 +59,15 @@ register_category_apps "Communication" \
     "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin"
 
 register_category_apps "Productivity" \
-    "LibreOffice" "pkg|libreoffice|org.libreoffice.LibreOffice|-" \
+    "LibreOffice" "native|arch-fresh|-|-;native|arch-still|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.libreoffice.LibreOffice|-" \
     "Obsidian" "flatpak|-|md.obsidian.Obsidian|-" \
     "Thunderbird" "pkg|thunderbird|-|-;native|snap|-|-;flatpak|-|org.mozilla.Thunderbird|-" \
     "Bitwarden" "flatpak|-|com.bitwarden.desktop|-" \
     "SyncThingy" "flatpak|-|com.github.zocker_160.SyncThingy|-" \
     "Syncthing Tray" "flatpak|-|io.github.martchus.syncthingtray|-" \
     "Flameshot" "pkg|flameshot|org.flameshot.Flameshot|-" \
-    "GIMP" "pkg|gimp|org.gimp.GIMP|-" \
-    "Inkscape" "pkg|inkscape|org.inkscape.Inkscape|-"
+    "GIMP" "pkg|gimp|-|-;native|snap|-|-;flatpak|-|org.gimp.GIMP|-;aur|-|-|gimp-git" \
+    "Inkscape" "pkg|inkscape|-|-;native|snap|-|-;flatpak|-|org.inkscape.Inkscape|-;aur|-|-|inkscape-bin" \
 
 register_category_apps "Gaming" \
     "Steam" "pkg|steam|com.valvesoftware.Steam|-" \
@@ -77,10 +79,6 @@ register_category_apps "Gaming" \
     "Bottles" "flatpak|-|com.usebottles.bottles|-"
 
 register_category_apps "System Tools" \
-    "Alacritty" "pkg|alacritty|-|-" \
-    "Kitty" "pkg|kitty|-|-" \
-    "Konsole" "pkg|konsole|-|-" \
-    "Ghostty" "terminal|ghostty|-|-" \
     "htop" "pkg|htop|-|-" \
     "btop" "pkg|btop|-|-" \
     "ncdu" "pkg|ncdu|-|-" \
@@ -94,6 +92,12 @@ register_category_apps "System Tools" \
     "fastfetch" "pkg|fastfetch|-|-" \
     "net-tools" "pkg|net-tools|-|-" \
     "openssh" "native|-|-|-"
+
+register_category_apps "Terminals" \
+    "Alacritty" "pkg|alacritty|-|-" \
+    "Kitty" "pkg|kitty|-|-" \
+    "Konsole" "pkg|konsole|-|-" \
+    "Ghostty" "terminal|ghostty|-|-"
 
 _fzf_menu() {
     local tmp_in tmp_out
@@ -149,6 +153,21 @@ _target_label() {
                         *) printf 'Official (Opera)' ;;
                     esac
                     ;;
+                "OperaGx")
+                    case "$pkg_name" in 
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Opera)' ;;
+                    esac
+                    ;;
+                "LibreWolf")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb, extrepo)' ;;
+                        rpm) printf 'Official (.rpm, repo)' ;;
+                        *)   printf 'Official (LibreWolf)' ;;
+                    esac
+                    ;;
                 "Teams")
                     case "$pkg_name" in
                         deb) printf 'Official (.deb)' ;;
@@ -180,6 +199,28 @@ _target_label() {
                         rpm) printf 'Official (.rpm)' ;;
                         snap) printf 'Snap' ;;
                         *) printf 'Official (Zoom)' ;;
+                    esac
+                    ;;
+                "Inkscape")
+                    case "$pkg_name" in
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Inkscape)' ;;
+                    esac
+                    ;;
+                "LibreOffice")
+                    case "$pkg_name" in
+                        arch-fresh) printf 'Official (Fresh, pacman)' ;;
+                        arch-still) printf 'Official (Still, pacman)' ;;
+                        deb)        printf 'Official (.deb)' ;;
+                        rpm)        printf 'Official (.rpm)' ;;
+                        snap)       printf 'Snap' ;;
+                        *)          printf 'Official (LibreOffice)' ;;
+                    esac
+                    ;;
+                "GIMP")
+                    case "$pkg_name" in
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (GIMP)' ;;
                     esac
                     ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
@@ -214,7 +255,7 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" || "$app" == "Telegram" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" || "$app" == "Telegram" || "$app" == "LibreOffice" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
@@ -329,6 +370,21 @@ _is_installed() {
                             *) return 1 ;;
                         esac
                         ;;
+                    "OperaGx")
+                        case "$pkg_name" in 
+                            deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
+                            rpm) rpm -q opera-gx-stable &>/dev/null || rpm -q opera-gx-developer &>/dev/null ;;
+                            snap) snap list opera-gx &>/dev/null ;;
+                            *) return 1 ;;
+                        esac
+                        ;;
+                    "LibreWolf")
+                        case "$pkg_name" in
+                            deb) dpkg -s librewolf &>/dev/null ;;
+                            rpm) rpm -q librewolf &>/dev/null ;;
+                            *)   return 1 ;;
+                        esac
+                        ;;
                     "OBS Studio")
                         case "$pkg_name" in
                             deb) dpkg -s obs-studio &>/dev/null || dpkg -s obs-studio-bin &>/dev/null ;;
@@ -394,6 +450,28 @@ _is_installed() {
                             *)    return 1 ;;
                         esac
                         ;;
+                    "Inkscape")
+                        case "$pkg_name" in
+                            snap) snap list inkscape &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
+                    "LibreOffice")
+                        case "$pkg_name" in
+                            arch-fresh) pacman -Q libreoffice-fresh &>/dev/null ;;
+                            arch-still) pacman -Q libreoffice-still &>/dev/null ;;
+                            deb)        dpkg -s libreoffice &>/dev/null ;;
+                            rpm)        rpm -q libreoffice &>/dev/null ;;
+                            snap)       snap list libreoffice &>/dev/null ;;
+                            *)          return 1 ;;
+                        esac
+                        ;;
+                    "GIMP")
+                        case "$pkg_name" in
+                            snap) snap list gimp &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -451,6 +529,21 @@ _remove_app() {
                                 rpm) rpm -q opera-stable &>/dev/null || rpm -q opera-developer &>/dev/null ;;
                                 snap) snap list opera &>/dev/null ;;
                                 *) false ;;
+                            esac
+                            ;;
+                        "OperaGx")
+                            case "$pkg_name" in
+                                deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
+                                rpm) rpm -q opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
+                                snap) snap list opera-gx-stable &>/dev/null ;;
+                                *) false ;; 
+                            esac 
+                            ;;
+                        "LibreWolf")
+                            case "$pkg_name" in
+                                deb) dpkg -s librewolf &>/dev/null ;;
+                                rpm) rpm -q librewolf &>/dev/null ;;
+                                *)   false ;;
                             esac
                             ;;
                         "OBS Studio")
@@ -515,6 +608,28 @@ _remove_app() {
                                 deb)  dpkg -s zoom &>/dev/null ;;
                                 rpm)  rpm -q zoom &>/dev/null ;;
                                 snap) snap list zoom-client &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
+                        "Inkscape")
+                            case "$pkg_name" in
+                                snap) snap list inkscape &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
+                        "LibreOffice")
+                            case "$pkg_name" in
+                                arch-fresh) pacman -Q libreoffice-fresh &>/dev/null ;;
+                                arch-still) pacman -Q libreoffice-still &>/dev/null ;;
+                                deb)        dpkg -s libreoffice &>/dev/null ;;
+                                rpm)        rpm -q libreoffice &>/dev/null ;;
+                                snap)       snap list libreoffice &>/dev/null ;;
+                                *)          false ;;
+                            esac
+                            ;;
+                        "GIMP")
+                            case "$pkg_name" in
+                                snap) snap list gimp &>/dev/null ;;
                                 *)    false ;;
                             esac
                             ;;
@@ -585,6 +700,19 @@ _remove_app() {
                         snap) sudo snap remove opera ;;
                     esac
                     ;;
+                "OperaGx")
+                    case "$pkg_name" in
+                        deb) sudo apt-get remove -y opera-gx-stable opera-gx-developer ;;
+                        rpm) sudo dnf remove -y opera-gx-stable opera-gx-developer ;;
+                        snap) sudo snap remove opera-gx ;;
+                    esac
+                    ;;
+                "LibreWolf")
+                    case "$pkg_name" in
+                        deb) sudo extrepo disable librewolf ;;
+                        rpm) sudo dnf remove -y librewolf && sudo rm -f /etc/yum.repos.d/librewolf.repo ;;
+                    esac
+                    ;;
                 "OBS Studio")
                     case "$pkg_name" in
                         deb) sudo apt-get remove -y obs-studio obs-studio-bin ;;
@@ -633,6 +761,25 @@ _remove_app() {
                         deb)  sudo apt-get remove -y zoom ;;
                         rpm)  sudo dnf remove -y zoom ;;
                         snap) sudo snap remove zoom-client ;;
+                    esac
+                    ;;
+                "Inkscape")
+                    case "$pkg_name" in
+                        snap) sudo snap remove inkscape ;;
+                    esac
+                    ;;
+                "LibreOffice")
+                    case "$pkg_name" in
+                        arch-fresh) sudo pacman -Rns --noconfirm libreoffice-fresh ;;
+                        arch-still) sudo pacman -Rns --noconfirm libreoffice-still ;;
+                        deb)        sudo apt-get remove -y libreoffice ;;
+                        rpm)        sudo dnf remove -y libreoffice ;;
+                        snap)       sudo snap remove libreoffice ;;
+                    esac
+                    ;;
+                "GIMP")
+                    case "$pkg_name" in
+                        snap) sudo snap remove gimp ;;
                     esac
                     ;;
                 "fd")
@@ -878,6 +1025,50 @@ _install_native_app() {
                     ;;
             esac
             ;;
+        "OperaGx")
+            case "$DISTRO" in
+               deb)
+                    log_info "Installing Opera GX via native way"
+                    tmpfile="$(mktemp --suffix=.deb)"
+                    curl -fsSL \
+                        "https://download.opera.com/download/get/?partner=www&opsys=Linux&product=Opera+GX" \
+                        -o "$tmpfile" \
+                        || die "Failed to download Opera GX."
+                    sudo dpkg -i "$tmpfile" \
+                        || sudo apt-get install -f -y \
+                        || die "Failed to install Opera GX."
+                    rm -f "$tmpfile"
+                    ;;
+                rpm)
+                    log_info "Installing Opera GX via native way"
+
+                    tmpfile="$(mktemp --suffix=.rpm)"
+
+                    curl -fsSL \
+                        "https://download.opera.com/download/get/?partner=www&opsys=Linux&product=Opera+GX&package=RPM" \
+                        -o "$tmpfile" \
+                        || die "Failed to download Opera GX."
+
+                    if command -v dnf >/dev/null 2>&1; then
+                        sudo dnf install -y "$tmpfile"
+                    elif command -v zypper >/dev/null 2>&1; then
+                        sudo zypper --non-interactive install "$tmpfile"
+                    else
+                        sudo rpm -Uvh "$tmpfile"
+                    fi || die "Failed to install Opera GX."
+
+                    rm -f "$tmpfile"
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    log_info "Installing Opera GX via Snap..."
+                    sudo snap install opera-gx \
+                        || die "Failed to install Opera GX via Snap."
+                    ;;
+            esac 
+            ;;
         "Helium Browser")
             local repo="imputnet/helium-linux"
             local download_url fallback_download_url install_dir binary_path launcher_path
@@ -960,6 +1151,33 @@ EOF
                     ;;
                 *)
                     die "Unsupported Opera package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "LibreWolf")
+            case "$pkg_name" in
+                deb)
+                    log_info "Enabling LibreWolf's official repo via extrepo..."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT before enabling extrepo."
+                    sudo apt-get install -y extrepo \
+                        || die "Failed to install extrepo."
+                    sudo extrepo enable librewolf \
+                        || die "Failed to enable LibreWolf's extrepo repository."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT after enabling LibreWolf's repository."
+                    sudo apt-get install -y librewolf \
+                        || die "Failed to install LibreWolf via APT."
+                    ;;
+                rpm)
+                    log_info "Adding LibreWolf's official DNF repository..."
+                    sudo dnf config-manager addrepo --from-repofile=https://repo.librewolf.net/librewolf.repo \
+                        || die "Failed to add LibreWolf's DNF repository."
+                    sudo dnf install -y librewolf \
+                        || die "Failed to install LibreWolf via DNF."
+                    ;;
+                *)
+                    die "Unsupported LibreWolf package source: $pkg_name"
                     ;;
             esac
             ;;
@@ -1218,6 +1436,61 @@ EOF
                     ;;
                 *)
                     die "Unsupported Zoom package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Inkscape")
+            case "$pkg_name" in
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install inkscape || die "Failed to install Inkscape via Snap."
+                    ;;
+                *)
+                    die "Unsupported Inkscape package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "LibreOffice")
+            case "$pkg_name" in
+                arch-fresh)
+                    sudo pacman -S --noconfirm libreoffice-fresh || die "Failed to install LibreOffice Fresh."
+                    ;;
+                arch-still)
+                    sudo pacman -S --noconfirm libreoffice-still || die "Failed to install LibreOffice Still."
+                    ;;
+                deb)
+                    log_info "Installing LibreOffice via APT..."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT before installing LibreOffice."
+                    sudo apt-get install -y libreoffice || die "Failed to install LibreOffice via APT."
+                    ;;
+                rpm)
+                    log_info "Installing LibreOffice via DNF..."
+                    sudo dnf install -y libreoffice || die "Failed to install LibreOffice via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install libreoffice || die "Failed to install LibreOffice via Snap."
+                    ;;
+                *)
+                    die "Unsupported LibreOffice package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "GIMP")
+            case "$pkg_name" in
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install gimp || die "Failed to install GIMP via Snap."
+                    ;;
+                *)
+                    die "Unsupported GIMP package source: $pkg_name"
                     ;;
             esac
             ;;

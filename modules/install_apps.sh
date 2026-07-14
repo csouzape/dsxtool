@@ -64,7 +64,7 @@ register_category_apps "Productivity" \
     "SyncThingy" "flatpak|-|com.github.zocker_160.SyncThingy|-" \
     "Syncthing Tray" "flatpak|-|io.github.martchus.syncthingtray|-" \
     "Flameshot" "pkg|flameshot|org.flameshot.Flameshot|-" \
-    "GIMP" "pkg|gimp|org.gimp.GIMP|-" \
+    "GIMP" "pkg|gimp|-|-;native|snap|-|-;flatpak|-|org.gimp.GIMP|-;aur|-|-|gimp-git" \
     "Inkscape" "pkg|inkscape|-|-;native|snap|-|-;flatpak|-|org.inkscape.Inkscape|-;aur|-|-|inkscape-bin" \
 
 register_category_apps "Gaming" \
@@ -196,6 +196,12 @@ _target_label() {
                         rpm)        printf 'Official (.rpm)' ;;
                         snap)       printf 'Snap' ;;
                         *)          printf 'Official (LibreOffice)' ;;
+                    esac
+                    ;;
+                "GIMP")
+                    case "$pkg_name" in
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (GIMP)' ;;
                     esac
                     ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
@@ -426,6 +432,12 @@ _is_installed() {
                             *)          return 1 ;;
                         esac
                         ;;
+                    "GIMP")
+                        case "$pkg_name" in
+                            snap) snap list gimp &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -566,6 +578,12 @@ _remove_app() {
                                 *)          false ;;
                             esac
                             ;;
+                        "GIMP")
+                            case "$pkg_name" in
+                                snap) snap list gimp &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
                         *)               false ;;
@@ -695,6 +713,11 @@ _remove_app() {
                         deb)        sudo apt-get remove -y libreoffice ;;
                         rpm)        sudo dnf remove -y libreoffice ;;
                         snap)       sudo snap remove libreoffice ;;
+                    esac
+                    ;;
+                "GIMP")
+                    case "$pkg_name" in
+                        snap) sudo snap remove gimp ;;
                     esac
                     ;;
                 "fd")
@@ -1322,6 +1345,19 @@ EOF
                     ;;
                 *)
                     die "Unsupported LibreOffice package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "GIMP")
+            case "$pkg_name" in
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install gimp || die "Failed to install GIMP via Snap."
+                    ;;
+                *)
+                    die "Unsupported GIMP package source: $pkg_name"
                     ;;
             esac
             ;;

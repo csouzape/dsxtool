@@ -677,7 +677,7 @@ _remove_app() {
                     ;;
                 "LibreWolf")
                     case "$pkg_name" in
-                        deb) sudo apt-get remove -y librewolf ;;
+                        deb) sudo extrepo disable librewolf ;;
                         rpm) sudo dnf remove -y librewolf && sudo rm -f /etc/yum.repos.d/librewolf.repo ;;
                     esac
                     ;;

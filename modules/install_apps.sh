@@ -77,10 +77,6 @@ register_category_apps "Gaming" \
     "Bottles" "flatpak|-|com.usebottles.bottles|-"
 
 register_category_apps "System Tools" \
-    "Alacritty" "pkg|alacritty|-|-" \
-    "Kitty" "pkg|kitty|-|-" \
-    "Konsole" "pkg|konsole|-|-" \
-    "Ghostty" "terminal|ghostty|-|-" \
     "htop" "pkg|htop|-|-" \
     "btop" "pkg|btop|-|-" \
     "ncdu" "pkg|ncdu|-|-" \
@@ -94,6 +90,12 @@ register_category_apps "System Tools" \
     "fastfetch" "pkg|fastfetch|-|-" \
     "net-tools" "pkg|net-tools|-|-" \
     "openssh" "native|-|-|-"
+
+register_category_apps "Terminals" \
+    "Alacritty" "pkg|alacritty|-|-" \
+    "Kitty" "pkg|kitty|-|-" \
+    "Konsole" "pkg|konsole|-|-" \
+    "Ghostty" "terminal|ghostty|-|-"
 
 _fzf_menu() {
     local tmp_in tmp_out

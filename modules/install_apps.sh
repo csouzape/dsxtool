@@ -65,7 +65,7 @@ register_category_apps "Productivity" \
     "Syncthing Tray" "flatpak|-|io.github.martchus.syncthingtray|-" \
     "Flameshot" "pkg|flameshot|org.flameshot.Flameshot|-" \
     "GIMP" "pkg|gimp|org.gimp.GIMP|-" \
-    "Inkscape" "pkg|inkscape|org.inkscape.Inkscape|-"
+    "Inkscape" "pkg|inkscape|-|-;native|snap|-|-;flatpak|-|org.inkscape.Inkscape|-;aur|-|-|inkscape-bin" \
 
 register_category_apps "Gaming" \
     "Steam" "pkg|steam|com.valvesoftware.Steam|-" \
@@ -180,6 +180,12 @@ _target_label() {
                         rpm) printf 'Official (.rpm)' ;;
                         snap) printf 'Snap' ;;
                         *) printf 'Official (Zoom)' ;;
+                    esac
+                    ;;
+                "Inkscape")
+                    case "$pkg_name" in
+                        snap) printf 'Snap' ;;
+                        *) printf 'Official (Inkscape)' ;;
                     esac
                     ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
@@ -394,6 +400,12 @@ _is_installed() {
                             *)    return 1 ;;
                         esac
                         ;;
+                    "Inkscape")
+                        case "$pkg_name" in
+                            snap) snap list inkscape &>/dev/null ;;
+                            *)    return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -518,6 +530,12 @@ _remove_app() {
                                 *)    false ;;
                             esac
                             ;;
+                        "Inkscape")
+                            case "$pkg_name" in
+                                snap) snap list inkscape &>/dev/null ;;
+                                *)    false ;;
+                            esac
+                            ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
                         *)               false ;;
@@ -633,6 +651,11 @@ _remove_app() {
                         deb)  sudo apt-get remove -y zoom ;;
                         rpm)  sudo dnf remove -y zoom ;;
                         snap) sudo snap remove zoom-client ;;
+                    esac
+                    ;;
+                "Inkscape")
+                    case "$pkg_name" in
+                        snap) sudo snap remove inkscape ;;
                     esac
                     ;;
                 "fd")
@@ -1218,6 +1241,19 @@ EOF
                     ;;
                 *)
                     die "Unsupported Zoom package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "Inkscape")
+            case "$pkg_name" in
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install inkscape || die "Failed to install Inkscape via Snap."
+                    ;;
+                *)
+                    die "Unsupported Inkscape package source: $pkg_name"
                     ;;
             esac
             ;;

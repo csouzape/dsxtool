@@ -57,7 +57,7 @@ register_category_apps "Communication" \
     "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin"
 
 register_category_apps "Productivity" \
-    "LibreOffice" "pkg|libreoffice|org.libreoffice.LibreOffice|-" \
+    "LibreOffice" "native|arch-fresh|-|-;native|arch-still|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.libreoffice.LibreOffice|-" \
     "Obsidian" "flatpak|-|md.obsidian.Obsidian|-" \
     "Thunderbird" "pkg|thunderbird|-|-;native|snap|-|-;flatpak|-|org.mozilla.Thunderbird|-" \
     "Bitwarden" "flatpak|-|com.bitwarden.desktop|-" \
@@ -188,6 +188,16 @@ _target_label() {
                         *) printf 'Official (Inkscape)' ;;
                     esac
                     ;;
+                "LibreOffice")
+                    case "$pkg_name" in
+                        arch-fresh) printf 'Official (Fresh, pacman)' ;;
+                        arch-still) printf 'Official (Still, pacman)' ;;
+                        deb)        printf 'Official (.deb)' ;;
+                        rpm)        printf 'Official (.rpm)' ;;
+                        snap)       printf 'Snap' ;;
+                        *)          printf 'Official (LibreOffice)' ;;
+                    esac
+                    ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
             esac
             ;;
@@ -220,7 +230,7 @@ _get_available_targets() {
                  printf '%s\n' "$target"
                  ;;
             pkg)
-                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" || "$app" == "Telegram" ]]; then
+                if [[ "$app" == "OBS Studio" || "$app" == "Spotify" || "$app" == "Zen Browser" || "$app" == "kdenlive" || "$app" == "Discord" || "$app" == "Thunderbird" || "$app" == "Telegram" || "$app" == "LibreOffice" ]]; then
                     [[ "$DISTRO" == "arch" ]] && printf '%s\n' "$target"
                 else
                     printf '%s\n' "$target"
@@ -406,6 +416,16 @@ _is_installed() {
                             *)    return 1 ;;
                         esac
                         ;;
+                    "LibreOffice")
+                        case "$pkg_name" in
+                            arch-fresh) pacman -Q libreoffice-fresh &>/dev/null ;;
+                            arch-still) pacman -Q libreoffice-still &>/dev/null ;;
+                            deb)        dpkg -s libreoffice &>/dev/null ;;
+                            rpm)        rpm -q libreoffice &>/dev/null ;;
+                            snap)       snap list libreoffice &>/dev/null ;;
+                            *)          return 1 ;;
+                        esac
+                        ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                     "openssh")       command -v ssh &>/dev/null ;;
                     *)               return 1 ;;
@@ -536,6 +556,16 @@ _remove_app() {
                                 *)    false ;;
                             esac
                             ;;
+                        "LibreOffice")
+                            case "$pkg_name" in
+                                arch-fresh) pacman -Q libreoffice-fresh &>/dev/null ;;
+                                arch-still) pacman -Q libreoffice-still &>/dev/null ;;
+                                deb)        dpkg -s libreoffice &>/dev/null ;;
+                                rpm)        rpm -q libreoffice &>/dev/null ;;
+                                snap)       snap list libreoffice &>/dev/null ;;
+                                *)          false ;;
+                            esac
+                            ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
                         "openssh")       command -v ssh &>/dev/null ;;
                         *)               false ;;
@@ -656,6 +686,15 @@ _remove_app() {
                 "Inkscape")
                     case "$pkg_name" in
                         snap) sudo snap remove inkscape ;;
+                    esac
+                    ;;
+                "LibreOffice")
+                    case "$pkg_name" in
+                        arch-fresh) sudo pacman -Rns --noconfirm libreoffice-fresh ;;
+                        arch-still) sudo pacman -Rns --noconfirm libreoffice-still ;;
+                        deb)        sudo apt-get remove -y libreoffice ;;
+                        rpm)        sudo dnf remove -y libreoffice ;;
+                        snap)       sudo snap remove libreoffice ;;
                     esac
                     ;;
                 "fd")
@@ -1254,6 +1293,35 @@ EOF
                     ;;
                 *)
                     die "Unsupported Inkscape package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "LibreOffice")
+            case "$pkg_name" in
+                arch-fresh)
+                    sudo pacman -S --noconfirm libreoffice-fresh || die "Failed to install LibreOffice Fresh."
+                    ;;
+                arch-still)
+                    sudo pacman -S --noconfirm libreoffice-still || die "Failed to install LibreOffice Still."
+                    ;;
+                deb)
+                    log_info "Installing LibreOffice via APT..."
+                    sudo apt-get update \
+                        || die "Failed to refresh APT before installing LibreOffice."
+                    sudo apt-get install -y libreoffice || die "Failed to install LibreOffice via APT."
+                    ;;
+                rpm)
+                    log_info "Installing LibreOffice via DNF..."
+                    sudo dnf install -y libreoffice || die "Failed to install LibreOffice via DNF."
+                    ;;
+                snap)
+                    if ! _can_use_snap; then
+                        die "Snap is not installed or enabled. Install snapd and enable it first."
+                    fi
+                    sudo snap install libreoffice || die "Failed to install LibreOffice via Snap."
+                    ;;
+                *)
+                    die "Unsupported LibreOffice package source: $pkg_name"
                     ;;
             esac
             ;;

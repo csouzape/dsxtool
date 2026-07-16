@@ -55,7 +55,6 @@ curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh 
 - or for arch linux users 
 ```
 yay -S dsxtool  #or git for you preference
-
 ```
 
 

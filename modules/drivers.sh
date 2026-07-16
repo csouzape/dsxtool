@@ -23,7 +23,7 @@ detect_gpu_vendors() {
     fi
 
     grep -qi 'nvidia' <<< "$gpu_lines" && GPU_HAS_NVIDIA=1
-    grep -Eqi 'amd|ati|radeon' <<< "$gpu_lines" && GPU_HAS_AMD=1
+    grep -Eqi '\<(amd|ati|radeon)\>' <<< "$gpu_lines" && GPU_HAS_AMD=1
     grep -qi 'intel' <<< "$gpu_lines" && GPU_HAS_INTEL=1
 
     log_info "GPU(s) detected:"
@@ -113,7 +113,6 @@ _install_drivers_intel() {
 
 setup_drivers() {
     log_info "Starting GPU driver setup..."
-    require_sudo
 
     if ! detect_gpu_vendors; then
         log_warn "No supported GPU vendor detected. Skipping driver setup."

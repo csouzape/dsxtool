@@ -52,6 +52,13 @@ Supports **Arch Linux**, **Debian/Ubuntu**, and **Fedora**.
 curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh | bash
 ```
 
+- or for arch linux users 
+```
+yay -S dsxtool  #or git for you preference
+
+```
+
+
 ---
 
 ## Features

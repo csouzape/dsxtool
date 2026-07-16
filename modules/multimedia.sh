@@ -50,18 +50,21 @@ install_multimedia_debian(){
 install_multimedia_fedora(){
     log_info "Installing Multimedia Packages for Fedora and Based Distributions..."
 
-    pkg_install \
-        ffmpeg \
-        gstreamer1-plugins-base \
-        gstreamer1-plugins-good \
-        gstreamer1-plugins-bad-free \
-        gstreamer1-plugins-ugly \
-        gstreamer1-libav \
-        gstreamer1-vaapi \
+    if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
+        die "RPM Fusion is required for full multimedia codec support. Enable it first."
+    fi
+
+    sudo dnf group install -y multimedia \
+        --setopt="install_weak_deps=False" \
+        --exclude="PackageKit-gstreamer-plugins" \
         || die "Failed to install Multimedia Packages for Fedora and Based Distributions."
+
+    sudo dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing \
+        || die "Failed to swap ffmpeg-free for full ffmpeg."
 
     log_info "Multimedia Packages for Fedora and Based Distributions installed successfully."
 }
+
 
 install_multimedia(){
     case "$DISTRO" in

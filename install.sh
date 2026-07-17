@@ -132,10 +132,12 @@ setup_gaming_module()           { module_runner "Setup Gaming" "source \"$BASE_D
 bluetooth_module()              { module_runner "Setup Bluetooth" "source \"$BASE_DIR/modules/setup_bluetooth.sh\"; setup_bluetooth" || log_warn "Bluetooth setup finished with errors."; }
 setup_printer_module()          { module_runner "Setup Printer" "source \"$BASE_DIR/modules/setup_printer.sh\"; setup_printer" || log_warn "Printer setup finished with errors."; }
 dsxswap_module()                { module_runner "DSXSWAP" "source \"$BASE_DIR/modules/dsxswap.sh\"; main" || log_warn "Swap configuration finished with errors."; }
-setup_nvidia_module()           { module_runner "Setup NVIDIA" "source \"$BASE_DIR/modules/nvidia.sh\"; setup_nvidia" || log_warn "NVIDIA setup finished with errors."; }
+setup_drivers_module()          { module_runner "Setup Drivers" "source \"$BASE_DIR/modules/drivers.sh\"; setup_drivers" || log_warn "Driver setup finished with errors."; }
 sober_optimization_module()     { module_runner "Sober Optimization" "source \"$BASE_DIR/modules/sober_optimization.sh\"; install" || log_warn "Sober optimization finished with errors."; }
 setup_maintenance_module()      { module_runner "System Maintenance" "source \"$BASE_DIR/modules/maintenance.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
 setup_fastfetch_module()        { module_runner "Setup Fastfetch" "source \"$BASE_DIR/modules/fastfetch.sh\"; setup_fastfetch" || log_warn "Fastfetch setup finished with errors."; }
+setup_multimedia_module()       { module_runner "Setup Multimedia" "source \"$BASE_DIR/modules/multimedia.sh\"; install_multimedia" || log_warn "Multimedia setup finished with errors."; }
+
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔═══██╗██║
@@ -150,26 +152,26 @@ EOF
 build_menu() {
     printf '%s\n' \
         "1 - Setup Alias" \
-        "3 - Install TLP" \
-        "4 - Install Apps" \
-        "5 - Change Desktop Environment" \
-        "6 - Fonts Downloader" \
-        "7 - Setup Flatpak" \
-        "8 - Setup Virtualization" \
-        "9 - Setup Shell" \
-        "10 - Setup Gaming" \
-        "11 - Setup Bluetooth" \
-        "13 - Setup Printer" \
-        "14 - DSXSWAP (BETA)" \
-        "15 - Sober Optimization" \
-        "16 - Setup NVIDIA Drivers" \
-        "17 - System Maintenance" \
-        "18 - Setup Fastfetch" \
-
+        "2 - Install TLP" \
+        "3 - Install Apps" \
+        "4 - Change Desktop Environment" \
+        "5 - Fonts Downloader" \
+        "6 - Setup Flatpak" \
+        "7 - Setup Virtualization" \
+        "8 - Setup Shell" \
+        "9 - Setup Gaming" \
+        "10 - Setup Bluetooth" \
+        "11 - Setup Printer" \
+        "12 - DSXSWAP (BETA)" \
+        "13 - Sober Optimization" \
+        "14 - Setup Drivers" \
+        "15 - System Maintenance" \
+        "16 - Setup Fastfetch" \
+        "17 - Setup Multimedia"
 
     if [[ "$DISTRO" == "arch" ]]; then
-        echo "21 - Setup yay (AUR helper)"
-        echo "22 - Setup paru (AUR helper)"
+        echo "18 - Setup yay (AUR helper)"
+        echo "19 - Setup paru (AUR helper)"
     fi
     echo "0 - Exit"
 }
@@ -241,8 +243,10 @@ dsxtool_main() {
             "Setup yay (AUR helper)")      clear; install_yay_module ;;
             "Setup paru (AUR helper)")     clear; install_paru_module ;;
             "Sober Optimization")          clear; sober_optimization_module ;;
+            "Setup Drivers")               clear; setup_drivers_module ;;
             "System Maintenance")          clear; setup_maintenance_module ;;
             "Setup Fastfetch")             clear; setup_fastfetch_module ;;
+            "Setup Multimedia")            clear; setup_multimedia_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

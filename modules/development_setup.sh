@@ -167,9 +167,60 @@ install_ide() {
             ;;
         "Zed")
             log_info "Installing Zed..."
-            curl --proto '=https' --tlsv1.2 -sSf https://zed.dev/install.sh | sh \
-                && log_info "Zed installed successfully." \
-                || die "Failed to install Zed."
+            case "$DISTRO" in
+                arch)
+                    local method
+                    method=$(printf "aur\ncurl" \
+                        | _fzf_menu \
+                            --prompt="Zed install method > " \
+                            --height=5 --layout=reverse --border=rounded --no-info \
+                            --color="$_FZF_COLORS")
+                    case "$method" in
+                        "aur")
+                            require_aur_helper
+                            aur_install zed-bin \
+                                && log_info "Zed installed successfully." \
+                                || die "Failed to install Zed."
+                            ;;
+                        "curl")
+                            curl --proto '=https' --tlsv1.2 -sSf https://zed.dev/install.sh | sh \
+                                && log_info "Zed installed successfully." \
+                                || die "Failed to install Zed."
+                            ;;
+                        *)
+                            log_warn "No method selected."; return 0
+                            ;;
+                    esac
+                    ;;
+                fedora)
+                    local method
+                    method=$(printf "curl\nrpm" \
+                        | _fzf_menu \
+                            --prompt="Zed install method > " \
+                            --height=5 --layout=reverse --border=rounded --no-info \
+                            --color="$_FZF_COLORS")
+                    case "$method" in
+                        "curl")
+                            curl --proto '=https' --tlsv1.2 -sSf https://zed.dev/install.sh | sh \
+                                && log_info "Zed installed successfully." \
+                                || die "Failed to install Zed."
+                            ;;
+                        "rpm")
+                            sudo dnf install -y zed \
+                                && log_info "Zed installed successfully." \
+                                || die "Failed to install Zed."
+                            ;;
+                        *)
+                            log_warn "No method selected."; return 0
+                            ;;
+                    esac
+                    ;;
+                debian)
+                    curl --proto '=https' --tlsv1.2 -sSf https://zed.dev/install.sh | sh \
+                        && log_info "Zed installed successfully." \
+                        || die "Failed to install Zed."
+                    ;;
+            esac
             ;;
         "NVIM (LazyVim)")
             log_info "Installing Neovim + LazyVim..."
@@ -229,8 +280,6 @@ install_ide() {
                     ;;
             esac
             ;;
-
-        
         "JetBrains Toolbox")
             log_info "Installing JetBrains Toolbox..."
             if [[ "$DISTRO" == "arch" ]]; then

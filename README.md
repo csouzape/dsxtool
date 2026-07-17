@@ -7,7 +7,8 @@
 </p>
 
 <p align="center">
-  <img width="1428" height="745" alt="image" src="https://github.com/user-attachments/assets/4e2858b4-da25-4a9c-a8c5-748a5bb89657" />
+  <img width="1621" height="916" alt="image" src="https://github.com/user-attachments/assets/ad0ec258-ea9e-4283-8c2c-2a0a69cd7897" />
+
 </p>
 
 <p align="center">
@@ -55,7 +56,6 @@ curl -fsSL https://raw.githubusercontent.com/csouzape/dsxtool/main/bootstrap.sh 
 - or for arch linux users 
 ```
 yay -S dsxtool  #or git for you preference
-
 ```
 
 

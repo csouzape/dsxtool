@@ -6,7 +6,7 @@ source "$BASE_DIR/core/common.sh"
 source "$BASE_DIR/core/detect.sh"
 
 pause(){
-    read -n 1 -s -r -p $'\nPressione qualquer tecla para continuar...'
+    read -n 1 -s -r -p $'\nPress Any key to continue...'
     echo
 }
 

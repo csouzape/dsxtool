@@ -1,7 +1,13 @@
-# process|service|description|reason
+# process|service|description
 systemd-resolved|DNS Resolver|Provides local DNS resolution.
-sshd|OpenSSH Server|Allows remote remote login via SSH.
+sshd|OpenSSH Server|Allows remote login via SSH.
 syncthing|Syncthing|Synchronizes files between devices.
 steam|Steam|Steam Remote Play and LAN services.
 cupsd|CUPS|Printing service.
 docker-proxy|Docker|Publishes container ports.
+brave|Brave Browser|Local mDNS/DNS-SD discovery (port 5353).
+code|VS Code|Local server for extensions and dev tools.
+Discord|Discord|Voice/video calls and RPC for game integration.
+dnsmasq|dnsmasq|Local DNS/DHCP forwarder.
+steamwebhelper|Steam Web Helper|Steam's embedded browser/UI process.
+youtube-music|YouTube Music Desktop|Local mDNS/DNS-SD discovery (port 5353).

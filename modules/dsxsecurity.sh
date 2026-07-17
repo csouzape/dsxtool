@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 # This is Dsx security module
 # Detect all security modules and verify
+
 set -euo pipefail
 source "$BASE_DIR/core/common.sh"
 source "$BASE_DIR/core/detect.sh"
 
-pause(){
+pause() {
     read -n 1 -s -r -p $'\nPress Any key to continue...'
     echo
 }
 
-firewall_install(){
+firewall_install() {
     if command -v nft &> /dev/null; then
         log_info "nftables já está instalado."
         return 0
     fi
 
-    read -rp "Do you want to install the firewall? (y/n):" -n 1 -r confirm
+    read -rp "Do you want to install the firewall? (y/n): " -n 1 -r confirm
     echo
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         log_error "Firewall installation was cancelled."
@@ -25,7 +26,7 @@ firewall_install(){
     pkg_install nftables
 }
 
-firewall_enable(){
+firewall_enable() {
     log_info "Enabling firewall..."
     service_enable nftables || {
         log_error "Failed to enable firewall."
@@ -34,7 +35,7 @@ firewall_enable(){
     log_success "Firewall has been enabled."
 }
 
-firewall_disable(){
+firewall_disable() {
     log_info "Disabling firewall..."
     service_disable nftables || {
         log_error "Failed to disable firewall."
@@ -68,14 +69,14 @@ firewall_status() {
     fi
 
     rules=$(sudo nft list ruleset 2>/dev/null | grep -Ec 'accept|drop|reject' || true)
-    tables=$(sudo nft list tables 2>/dev/null | wc -l)
+    tables=$(sudo nft list tables 2>/dev/null | wc -l) || true
 
     services=$(
         sudo ss -H -tulpn 2>/dev/null |
         sed -n 's/.*users:(("\([^"]*\)".*/\1/p' |
         sort -u |
         wc -l
-    )
+    ) || true
 
     cat <<EOF
 ╭──────────────────────────────────────────────────────────────╮
@@ -114,17 +115,15 @@ EOF
             seen[key] = 1
 
             if (proc in ports)
-                ports[proc] = ports[proc] ",  " port
+                ports[proc] = ports[proc] ", " port
             else
                 ports[proc] = port
         }
-
     }
-
-    END{
+    END {
         for(i in ports)
-            if (ports[1] != "")
-            print i "|" ports[i]
+            if (ports[i] != "")
+                print i "|" ports[i]
     }' |
     sort |
     while IFS='|' read -r process ports; do
@@ -170,7 +169,7 @@ firewall_menu() {
                 --border \
                 --reverse \
                 --cycle
-        )
+        ) || true
 
         case "$option" in
             "Status")
@@ -192,11 +191,10 @@ firewall_menu() {
             "Back"|"")
                 return 0
                 ;;
-            *)
-                ;;
         esac
     done
 }
+
 main() {
     local option
     local banner
@@ -210,32 +208,33 @@ main() {
 ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝   ╚═╝      ╚═╝
 \033[0m"
 
-    option=$(
-        printf "%s\n" \
-            "Firewall" \
-            "SSH" \
-            "SELinux" \
-            "AppArmor" \
-            "Exit" |
-        fzf \
-            --ansi \
-            --header "$banner" \
-            --header-first \
-            --prompt "dsxsecurity > " \
-            --height=60% \
-            --border \
-            --reverse \
-            --cycle
-    )
+    while true; do
+        option=$(
+            printf "%s\n" \
+                "Firewall" \
+                "SSH" \
+                "SELinux" \
+                "AppArmor" \
+                "Exit" |
+            fzf \
+                --ansi \
+                --header "$banner" \
+                --header-first \
+                --prompt "dsxsecurity > " \
+                --height=60% \
+                --border \
+                --reverse \
+                --cycle
+        ) || true
 
-    case "$option" in
-        "Firewall") firewall_menu ;;
-        "SSH") ssh_menu ;;
-        "SELinux") selinux_menu ;;
-        "AppArmor") apparmor_menu ;;
-        "Exit"|"") exit 0 ;;
-    esac
+        case "$option" in
+            "Firewall") firewall_menu ;;
+            "SSH") ssh_menu ;;
+            "SELinux") selinux_menu ;;
+            "AppArmor") apparmor_menu ;;
+            "Exit"|"") exit 0 ;;
+        esac
+    done
 }
 
-main
 main

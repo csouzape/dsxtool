@@ -43,53 +43,116 @@ firewall_disable(){
     log_success "Firewall has been disabled."
 }
 
-firewall_status(){
-    local service_status
-    local enabled_status
-    local rules_count
-    local table_count
-    local port_count
+firewall_status() {
+    local db="$BASE_DIR/modules/data/services.db"
+    local fw_status fw_boot rules tables services line
+    local process service description
+
+    clear
 
     echo "[MODULE] DSXSecurity - running (logs saved only on error)"
+    echo
+
+    [[ -f "$db" ]] || die "services.db not found: $db"
 
     if systemctl is-active --quiet nftables; then
-        service_status="Active"
+        fw_status="Active"
     else
-        service_status="Inactive"
+        fw_status="Inactive"
     fi
 
     if systemctl is-enabled --quiet nftables 2>/dev/null; then
-        enabled_status="Enabled"
+        fw_boot="Enabled"
     else
-        enabled_status="Disabled"
+        fw_boot="Disabled"
     fi
 
-    rules_count=$(sudo nft list ruleset 2>/dev/null | grep -cE '^\s*(tcp|udp|ip|ip6|meta|ct|iif|oif|accept|drop|reject|counter|log)\b' || true)
-    table_count=$(sudo nft list tables 2>/dev/null | grep -c . || true)
-    port_count=$(ss -tuln 2>/dev/null | grep -c LISTEN || true)
+    rules=$(sudo nft list ruleset 2>/dev/null | grep -Ec 'accept|drop|reject' || true)
+    tables=$(sudo nft list tables 2>/dev/null | wc -l)
 
-    echo
-    echo "================ Firewall Report ================"
-    printf "%-22s %s\n" "Service:" "$service_status"
-    printf "%-22s %s\n" "Start at Boot:" "$enabled_status"
-    printf "%-22s %s\n" "Backend:" "nftables"
-    printf "%-22s %s\n" "Rules Loaded:" "$rules_count"
-    printf "%-22s %s\n" "Networks Protected:" "$table_count"
-    printf "%-22s %s\n" "Open Ports:" "$port_count"
-    echo "------------------------------------------------"
+    services=$(
+        sudo ss -H -tulpn 2>/dev/null |
+        sed -n 's/.*users:(("\([^"]*\)".*/\1/p' |
+        sort -u |
+        wc -l
+    )
 
-    if [[ "$port_count" -gt 0 ]]; then
-        echo "Listening on:"
-        ss -tuln 2>/dev/null \
-            | awk '/LISTEN/ { n=split($5,a,":"); print a[n] }' \
-            | sort -nu \
-            | sed 's/^/  • port /'
-    else
-        echo "No open ports detected."
-    fi
-    echo "================================================"
+    cat <<EOF
+╭──────────────────────────────────────────────────────────────╮
+│                    DSXSecurity Firewall                      │
+├──────────────────────────────────────────────────────────────┤
+│ Firewall       $fw_status
+│ Startup        $fw_boot
+│ Backend        nftables
+│ Rules          $rules
+│ Tables         $tables
+│ Services       $services
+╰──────────────────────────────────────────────────────────────╯
+
+Detected Services
+──────────────────────────────────────────────────────────────
+EOF
+
+    sudo ss -H -tulpn 2>/dev/null |
+    awk '
+    {
+        split($5,a,":")
+        port=a[length(a)]
+        if (port > 49151)
+            next
+        proc="Unknown"
+
+        if(match($0,/users:\(\("([^"]+)"/)){
+            s=substr($0,RSTART,RLENGTH)
+            sub(/users:\(\("/,"",s)
+            sub(/".*/,"",s)
+            proc=s
+        }
+
+        key = proc ":" port
+        if (!(key in seen )) {
+            seen[key] = 1
+
+            if (proc in ports)
+                ports[proc] = ports[proc] ",  " port
+            else
+                ports[proc] = port
+        }
+
+    }
+
+    END{
+        for(i in ports)
+            if (ports[1] != "")
+            print i "|" ports[i]
+    }' |
+    sort |
+    while IFS='|' read -r process ports; do
+
+        line=$(
+            awk -F'|' -v p="$process" '
+                BEGIN{IGNORECASE=1}
+                $1==p{
+                    print
+                    exit
+                }
+            ' "$db"
+        )
+
+        if [[ -n "$line" ]]; then
+            IFS='|' read -r _ service description <<<"$line"
+        else
+            service="$process"
+            description="Application not registered in DSXSecurity."
+        fi
+
+        printf "● %s\n" "$service"
+        printf "  Process : %s\n" "$process"
+        printf "  Ports   : %s\n" "$ports"
+        printf "  About   : %s\n\n" "$description"
+
+    done
 }
-
 
 firewall_menu() {
     local option
@@ -134,9 +197,19 @@ firewall_menu() {
         esac
     done
 }
-
-main(){
+main() {
     local option
+    local banner
+
+    banner=$'\033[34m'"\
+██████╗ ███████╗██╗  ██╗███████╗███████╗ ██████╗██╗   ██╗██████╗ ██╗████████╗██╗   ██╗
+██╔══██╗██╔════╝╚██╗██╔╝██╔════╝██╔════╝██╔════╝██║   ██║██╔══██╗██║╚══██╔══╝╚██╗ ██╔╝
+██║  ██║███████╗ ╚███╔╝ ███████╗█████╗  ██║     ██║   ██║██████╔╝██║   ██║    ╚████╔╝
+██║  ██║╚════██║ ██╔██╗ ╚════██║██╔══╝  ██║     ██║   ██║██╔══██╗██║   ██║     ╚██╔╝
+██████╔╝███████║██╔╝ ██╗███████║███████╗╚██████╗╚██████╔╝██║  ██║██║   ██║      ██║
+╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝   ╚═╝      ╚═╝
+\033[0m"
+
     option=$(
         printf "%s\n" \
             "Firewall" \
@@ -145,6 +218,9 @@ main(){
             "AppArmor" \
             "Exit" |
         fzf \
+            --ansi \
+            --header "$banner" \
+            --header-first \
             --prompt "dsxsecurity > " \
             --height=60% \
             --border \
@@ -153,24 +229,13 @@ main(){
     )
 
     case "$option" in
-        "Firewall")
-            firewall_menu
-            ;;
-        "SSH")
-            ssh_menu
-            ;;
-        "SELinux")
-            selinux_menu
-            ;;
-        "AppArmor")
-            apparmor_menu
-            ;;
-        "Exit"|"")
-            exit 0
-            ;;
-        *)
-            ;;
+        "Firewall") firewall_menu ;;
+        "SSH") ssh_menu ;;
+        "SELinux") selinux_menu ;;
+        "AppArmor") apparmor_menu ;;
+        "Exit"|"") exit 0 ;;
     esac
 }
 
+main
 main

@@ -1,0 +1,7 @@
+# process|service|description|reason
+systemd-resolved|DNS Resolver|Provides local DNS resolution.
+sshd|OpenSSH Server|Allows remote remote login via SSH.
+syncthing|Syncthing|Synchronizes files between devices.
+steam|Steam|Steam Remote Play and LAN services.
+cupsd|CUPS|Printing service.
+docker-proxy|Docker|Publishes container ports.

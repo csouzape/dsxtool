@@ -132,6 +132,7 @@ setup_gaming_module()           { module_runner "Setup Gaming" "source \"$BASE_D
 bluetooth_module()              { module_runner "Setup Bluetooth" "source \"$BASE_DIR/modules/setup_bluetooth.sh\"; setup_bluetooth" || log_warn "Bluetooth setup finished with errors."; }
 setup_printer_module()          { module_runner "Setup Printer" "source \"$BASE_DIR/modules/setup_printer.sh\"; setup_printer" || log_warn "Printer setup finished with errors."; }
 dsxswap_module()                { module_runner "DSXSWAP" "source \"$BASE_DIR/modules/dsxswap.sh\"; main" || log_warn "Swap configuration finished with errors."; }
+dsxsecurity_module()            { module_runner "DSXSecurity" "source \"$BASE_DIR/modules/dsxsecurity.sh\"; main" || log_warn "Security setup finished with errors."; }
 setup_drivers_module()          { module_runner "Setup Drivers" "source \"$BASE_DIR/modules/drivers.sh\"; setup_drivers" || log_warn "Driver setup finished with errors."; }
 sober_optimization_module()     { module_runner "Sober Optimization" "source \"$BASE_DIR/modules/sober_optimization.sh\"; install" || log_warn "Sober optimization finished with errors."; }
 setup_maintenance_module()      { module_runner "System Maintenance" "source \"$BASE_DIR/modules/maintenance.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
@@ -163,15 +164,16 @@ build_menu() {
         "10 - Setup Bluetooth" \
         "11 - Setup Printer" \
         "12 - DSXSWAP (BETA)" \
-        "13 - Sober Optimization" \
-        "14 - Setup Drivers" \
-        "15 - System Maintenance" \
-        "16 - Setup Fastfetch" \
-        "17 - Setup Multimedia"
+        "13 - DSXSecurity" \
+        "14 - Sober Optimization" \
+        "15 - Setup Drivers" \
+        "16 - System Maintenance" \
+        "17 - Setup Fastfetch" \
+        "18 - Setup Multimedia"
 
     if [[ "$DISTRO" == "arch" ]]; then
-        echo "18 - Setup yay (AUR helper)"
-        echo "19 - Setup paru (AUR helper)"
+        echo "19 - Setup yay (AUR helper)"
+        echo "20 - Setup paru (AUR helper)"
     fi
     echo "0 - Exit"
 }
@@ -238,6 +240,7 @@ dsxtool_main() {
             "Setup Shell")                 clear; install_shell_module ;;
             "Setup Gaming")                clear; setup_gaming_module ;;
             "DSXSWAP (BETA)")              clear; dsxswap_module ;;
+            "DSXSecurity")                 clear; dsxsecurity_module ;;
             "Setup Bluetooth")             clear; bluetooth_module ;;
             "Setup Printer")               clear; setup_printer_module ;;
             "Setup yay (AUR helper)")      clear; install_yay_module ;;

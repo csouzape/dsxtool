@@ -25,8 +25,8 @@
 | Tool | Description |
 |------|-------------|
 | [dsxtool](https://github.com/csouzape/dsxtool) | Post-install automation with interactive fzf TUI |
-| dsxswap | Configure your swapfile and swaptype |
-
+| [dsxswap](https://github.com/csouzape/dsxswap) | Configure your swapfile and swaptype |
+| [dsxsecurity](https://github.com/csouzape/dsxsecurity) | Configure security settings |
 ---
 
 ## Overview

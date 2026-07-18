@@ -65,7 +65,7 @@ FASTFETCH_DEFAULT_MODULES=(
 
 fastfetch_pick_modules() {
     if ! command -v fzf &>/dev/null; then
-        log_warn "fzf não encontrado, usando módulos padrão."
+        log_warn "fzf not found, using default modules."
         printf '%s\n' "${FASTFETCH_DEFAULT_MODULES[@]}"
         return 0
     fi
@@ -73,11 +73,11 @@ fastfetch_pick_modules() {
     local chosen
     chosen="$(printf '%s\n' "${FASTFETCH_AVAILABLE_MODULES[@]}" | \
         fzf --multi --height=60% --border \
-            --header="TAB para marcar, ENTER para confirmar" \
-            --prompt="Módulos do fastfetch > ")"
+            --header="TAB for select, ENTER to confirm" \
+            --prompt="Fastfetch modules > ")"
 
     if [[ -z "$chosen" ]]; then
-        log_warn "Nenhum módulo selecionado, usando padrão."
+        log_warn "Any module selected, using default modules."
         printf '%s\n' "${FASTFETCH_DEFAULT_MODULES[@]}"
         return 0
     fi
@@ -93,7 +93,7 @@ fastfetch_pick_color() {
         chosen="$(printf '%s\n' "${colors[@]}" | \
             fzf --height=40% --border --prompt="Cor do logo > ")"
     else
-        read -rp "$(echo -e "${YELLOW}Cor do logo (blue/cyan/green/magenta/red/yellow/white/default): ${RESET}")" chosen < /dev/tty
+        read -rp "$(echo -e "${YELLOW}Logo color (blue/cyan/green/magenta/red/yellow/white/default): ${RESET}")" chosen < /dev/tty
     fi
 
     echo "${chosen:-blue}"
@@ -140,23 +140,23 @@ setup_fastfetch_config() {
     mkdir -p "$config_dir"
 
     local mode
-    read -rp "$(echo -e "${YELLOW}Config do fastfetch: [P]adrão do dsxtool / [c]ustomizar agora / [e]ditar JSON manualmente (P/c/e): ${RESET}")" mode < /dev/tty
+    read -rp "$(echo -e "${YELLOW}Fastfetch Config: [d]sxtool default / [c]ustomize now / [e]dit manually (d/c/e): ${RESET}")" mode < /dev/tty
     mode="${mode:-p}"
 
     case "$mode" in
         c|C)
-            log_info "Selecione os módulos que deseja exibir."
+            log_info "Select the modules to display."
             mapfile -t selected_modules < <(fastfetch_pick_modules)
             build_fastfetch_json "$config_file" "${selected_modules[@]}"
-            log_info "Configuração customizada salva em $config_file."
+            log_info "Custom configuration saved to $config_file."
             ;;
         e|E)
             build_fastfetch_json "$config_file" "${FASTFETCH_DEFAULT_MODULES[@]}"
             "${EDITOR:-nano}" "$config_file"
-            log_info "Configuração editada manualmente em $config_file."
+            log_info "Manual edit saved to $config_file."
             ;;
         *)
-            if curl -fsSLo "$config_file" "$FASTFETCH_CONFIG_URL"; then
+            if curl -fsSLo "$config_file" "$FASTFETcH_CONFIG_URL"; then
                 log_info "Fastfetch configuration downloaded to $config_file."
             else
                 log_warn "Could not download config, writing built-in default instead."
@@ -191,29 +191,29 @@ open_in_editor() {
     done
 
     if [[ "${#available[@]}" -eq 0 ]]; then
-        log_warn "Nenhum editor encontrado no sistema. Edite depois manualmente: $file"
+        log_warn "Any editor found. Edit manually: $file"
         return 0
     fi
 
     if [[ "${#available[@]}" -eq 1 ]]; then
         editor_bin="${available[0]}"
-        log_info "Usando $editor_bin (único editor disponível)."
+        log_info "Using $editor_bin (Only editor available)."
     elif command -v fzf &>/dev/null; then
         editor_bin="$(printf '%s\n' "${available[@]}" | \
-            fzf --height=40% --border --prompt="Escolha o editor > ")"
+            fzf --height=40% --border --prompt="Choice the editor > ")"
     else
-        log_info "Editores disponíveis:"
+        log_info "Available editors:"
         local i
         for i in "${!available[@]}"; do
             echo "  $((i+1))) ${available[$i]}"
         done
         local choice
-        read -rp "$(echo -e "${YELLOW}Escolha o número do editor: ${RESET}")" choice < /dev/tty
+        read -rp "$(echo -e "${YELLOW}Choice the editor (number): ${RESET}")" choice < /dev/tty
         editor_bin="${available[$((choice-1))]}"
     fi
 
     if [[ -z "$editor_bin" ]]; then
-        log_warn "Nenhum editor selecionado. Pulei a edição manual."
+        log_warn "No editor selected. Skipping manual edit."
         return 0
     fi
 
@@ -232,21 +232,21 @@ setup_fastfetch_config() {
     mkdir -p "$config_dir"
 
     local mode
-    read -rp "$(echo -e "${YELLOW}Config do fastfetch: [P]adrão do dsxtool / [c]ustomizar agora / [e]ditar JSON manualmente (P/c/e): ${RESET}")" mode < /dev/tty
+    read -rp "$(echo -e "${YELLOW}Fastfetch Config: [d]sxtool default / [c]ustomize now / [e]edit json manually (d/c/e): ${RESET}")" mode < /dev/tty
     mode="${mode:-p}"
 
     case "$mode" in
         c|C)
-            log_info "Selecione os módulos que deseja exibir."
+            log_info "Select the modules to display."
             local selected_modules
             mapfile -t selected_modules < <(fastfetch_pick_modules)
             build_fastfetch_json "$config_file" "${selected_modules[@]}"
-            log_info "Configuração customizada salva em $config_file."
+            log_info "Config save on $config_file."
             ;;
         e|E)
             build_fastfetch_json "$config_file" "${FASTFETCH_DEFAULT_MODULES[@]}"
             open_in_editor "$config_file"
-            log_info "Configuração salva em $config_file."
+            log_info "Config saved on $config_file."
             ;;
         *)
             if curl -fsSLo "$config_file" "$FASTFETCH_CONFIG_URL"; then

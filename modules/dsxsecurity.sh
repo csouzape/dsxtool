@@ -11,20 +11,51 @@ pause() {
     echo
 }
 
+
 firewall_install() {
-    if command -v nft &> /dev/null; then
-        log_info "nftables já está instalado."
+    local installed=false
+    local enabled=false
+
+    command -v nft &> /dev/null && installed=true
+    systemctl is-enabled --quiet nftables 2>/dev/null && enabled=true
+
+    if $installed && $enabled; then
+        log_info "nftables já está instalado e habilitado."
         return 0
     fi
 
-    read -rp "Do you want to install the firewall? (y/n): " -n 1 -r confirm
-    echo
-    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        log_error "Firewall installation was cancelled."
-        return 1
+    if $installed && ! $enabled; then
+        log_info "nftables já está instalado, mas não está habilitado."
+        read -rn 1 -p "Deseja habilitar o firewall agora? (y/n): " confirm
+        echo
+        [[ "$confirm" =~ ^[Yy]$ ]] || {
+            log_error "Ativação do firewall cancelada."
+            return 1
+        }
+        firewall_enable
+        return $?
     fi
-    pkg_install nftables
+
+    read -rn 1 -p "Deseja instalar o firewall? (y/n): " confirm
+    echo
+    [[ "$confirm" =~ ^[Yy]$ ]] || {
+        log_error "Instalação do firewall cancelada."
+        return 1
+    }
+
+    pkg_install nftables || {
+        log_error "Falha ao instalar nftables."
+        return 1
+    }
+
+    read -rn 1 -p "Deseja habilitar o firewall agora? (y/n): " confirm
+    echo
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        firewall_enable
+    fi
 }
+
+
 
 firewall_enable() {
     log_info "Enabling firewall..."
@@ -43,6 +74,7 @@ firewall_disable() {
     }
     log_success "Firewall has been disabled."
 }
+
 
 firewall_status() {
     local db="$BASE_DIR/modules/data/services.db"
@@ -153,6 +185,313 @@ EOF
     done
 }
 
+
+ssh_service_name() {
+    if systemctl list-unit-files --no-legend 2>/dev/null | grep -q '^sshd\.service'; then
+        echo "sshd"
+    elif systemctl list-unit-files --no-legend 2>/dev/null | grep -q '^ssh\.service'; then
+        echo "ssh"
+    else
+        echo "sshd"
+    fi
+}
+
+ssh_backup_config() {
+    local conf="/etc/ssh/sshd_config"
+    local backup="/etc/ssh/sshd_config.dsxsecurity.bak"
+
+    [[ -f "$backup" ]] || sudo cp "$conf" "$backup" || {
+        log_error "Falha ao criar backup de sshd_config."
+        return 1
+    }
+}
+
+ssh_set_option() {
+    local key="$1"
+    local value="$2"
+    local conf="/etc/ssh/sshd_config"
+    local tmp
+    tmp=$(mktemp)
+
+    sudo cp "$conf" "$tmp"
+
+    if grep -Eq "^\s*#?\s*${key}\b" "$tmp"; then
+        sudo sed -i -E "s|^\s*#?\s*${key}\b.*|${key} ${value}|" "$tmp"
+    else
+        echo "${key} ${value}" | sudo tee -a "$tmp" > /dev/null
+    fi
+
+    if ! sudo sshd -t -f "$tmp" 2>/dev/null; then
+        log_error "Config inválida ao tentar setar '${key} ${value}'. Alteração descartada."
+        rm -f "$tmp"
+        return 1
+    fi
+
+    sudo cp "$tmp" "$conf"
+    rm -f "$tmp"
+    return 0
+}
+
+ssh_restart_service() {
+    local svc
+    svc=$(ssh_service_name)
+    sudo systemctl restart "$svc" || {
+        log_error "Falha ao reiniciar $svc. Verifique 'journalctl -u $svc'."
+        return 1
+    }
+}
+
+
+
+ssh_disable() {
+    local svc
+    svc=$(ssh_service_name)
+
+    read -rn 1 -p "Isso vai impedir novas conexões SSH remotas. Confirma? (y/n): " confirm
+    echo
+    [[ "$confirm" =~ ^[Yy]$ ]] || {
+        log_info "Operação cancelada."
+        return 1
+    }
+
+    log_info "Desabilitando $svc..."
+    service_disable "$svc" || {
+        log_error "Falha ao desabilitar $svc."
+        return 1
+    }
+    log_success "SSH desabilitado."
+}
+
+ssh_status() {
+    local svc conf status boot port root_login pass_auth
+    local status_icon boot_icon port_note root_icon pass_icon
+    local warnings=()
+
+    svc=$(ssh_service_name)
+    conf="/etc/ssh/sshd_config"
+
+    clear
+    echo "[MODULE] DSXSecurity - running (logs saved only on error)"
+    echo
+
+    systemctl is-active --quiet "$svc" && status="active" || status="inactive"
+    systemctl is-enabled --quiet "$svc" 2>/dev/null && boot="yes" || boot="no"
+
+    port=$(sudo grep -E '^\s*Port\s' "$conf" 2>/dev/null | awk '{print $2}') || port=""
+    port="${port:-22}"
+
+    root_login=$(sudo grep -E '^\s*PermitRootLogin\s' "$conf" 2>/dev/null | awk '{print $2}') || root_login=""
+    root_login="${root_login:-yes}"
+
+    pass_auth=$(sudo grep -E '^\s*PasswordAuthentication\s' "$conf" 2>/dev/null | awk '{print $2}') || pass_auth=""
+    pass_auth="${pass_auth:-yes}"
+
+    # ── Translate raw values into icons + plain language ──
+
+    if [[ "$status" == "active" ]]; then
+        status_icon="✓ On"
+    else
+        status_icon="✗ Off"
+    fi
+
+    if [[ "$boot" == "yes" ]]; then
+        boot_icon="✓ Yes"
+    else
+        boot_icon="✗ No"
+    fi
+
+    if [[ "$port" == "22" ]]; then
+        port_note="$port (default port, most targeted by automated attacks)"
+        warnings+=("Changing the default port (22) reduces automated intrusion attempts.")
+    else
+        port_note="$port (custom port)"
+    fi
+
+    if [[ "$root_login" =~ ^(yes|prohibit-password)$ ]]; then
+        root_icon="✗ Allowed"
+        warnings+=("Disabling direct root login improves security.")
+    else
+        root_icon="✓ Blocked"
+    fi
+
+    if [[ "$pass_auth" == "yes" ]]; then
+        pass_icon="✗ Allowed"
+        warnings+=("Disabling password login (key-only) prevents brute-force attacks.")
+    else
+        pass_icon="✓ Blocked"
+    fi
+
+    cat <<EOF
+╭──────────────────────────────────────────────────────────────╮
+│                      DSXSecurity SSH                          │
+├──────────────────────────────────────────────────────────────┤
+│ Remote access enabled?........... $status_icon
+│ Starts automatically on boot?.... $boot_icon
+│ Port in use....................... $port_note
+│ Direct root login allowed?....... $root_icon
+│ Password login allowed?.......... $pass_icon
+╰──────────────────────────────────────────────────────────────╯
+EOF
+
+    if (( ${#warnings[@]} > 0 )); then
+        echo
+        echo "Recommendations:"
+        local w
+        for w in "${warnings[@]}"; do
+            echo "  • $w"
+        done
+    else
+        echo
+        echo "✓ SSH configuration is within recommended settings."
+    fi
+}
+
+ssh_change_port() {
+    local new_port
+
+    read -rp "Nova porta SSH (1024-65535): " new_port
+
+    if ! [[ "$new_port" =~ ^[0-9]+$ ]] || (( new_port < 1024 || new_port > 65535 )); then
+        log_error "Porta inválida."
+        return 1
+    fi
+
+    ssh_backup_config || return 1
+    ssh_set_option "Port" "$new_port" || return 1
+    ssh_restart_service || return 1
+
+    log_success "Porta SSH alterada para $new_port."
+    log_info "Lembre-se de liberar essa porta no firewall e ajustar sua sessão atual antes de sair."
+}
+
+ssh_disable_root_login() {
+    ssh_backup_config || return 1
+    ssh_set_option "PermitRootLogin" "no" || return 1
+    ssh_restart_service || return 1
+    log_success "Login root via SSH desabilitado."
+}
+
+ssh_disable_password_login() {
+    if ! sudo find /root /home -maxdepth 2 -name "authorized_keys" 2>/dev/null | grep -q .; then
+        log_error "Nenhuma chave pública (authorized_keys) encontrada em nenhum usuário."
+        read -rn 1 -p "Desabilitar login por senha mesmo assim pode te trancar fora. Continuar? (y/n): " confirm
+        echo
+        [[ "$confirm" =~ ^[Yy]$ ]] || {
+            log_info "Operação cancelada."
+            return 1
+        }
+    fi
+
+    ssh_backup_config || return 1
+    ssh_set_option "PasswordAuthentication" "no" || return 1
+    ssh_restart_service || return 1
+    log_success "Login por senha via SSH desabilitado."
+}
+
+ssh_harden() {
+    log_info "Aplicando hardening padrão de SSH (root login off, password auth off)..."
+    ssh_backup_config || return 1
+    ssh_disable_root_login || return 1
+    ssh_disable_password_login || return 1
+    log_success "Hardening de SSH concluído."
+}
+
+ssh_restore() {
+    local conf="/etc/ssh/sshd_config"
+    local backup="/etc/ssh/sshd_config.dsxsecurity.bak"
+
+    [[ -f "$backup" ]] || {
+        log_error "Nenhum backup encontrado em $backup."
+        return 1
+    }
+
+    read -rn 1 -p "Restaurar sshd_config para o estado original? (y/n): " confirm
+    echo
+    [[ "$confirm" =~ ^[Yy]$ ]] || {
+        log_info "Operação cancelada."
+        return 1
+    }
+
+    if ! sudo sshd -t -f "$backup" 2>/dev/null; then
+        log_error "Backup está com config inválida. Abortando restauração."
+        return 1
+    fi
+
+    sudo cp "$backup" "$conf"
+    ssh_restart_service || return 1
+    log_success "sshd_config restaurado a partir do backup."
+}
+
+ssh_install() {
+    if command -v sshd &> /dev/null || [[ -x /usr/sbin/sshd ]]; then
+        log_info "OpenSSH já está instalado."
+        return 0
+    fi
+
+    read -rn 1 -p "Deseja instalar o servidor SSH? (y/n): " confirm
+    echo
+    [[ "$confirm" =~ ^[Yy]$ ]] || {
+        log_error "Instalação do SSH cancelada."
+        return 1
+    }
+
+    pkg_install openssh || {
+        log_error "Falha ao instalar OpenSSH."
+        return 1
+    }
+    log_success "OpenSSH instalado."
+}
+
+ssh_enable() {
+    local svc
+    svc=$(ssh_service_name)
+    log_info "Habilitando $svc..."
+    service_enable "$svc" || {
+        log_error "Falha ao habilitar $svc."
+        return 1
+    }
+    log_success "SSH habilitado."
+}
+
+
+ssh_menu() {
+    local option
+    while true; do
+        option=$(
+            printf "%s\n" \
+                "Status" \
+                "Install" \
+                "Enable" \
+                "Disable" \
+                "Harden" \
+                "Change Port" \
+                "Disable Root Login" \
+                "Disable Password Login" \
+                "Restore" \
+                "Back" |
+            fzf \
+                --prompt "SSH Menu > " \
+                --height=60% \
+                --border \
+                --reverse \
+                --cycle
+        ) || true
+
+        case "$option" in
+            "Status") ssh_status; pause ;;
+            "Install") ssh_install; pause ;;
+            "Enable") ssh_enable; pause ;;
+            "Disable") ssh_disable; pause ;;
+            "Harden") ssh_harden; pause ;;
+            "Change Port") ssh_change_port; pause ;;
+            "Disable Root Login") ssh_disable_root_login; pause ;;
+            "Disable Password Login") ssh_disable_password_login; pause ;;
+            "Restore") ssh_restore; pause ;;
+            "Back"|"") return 0 ;;
+        esac
+    done
+}
+
 firewall_menu() {
     local option
     while true; do
@@ -195,6 +534,9 @@ firewall_menu() {
     done
 }
 
+
+
+
 main() {
     local option
     local banner
@@ -213,8 +555,6 @@ main() {
             printf "%s\n" \
                 "Firewall" \
                 "SSH" \
-                "SELinux" \
-                "AppArmor" \
                 "Exit" |
             fzf \
                 --ansi \
@@ -230,8 +570,6 @@ main() {
         case "$option" in
             "Firewall") firewall_menu ;;
             "SSH") ssh_menu ;;
-            "SELinux") selinux_menu ;;
-            "AppArmor") apparmor_menu ;;
             "Exit"|"") exit 0 ;;
         esac
     done

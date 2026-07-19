@@ -6,6 +6,10 @@ set -euo pipefail
 source "$BASE_DIR/core/common.sh"
 source "$BASE_DIR/core/detect.sh"
 
+DSXSEC_CONF_DIR="/etc/dsxsecurity"
+DSXSEC_FW_STATE="$DSXSEC_CONF_DIR/firewall.conf"
+
+
 pause() {
     read -n 1 -s -r -p $'\nPress Any key to continue...'
     echo
@@ -76,9 +80,107 @@ firewall_disable() {
 }
 
 
+firewall_apply_profile() {
+    local profile="$1"
+    local extra_rules=""
+
+    case "$profile" in
+        home)
+            extra_rules='ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } accept'
+            ;;
+        gaming)
+            extra_rules='ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } accept
+        udp dport { 1900, 5353 } accept'
+            ;;
+        public)
+            extra_rules=''
+            ;;
+        *)
+            log_error "Invalid profile: $profile"
+            return 1
+            ;;
+    esac
+
+    sudo nft -f - <<EOF
+flush ruleset
+table inet dsxsecurity {
+    chain input {
+        type filter hook input priority filter; policy drop;
+        iif lo accept
+        ct state established,related accept
+        ct state invalid drop
+        icmp type { echo-request, destination-unreachable, time-exceeded } accept
+        icmpv6 type { echo-request, nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert } accept
+        $extra_rules
+    }
+    chain forward { type filter hook forward priority filter; policy drop; }
+    chain output { type filter hook output priority filter; policy accept; }
+}
+EOF
+
+    if [[ $? -ne 0 ]]; then
+        log_error "Failed to apply profile '$profile'."
+        return 1
+    fi
+
+    sudo mkdir -p "$DSXSEC_CONF_DIR"
+    echo "PROFILE=$profile" | sudo tee "$DSXSEC_FW_STATE" > /dev/null
+    log_success "Profile '$profile' applied."
+}
+
+firewall_current_profile() {
+    [[ -f "$DSXSEC_FW_STATE" ]] && grep -oP '(?<=PROFILE=).*' "$DSXSEC_FW_STATE" || echo "none"
+}
+
+
+firewall_profile_preview() {
+    case "$1" in
+        "Home")
+cat <<'EOF'
+HOME — Trusted network (residence)
+
+What it does:
+  - Allows access from devices on your local network
+    (other computers, phone, printer, etc.)
+  - Blocks any connection attempt coming from the internet
+
+Use when: you are at home, on your own router.
+EOF
+            ;;
+        "Public")
+cat <<'EOF'
+PUBLIC — Untrusted network (third-party Wi-Fi)
+
+What it does:
+  - Blocks ALL incoming connections, even from the local network
+  - Only allows responses to connections you started yourself
+
+Use when: coffee shop, airport, hotel Wi-Fi, or any
+network that is not your own.
+
+Warning: if you access this machine via remote SSH,
+new SSH connections will also be blocked under this profile.
+EOF
+            ;;
+        "Gaming")
+cat <<'EOF'
+GAMING — Local network + device discovery
+
+What it does:
+  - Same as the Home profile
+  - Opens ports used by games/apps to discover other
+    devices on the same network (mDNS/SSDP)
+
+Use when: local network gaming, Chromecast, DLNA,
+media sharing.
+EOF
+            ;;
+    esac
+}
+
 firewall_status() {
     local db="$BASE_DIR/modules/data/services.db"
-    local fw_status fw_boot rules tables services line
+    local fw_status fw_boot profile rules tables services line
     local process service description
 
     clear
@@ -100,6 +202,12 @@ firewall_status() {
         fw_boot="Disabled"
     fi
 
+    if [[ "$fw_status" == "Active" ]] && sudo nft list tables 2>/dev/null | grep -q dsxsecurity; then
+        profile=$(firewall_current_profile)
+    else
+        profile="none"
+    fi
+
     rules=$(sudo nft list ruleset 2>/dev/null | grep -Ec 'accept|drop|reject' || true)
     tables=$(sudo nft list tables 2>/dev/null | wc -l) || true
 
@@ -116,6 +224,7 @@ firewall_status() {
 ├──────────────────────────────────────────────────────────────┤
 │ Firewall       $fw_status
 │ Startup        $fw_boot
+│ Profile        $profile
 │ Backend        nftables
 │ Rules          $rules
 │ Tables         $tables
@@ -184,6 +293,56 @@ EOF
 
     done
 }
+
+
+firewall_confirm_and_apply() {
+    local profile="$1" label="$2"
+
+    clear
+    echo "Selected profile: $label"
+    echo
+    firewall_profile_preview "$label"
+    echo
+
+    if [[ "$profile" == "public" ]] && systemctl is-active --quiet "$(ssh_service_name)" 2>/dev/null; then
+        echo "Warning: SSH is active on this machine."
+        echo "If you manage this computer remotely, new connections"
+        echo "may stop working after this change."
+        echo
+    fi
+
+    read -rn 1 -p "Apply profile '$label' now? (y/n): " confirm
+    echo
+    [[ "$confirm" =~ ^[Yy]$ ]] || {
+        log_info "Operation cancelled."
+        return 1
+    }
+
+    firewall_apply_profile "$profile"
+}
+
+
+firewall_set_profile() {
+    export -f firewall_profile_preview
+    local choice
+    choice=$(
+        printf "%s\n" "Home" "Public" "Gaming" "Back" |
+        fzf --prompt "Select network profile > " \
+            --height=80% --border --reverse \
+            --preview 'firewall_profile_preview {}' \
+            --preview-window=right:60%:wrap
+    ) || return 0
+
+    case "$choice" in
+        "Home")   firewall_confirm_and_apply home   "Home" ;;
+        "Public") firewall_confirm_and_apply public "Public" ;;
+        "Gaming") firewall_confirm_and_apply gaming "Gaming" ;;
+        *) return 0 ;;
+    esac
+    pause
+}
+
+
 
 
 ssh_service_name() {
@@ -286,7 +445,6 @@ ssh_status() {
     pass_auth=$(sudo grep -E '^\s*PasswordAuthentication\s' "$conf" 2>/dev/null | awk '{print $2}') || pass_auth=""
     pass_auth="${pass_auth:-yes}"
 
-    # ── Translate raw values into icons + plain language ──
 
     if [[ "$status" == "active" ]]; then
         status_icon="✓ On"
@@ -492,12 +650,14 @@ ssh_menu() {
     done
 }
 
+
 firewall_menu() {
     local option
     while true; do
         option=$(
             printf "%s\n" \
                 "Status" \
+                "Change Profile" \
                 "Install" \
                 "Enable" \
                 "Disable" \
@@ -514,6 +674,9 @@ firewall_menu() {
             "Status")
                 firewall_status
                 pause
+                ;;
+            "Change Profile")
+                firewall_set_profile
                 ;;
             "Install")
                 firewall_install
@@ -534,6 +697,42 @@ firewall_menu() {
     done
 }
 
+security_overview() {
+    clear
+    local fw_active fw_label ssh_active ssh_label svc
+
+    if systemctl is-active --quiet nftables && sudo nft list tables 2>/dev/null | grep -q dsxsecurity; then
+        fw_active=true
+        fw_label="Protected (profile: $(firewall_current_profile))"
+    else
+        fw_active=false
+        fw_label="Vulnerable (firewall is off)"
+    fi
+
+    svc=$(ssh_service_name)
+    if systemctl is-active --quiet "$svc"; then
+        ssh_active=true
+        if sudo grep -Eq '^\s*PasswordAuthentication\s+no' /etc/ssh/sshd_config 2>/dev/null; then
+            ssh_label="Running (key-only login)"
+        else
+            ssh_label="Running (password login allowed)"
+        fi
+    else
+        ssh_active=false
+        ssh_label="Not running"
+    fi
+
+    cat <<EOF
++------------------------------------------------+
+|              DSXSecurity Overview               |
++------------------------------------------------+
+| Firewall       $fw_label
+| SSH            $ssh_label
++------------------------------------------------+
+EOF
+}
+
+
 
 
 
@@ -543,7 +742,7 @@ main() {
 
     banner=$'\033[34m'"\
 ██████╗ ███████╗██╗  ██╗███████╗███████╗ ██████╗██╗   ██╗██████╗ ██╗████████╗██╗   ██╗
-██╔══██╗██╔════╝╚██╗██╔╝██╔════╝██╔════╝██╔════╝██║   ██║██╔══██╗██║╚══██╔══╝╚██╗ ██╔╝
+██╔══██╗██╔════╝╚██╗██╔╝██╔════╝██╔════╝██╔════╝██╔════╝██║   ██║██╔══██╗██║╚══██╔══╝╚██╗ ██╔╝
 ██║  ██║███████╗ ╚███╔╝ ███████╗█████╗  ██║     ██║   ██║██████╔╝██║   ██║    ╚████╔╝
 ██║  ██║╚════██║ ██╔██╗ ╚════██║██╔══╝  ██║     ██║   ██║██╔══██╗██║   ██║     ╚██╔╝
 ██████╔╝███████║██╔╝ ██╗███████║███████╗╚██████╗╚██████╔╝██║  ██║██║   ██║      ██║
@@ -553,6 +752,7 @@ main() {
     while true; do
         option=$(
             printf "%s\n" \
+                "Overview" \
                 "Firewall" \
                 "SSH" \
                 "Exit" |
@@ -561,18 +761,29 @@ main() {
                 --header "$banner" \
                 --header-first \
                 --prompt "dsxsecurity > " \
-                --height=60% \
+                --height=100% \
                 --border \
                 --reverse \
-                --cycle
+                --cycle \
+                --preview '
+                    case {} in
+                        "Overview") echo "See a quick summary of the security status." ;;
+                        "Firewall") echo "Manage the system firewall: status, install, enable, disable, and switch between Home, Public, and Gaming profiles." ;;
+                        "SSH") echo "Audit and harden the SSH service: check status, change port, disable root login, disable password login, restore backup." ;;
+                        "Exit") echo "Close DSXSecurity." ;;
+                    esac
+                ' \
+                --preview-window=right:50%:wrap
         ) || true
 
         case "$option" in
+            "Overview") security_overview; pause ;;
             "Firewall") firewall_menu ;;
             "SSH") ssh_menu ;;
             "Exit"|"") exit 0 ;;
         esac
     done
 }
+
 
 main

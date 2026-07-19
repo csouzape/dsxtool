@@ -24,13 +24,13 @@ firewall_install() {
     systemctl is-enabled --quiet nftables 2>/dev/null && enabled=true
 
     if $installed && $enabled; then
-        log_info "nftables já está instalado e habilitado."
+        log_info "nftables already enabled."
         return 0
     fi
 
     if $installed && ! $enabled; then
-        log_info "nftables já está instalado, mas não está habilitado."
-        read -rn 1 -p "Deseja habilitar o firewall agora? (y/n): " confirm
+        log_info "nftables is installed, but not enabled."
+        read -rn 1 -p "Would you like to enable it now? (y/n): " confirm
         echo
         [[ "$confirm" =~ ^[Yy]$ ]] || {
             log_error "Ativação do firewall cancelada."
@@ -40,19 +40,19 @@ firewall_install() {
         return $?
     fi
 
-    read -rn 1 -p "Deseja instalar o firewall? (y/n): " confirm
+    read -rn 1 -p "Would you like to install the firewall? (y/n): " confirm
     echo
     [[ "$confirm" =~ ^[Yy]$ ]] || {
-        log_error "Instalação do firewall cancelada."
+        log_error "Firewall installation canceled."
         return 1
     }
 
     pkg_install nftables || {
-        log_error "Falha ao instalar nftables."
+        log_error "Failed to install nftables."
         return 1
     }
 
-    read -rn 1 -p "Deseja habilitar o firewall agora? (y/n): " confirm
+    read -rn 1 -p "Would you like to enable the firewall now? (y/n): " confirm
     echo
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         firewall_enable

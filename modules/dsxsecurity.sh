@@ -792,9 +792,9 @@ main() {
         option=$(
             printf "%s\n" \
                 "Overview" \
+                "Check Security Updates" \
                 "Firewall" \
                 "SSH" \
-                "Check Security Updates" \
                 "Exit" |
             fzf \
                 --ansi \
@@ -808,6 +808,7 @@ main() {
                 --preview '
                     case {} in
                         "Overview") echo "See a quick summary of the security status." ;;
+                        "Check Security Updates") echo "Check for security updates and install any available patches." ;;
                         "Firewall") echo "Manage the system firewall: status, install, enable, disable, and switch between Home, Public, and Gaming profiles." ;;
                         "SSH") echo "Audit and harden the SSH service: check status, change port, disable root login, disable password login, restore backup." ;;
                         "Exit") echo "Close DSXSecurity." ;;
@@ -818,9 +819,9 @@ main() {
 
         case "$option" in
             "Overview") security_overview; pause ;;
+            "Check Security Updates") security_check_updates; pause ;;
             "Firewall") firewall_menu ;;
             "SSH") ssh_menu ;;
-            "Check Security Updates") security_check_updates; pause ;;
             "Exit"|"") exit 0 ;;
         esac
     done

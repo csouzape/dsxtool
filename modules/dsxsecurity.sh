@@ -652,6 +652,7 @@ ssh_menu() {
 
 
 firewall_menu() {
+    clear
     local option
     while true; do
         option=$(

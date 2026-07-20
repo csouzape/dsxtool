@@ -697,6 +697,66 @@ firewall_menu() {
     done
 }
 
+pkg_integrity_check() {
+    local missing=0 altered=0
+
+    case "$DISTRO" in
+        arch)
+            command -v pacman &> /dev/null || { echo "N/A|N/A"; return; }
+            missing=$(pacman -Qkk 2>/dev/null | grep -oP '\K[0-9]+(?= missing)' | awk '{s+=$1} END{print s+0}')
+            altered=$(pacman -Qkk 2>/dev/null | grep -E '^(warning: )?/usr/(bin|sbin|lib)/' | grep -c 'altered') || true
+            ;;
+        debian)
+            command -v debsums &> /dev/null || { echo "N/A|N/A"; return; }
+            missing=$(debsums -c 2>/dev/null | grep -c 'no such file') || true
+            altered=$(debsums -c 2>/dev/null | grep -v 'no such file' | grep -Ev '\.conf$' | wc -l) || true
+            ;;
+        fedora)
+            command -v rpm &> /dev/null || { echo "N/A|N/A"; return; }
+            missing=$(rpm -Va 2>/dev/null | grep -c '^missing') || true
+            altered=$(rpm -Va 2>/dev/null | grep '^..5' | grep -vc '  c ') || true
+            ;;
+        *)
+            echo "N/A|N/A"
+            return
+            ;;
+    esac
+
+    echo "${missing:-0}|${altered:-0}"
+}
+
+security_check_package_integrity() {
+    clear
+    echo "[MODULE] DSXSecurity - Package Integrity"
+    echo
+
+    log_info "Checking installed packages, this may take a moment..."
+    local result missing altered
+    result=$(pkg_integrity_check)
+    IFS='|' read -r missing altered <<< "$result"
+
+    clear
+    echo "[MODULE] DSXSecurity - Package Integrity"
+    echo
+
+    if [[ "$missing" == "N/A" ]]; then
+        log_warn "Package integrity check is not available for this distro/tooling."
+        return
+    fi
+
+    if (( missing == 0 )); then
+        log_success "No missing files detected in critical system binaries."
+    else
+        log_error "$missing missing file(s) detected in critical system paths."
+        log_info "This may indicate corruption or unauthorized removal. Recommendation: reinstall affected packages."
+    fi
+
+    echo
+    log_info "$altered file(s) modified since installation (informational)."
+    log_info "Often normal: config edits, .pacnew updates, or AUR packages without full checksums. Not a security alert by itself."
+}
+
+
 security_overview() {
     clear
     local fw_active fw_label ssh_active ssh_label svc
@@ -795,6 +855,7 @@ main() {
                 "Check Security Updates" \
                 "Firewall" \
                 "SSH" \
+                "Package Integrity" \
                 "Exit" |
             fzf \
                 --ansi \
@@ -811,6 +872,7 @@ main() {
                         "Check Security Updates") echo "Check for security updates and install any available patches." ;;
                         "Firewall") echo "Manage the system firewall: status, install, enable, disable, and switch between Home, Public, and Gaming profiles." ;;
                         "SSH") echo "Audit and harden the SSH service: check status, change port, disable root login, disable password login, restore backup." ;;
+                        "Package Integrity") echo "Check the integrity of installed packages." ;;
                         "Exit") echo "Close DSXSecurity." ;;
                     esac
                 ' \
@@ -822,6 +884,7 @@ main() {
             "Check Security Updates") security_check_updates; pause ;;
             "Firewall") firewall_menu ;;
             "SSH") ssh_menu ;;
+            "Package Integrity") security_check_package_integrity; pause ;;
             "Exit"|"") exit 0 ;;
         esac
     done

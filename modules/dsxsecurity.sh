@@ -360,7 +360,7 @@ ssh_backup_config() {
     local backup="/etc/ssh/sshd_config.dsxsecurity.bak"
 
     [[ -f "$backup" ]] || sudo cp "$conf" "$backup" || {
-        log_error "Falha ao criar backup de sshd_config."
+        log_error "Failed to create backup of sshd_config."
         return 1
     }
 }
@@ -381,7 +381,7 @@ ssh_set_option() {
     fi
 
     if ! sudo sshd -t -f "$tmp" 2>/dev/null; then
-        log_error "Config inválida ao tentar setar '${key} ${value}'. Alteração descartada."
+        log_error "Invalid config for '${key} ${value}'. Change discarded."
         rm -f "$tmp"
         return 1
     fi
@@ -395,7 +395,7 @@ ssh_restart_service() {
     local svc
     svc=$(ssh_service_name)
     sudo systemctl restart "$svc" || {
-        log_error "Falha ao reiniciar $svc. Verifique 'journalctl -u $svc'."
+        log_error "Failed to restart $svc. Check 'journalctl -u $svc'."
         return 1
     }
 }
@@ -406,19 +406,19 @@ ssh_disable() {
     local svc
     svc=$(ssh_service_name)
 
-    read -rn 1 -p "Isso vai impedir novas conexões SSH remotas. Confirma? (y/n): " confirm
+    read -rn 1 -p "Are you sure you want to disable $svc? (y/n): " confirm
     echo
     [[ "$confirm" =~ ^[Yy]$ ]] || {
-        log_info "Operação cancelada."
+        log_info "Operation cancelled."
         return 1
     }
 
-    log_info "Desabilitando $svc..."
+    log_info "Disabling $svc..."
     service_disable "$svc" || {
         log_error "Falha ao desabilitar $svc."
         return 1
     }
-    log_success "SSH desabilitado."
+    log_success "$svc disabled."
 }
 
 ssh_status() {

@@ -163,7 +163,7 @@ build_menu() {
         "9 - Setup Gaming" \
         "10 - Setup Bluetooth" \
         "11 - Setup Printer" \
-        "12 - DSXSWAP (BETA)" \
+        "12 - DSXSwap" \
         "13 - DSXSecurity" \
         "14 - Sober Optimization" \
         "15 - Setup Drivers" \

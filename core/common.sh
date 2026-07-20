@@ -88,6 +88,10 @@ log_error() {
     echo -e "${RED}[ERROR]${RESET} $*"
 }
 
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${RESET} $*"
+}
+
 die() {
     log_error "$*"
     # If logging active, offer immediate copy before exiting

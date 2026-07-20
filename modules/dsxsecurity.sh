@@ -733,6 +733,45 @@ EOF
 }
 
 
+security_check_updates() {
+    clear
+    log_info "Checking for security updates..."
+
+    local output="" count=0
+
+    case "$DISTRO" in
+        arch)
+            if ! command -v arch-audit &> /dev/null; then
+                log_warn "arch-audit is not installed. Install it to enable security-specific update tracking."
+                read -rn 1 -p "Install arch-audit now? (y/n): " confirm
+                echo
+                [[ "$confirm" =~ ^[Yy]$ ]] && pkg_install arch-audit
+                return
+            fi
+            output=$(arch-audit -u 2>/dev/null)
+            ;;
+        debian)
+            sudo apt-get update -qq
+            output=$(apt-get -s dist-upgrade 2>/dev/null | awk '/^Inst/ && /security/ {print $2}')
+            ;;
+        fedora)
+            output=$(dnf updateinfo list security -q 2>/dev/null)
+            ;;
+    esac
+
+    if [[ -n "$output" ]]; then
+        count=$(echo "$output" | wc -l)
+    fi
+
+    if (( count == 0 )); then
+        log_success "No known security updates pending."
+    else
+        echo "$output"
+        echo
+        log_warn "$count security update(s) available. Consider running a full system update."
+    fi
+}
+
 
 
 
@@ -755,6 +794,7 @@ main() {
                 "Overview" \
                 "Firewall" \
                 "SSH" \
+                "Check Security Updates" \
                 "Exit" |
             fzf \
                 --ansi \
@@ -780,6 +820,7 @@ main() {
             "Overview") security_overview; pause ;;
             "Firewall") firewall_menu ;;
             "SSH") ssh_menu ;;
+            "Check Security Updates") security_check_updates; pause ;;
             "Exit"|"") exit 0 ;;
         esac
     done

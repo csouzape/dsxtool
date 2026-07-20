@@ -833,6 +833,75 @@ security_check_updates() {
 }
 
 
+login_activity_check() {
+    local svc failed_count=0 last_fail_ip="" last_fail_time=""
+    svc=$(ssh_service_name)
+
+    if command -v journalctl &> /dev/null && journalctl -u "$svc" -n1 &> /dev/null; then
+        failed_count=$(journalctl -u "$svc" --since "-7 days" 2>/dev/null | grep -c 'Failed password') || true
+        last_fail_ip=$(journalctl -u "$svc" --since "-7 days" 2>/dev/null | grep 'Failed password' | grep -oP 'from \K[0-9.]+' | tail -1)
+    elif [[ -f /var/log/auth.log ]]; then
+        failed_count=$(sudo grep -c 'Failed password' /var/log/auth.log 2>/dev/null) || true
+        last_fail_ip=$(sudo grep 'Failed password' /var/log/auth.log 2>/dev/null | grep -oP 'from \K[0-9.]+' | tail -1)
+    fi
+
+    echo "${failed_count:-0}|${last_fail_ip:-none}"
+}
+
+login_history_render() {
+    local tool_used=""
+
+    if command -v lastlog &> /dev/null; then
+        tool_used="lastlog"
+        lastlog -t 30 2>/dev/null |
+        awk 'NR==1 {next} $2!~/^\*\*/ {printf "● %-12s %s\n", $1, substr($0, index($0,$2))}'
+    elif command -v last &> /dev/null; then
+        tool_used="last"
+        last -n 20 2>/dev/null |
+        grep -Ev '^(reboot|wtmp| *$)' |
+        awk '{printf "● %-12s %s\n", $1, substr($0, index($0,$3))}'
+    fi
+
+    [[ -z "$tool_used" ]] && return 1
+    return 0
+}
+
+security_login_activity() {
+    clear
+    echo "[MODULE] DSXSecurity - Login Activity"
+    echo
+
+    local svc result failed_count last_fail_ip
+    svc=$(ssh_service_name)
+    result=$(login_activity_check)
+    IFS='|' read -r failed_count last_fail_ip <<< "$result"
+
+    cat <<EOF
++------------------------------------------------+
+|              DSXSecurity Login Activity          |
++------------------------------------------------+
+| Failed SSH logins (7 days)    $failed_count
+| Last failed attempt from      $last_fail_ip
++------------------------------------------------+
+
+Recent Successful Logins
+──────────────────────────────────────────────────
+EOF
+
+    if ! login_history_render; then
+        log_warn "No login history tool (lastlog/last) available on this system."
+    fi
+
+    echo
+    if (( failed_count > 50 )); then
+        log_warn "High number of failed login attempts detected."
+        log_info "Consider enabling key-only login and/or installing fail2ban to block repeat offenders automatically."
+    elif (( failed_count > 0 )); then
+        log_info "Some failed login attempts detected. This is common with SSH exposed to the internet."
+    else
+        log_success "No failed login attempts detected in the last 7 days."
+    fi
+}
 
 
 main() {
@@ -856,6 +925,7 @@ main() {
                 "Firewall" \
                 "SSH" \
                 "Package Integrity" \
+                "Login Activity" \
                 "Exit" |
             fzf \
                 --ansi \
@@ -873,6 +943,7 @@ main() {
                         "Firewall") echo "Manage the system firewall: status, install, enable, disable, and switch between Home, Public, and Gaming profiles." ;;
                         "SSH") echo "Audit and harden the SSH service: check status, change port, disable root login, disable password login, restore backup." ;;
                         "Package Integrity") echo "Check the integrity of installed packages." ;;
+                        "Login Activity") echo "View login activity and failed login attempts." ;;
                         "Exit") echo "Close DSXSecurity." ;;
                     esac
                 ' \
@@ -885,6 +956,7 @@ main() {
             "Firewall") firewall_menu ;;
             "SSH") ssh_menu ;;
             "Package Integrity") security_check_package_integrity; pause ;;
+            "Login Activity") security_login_activity; pause ;;
             "Exit"|"") exit 0 ;;
         esac
     done

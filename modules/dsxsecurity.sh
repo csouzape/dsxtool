@@ -24,13 +24,13 @@ firewall_install() {
     systemctl is-enabled --quiet nftables 2>/dev/null && enabled=true
 
     if $installed && $enabled; then
-        log_info "nftables já está instalado e habilitado."
+        log_info "nftables already enabled."
         return 0
     fi
 
     if $installed && ! $enabled; then
-        log_info "nftables já está instalado, mas não está habilitado."
-        read -rn 1 -p "Deseja habilitar o firewall agora? (y/n): " confirm
+        log_info "nftables is installed, but not enabled."
+        read -rn 1 -p "Would you like to enable it now? (y/n): " confirm
         echo
         [[ "$confirm" =~ ^[Yy]$ ]] || {
             log_error "Ativação do firewall cancelada."
@@ -40,19 +40,19 @@ firewall_install() {
         return $?
     fi
 
-    read -rn 1 -p "Deseja instalar o firewall? (y/n): " confirm
+    read -rn 1 -p "Would you like to install the firewall? (y/n): " confirm
     echo
     [[ "$confirm" =~ ^[Yy]$ ]] || {
-        log_error "Instalação do firewall cancelada."
+        log_error "Firewall installation canceled."
         return 1
     }
 
     pkg_install nftables || {
-        log_error "Falha ao instalar nftables."
+        log_error "Failed to install nftables."
         return 1
     }
 
-    read -rn 1 -p "Deseja habilitar o firewall agora? (y/n): " confirm
+    read -rn 1 -p "Would you like to enable the firewall now? (y/n): " confirm
     echo
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         firewall_enable
@@ -697,6 +697,66 @@ firewall_menu() {
     done
 }
 
+pkg_integrity_check() {
+    local missing=0 altered=0
+
+    case "$DISTRO" in
+        arch)
+            command -v pacman &> /dev/null || { echo "N/A|N/A"; return; }
+            missing=$(pacman -Qkk 2>/dev/null | grep -oP '\K[0-9]+(?= missing)' | awk '{s+=$1} END{print s+0}')
+            altered=$(pacman -Qkk 2>/dev/null | grep -E '^(warning: )?/usr/(bin|sbin|lib)/' | grep -c 'altered') || true
+            ;;
+        debian)
+            command -v debsums &> /dev/null || { echo "N/A|N/A"; return; }
+            missing=$(debsums -c 2>/dev/null | grep -c 'no such file') || true
+            altered=$(debsums -c 2>/dev/null | grep -v 'no such file' | grep -Ev '\.conf$' | wc -l) || true
+            ;;
+        fedora)
+            command -v rpm &> /dev/null || { echo "N/A|N/A"; return; }
+            missing=$(rpm -Va 2>/dev/null | grep -c '^missing') || true
+            altered=$(rpm -Va 2>/dev/null | grep '^..5' | grep -vc '  c ') || true
+            ;;
+        *)
+            echo "N/A|N/A"
+            return
+            ;;
+    esac
+
+    echo "${missing:-0}|${altered:-0}"
+}
+
+security_check_package_integrity() {
+    clear
+    echo "[MODULE] DSXSecurity - Package Integrity"
+    echo
+
+    log_info "Checking installed packages, this may take a moment..."
+    local result missing altered
+    result=$(pkg_integrity_check)
+    IFS='|' read -r missing altered <<< "$result"
+
+    clear
+    echo "[MODULE] DSXSecurity - Package Integrity"
+    echo
+
+    if [[ "$missing" == "N/A" ]]; then
+        log_warn "Package integrity check is not available for this distro/tooling."
+        return
+    fi
+
+    if (( missing == 0 )); then
+        log_success "No missing files detected in critical system binaries."
+    else
+        log_error "$missing missing file(s) detected in critical system paths."
+        log_info "This may indicate corruption or unauthorized removal. Recommendation: reinstall affected packages."
+    fi
+
+    echo
+    log_info "$altered file(s) modified since installation (informational)."
+    log_info "Often normal: config edits, .pacnew updates, or AUR packages without full checksums. Not a security alert by itself."
+}
+
+
 security_overview() {
     clear
     local fw_active fw_label ssh_active ssh_label svc
@@ -733,7 +793,115 @@ EOF
 }
 
 
+security_check_updates() {
+    clear
+    log_info "Checking for security updates..."
 
+    local output="" count=0
+
+    case "$DISTRO" in
+        arch)
+            if ! command -v arch-audit &> /dev/null; then
+                log_warn "arch-audit is not installed. Install it to enable security-specific update tracking."
+                read -rn 1 -p "Install arch-audit now? (y/n): " confirm
+                echo
+                [[ "$confirm" =~ ^[Yy]$ ]] && pkg_install arch-audit
+                return
+            fi
+            output=$(arch-audit -u 2>/dev/null)
+            ;;
+        debian)
+            sudo apt-get update -qq
+            output=$(apt-get -s dist-upgrade 2>/dev/null | awk '/^Inst/ && /security/ {print $2}')
+            ;;
+        fedora)
+            output=$(dnf updateinfo list security -q 2>/dev/null)
+            ;;
+    esac
+
+    if [[ -n "$output" ]]; then
+        count=$(echo "$output" | wc -l)
+    fi
+
+    if (( count == 0 )); then
+        log_success "No known security updates pending."
+    else
+        echo "$output"
+        echo
+        log_warn "$count security update(s) available. Consider running a full system update."
+    fi
+}
+
+
+login_activity_check() {
+    local svc failed_count=0 last_fail_ip="" last_fail_time=""
+    svc=$(ssh_service_name)
+
+    if command -v journalctl &> /dev/null && journalctl -u "$svc" -n1 &> /dev/null; then
+        failed_count=$(journalctl -u "$svc" --since "-7 days" 2>/dev/null | grep -c 'Failed password') || true
+        last_fail_ip=$(journalctl -u "$svc" --since "-7 days" 2>/dev/null | grep 'Failed password' | grep -oP 'from \K[0-9.]+' | tail -1)
+    elif [[ -f /var/log/auth.log ]]; then
+        failed_count=$(sudo grep -c 'Failed password' /var/log/auth.log 2>/dev/null) || true
+        last_fail_ip=$(sudo grep 'Failed password' /var/log/auth.log 2>/dev/null | grep -oP 'from \K[0-9.]+' | tail -1)
+    fi
+
+    echo "${failed_count:-0}|${last_fail_ip:-none}"
+}
+
+login_history_render() {
+    local tool_used=""
+
+    if command -v lastlog &> /dev/null; then
+        tool_used="lastlog"
+        lastlog -t 30 2>/dev/null |
+        awk 'NR==1 {next} $2!~/^\*\*/ {printf "● %-12s %s\n", $1, substr($0, index($0,$2))}'
+    elif command -v last &> /dev/null; then
+        tool_used="last"
+        last -n 20 2>/dev/null |
+        grep -Ev '^(reboot|wtmp| *$)' |
+        awk '{printf "● %-12s %s\n", $1, substr($0, index($0,$3))}'
+    fi
+
+    [[ -z "$tool_used" ]] && return 1
+    return 0
+}
+
+security_login_activity() {
+    clear
+    echo "[MODULE] DSXSecurity - Login Activity"
+    echo
+
+    local svc result failed_count last_fail_ip
+    svc=$(ssh_service_name)
+    result=$(login_activity_check)
+    IFS='|' read -r failed_count last_fail_ip <<< "$result"
+
+    cat <<EOF
++------------------------------------------------+
+|              DSXSecurity Login Activity          |
++------------------------------------------------+
+| Failed SSH logins (7 days)    $failed_count
+| Last failed attempt from      $last_fail_ip
++------------------------------------------------+
+
+Recent Successful Logins
+──────────────────────────────────────────────────
+EOF
+
+    if ! login_history_render; then
+        log_warn "No login history tool (lastlog/last) available on this system."
+    fi
+
+    echo
+    if (( failed_count > 50 )); then
+        log_warn "High number of failed login attempts detected."
+        log_info "Consider enabling key-only login and/or installing fail2ban to block repeat offenders automatically."
+    elif (( failed_count > 0 )); then
+        log_info "Some failed login attempts detected. This is common with SSH exposed to the internet."
+    else
+        log_success "No failed login attempts detected in the last 7 days."
+    fi
+}
 
 
 main() {
@@ -753,8 +921,11 @@ main() {
         option=$(
             printf "%s\n" \
                 "Overview" \
+                "Check Security Updates" \
                 "Firewall" \
                 "SSH" \
+                "Package Integrity" \
+                "Login Activity" \
                 "Exit" |
             fzf \
                 --ansi \
@@ -768,8 +939,11 @@ main() {
                 --preview '
                     case {} in
                         "Overview") echo "See a quick summary of the security status." ;;
+                        "Check Security Updates") echo "Check for security updates and install any available patches." ;;
                         "Firewall") echo "Manage the system firewall: status, install, enable, disable, and switch between Home, Public, and Gaming profiles." ;;
                         "SSH") echo "Audit and harden the SSH service: check status, change port, disable root login, disable password login, restore backup." ;;
+                        "Package Integrity") echo "Check the integrity of installed packages." ;;
+                        "Login Activity") echo "View login activity and failed login attempts." ;;
                         "Exit") echo "Close DSXSecurity." ;;
                     esac
                 ' \
@@ -778,8 +952,11 @@ main() {
 
         case "$option" in
             "Overview") security_overview; pause ;;
+            "Check Security Updates") security_check_updates; pause ;;
             "Firewall") firewall_menu ;;
             "SSH") ssh_menu ;;
+            "Package Integrity") security_check_package_integrity; pause ;;
+            "Login Activity") security_login_activity; pause ;;
             "Exit"|"") exit 0 ;;
         esac
     done

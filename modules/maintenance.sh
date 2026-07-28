@@ -142,10 +142,27 @@ empty_trash() {
 }
 
 clean_temp() {
-    log_step "Removing temp files older than 7 days (/tmp, /var/tmp)..."
-    sudo find /tmp     -mindepth 1 -xdev -atime +7 -delete 2>/dev/null || true
-    sudo find /var/tmp -mindepth 1 -xdev -atime +7 -delete 2>/dev/null || true
-    log_info "Old temporary files cleaned."
+    local choice
+
+    choice=$(
+        printf "%s\n" "Older than 7 days (safe)" "Remove everything" |
+        _fzf_menu --prompt "Temp cleanup mode > " --height=40% --border --reverse
+    ) || true
+
+    case "$choice" in
+        "Remove everything")
+            log_warn "Removing ALL files in /tmp and /var/tmp, including files in use..."
+            sudo find /tmp     -mindepth 1 -xdev -delete 2>/dev/null || true
+            sudo find /var/tmp -mindepth 1 -xdev -delete 2>/dev/null || true
+            ;;
+        "Older than 7 days (safe)"|*)
+            log_step "Removing temp files older than 7 days (/tmp, /var/tmp)..."
+            sudo find /tmp     -mindepth 1 -xdev -atime +7 -delete 2>/dev/null || true
+            sudo find /var/tmp -mindepth 1 -xdev -atime +7 -delete 2>/dev/null || true
+            ;;
+    esac
+
+    log_info "Temporary files cleaned."
 }
 
 clean_flatpak() {

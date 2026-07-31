@@ -336,6 +336,11 @@ _select_install_target() {
     printf '%s\n' "${options[0]}"
 }
 
+_dpkg_is_installed() {
+    dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "^install ok installed"
+}
+
+
 _is_installed() {
     local app="$1"
     local entry="${APP_REGISTRY[$app]:-}"
@@ -352,7 +357,7 @@ _is_installed() {
             pkg)
                 case "$DISTRO" in
                     arch)   pacman -Q "$pkg_name" &>/dev/null ;;
-                    debian) dpkg -s "$pkg_name" &>/dev/null ;;
+                    debian) _dpkg_is_installed "$pkg_name" ;;
                     fedora) rpm -q "$pkg_name" &>/dev/null ;;
                 esac
                 ;;
@@ -372,7 +377,7 @@ _is_installed() {
                     "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
                     "Opera")
                         case "$pkg_name" in
-                            deb) dpkg -s opera-stable &>/dev/null || dpkg -s opera-developer &>/dev/null ;;
+                            deb) _dpkg_is_installed opera-stable || _dpkg_is_installed opera-developer ;;
                             rpm) rpm -q opera-stable &>/dev/null || rpm -q opera-developer &>/dev/null ;;
                             snap) snap list opera &>/dev/null ;;
                             *) return 1 ;;
@@ -380,7 +385,7 @@ _is_installed() {
                         ;;
                     "OperaGx")
                         case "$pkg_name" in
-                            deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
+                            deb) _dpkg_is_installed opera-gx-stable || _dpkg_is_installed opera-gx-developer ;;
                             rpm) rpm -q opera-gx-stable &>/dev/null || rpm -q opera-gx-developer &>/dev/null ;;
                             snap) snap list opera-gx &>/dev/null ;;
                             *) return 1 ;;
@@ -388,14 +393,14 @@ _is_installed() {
                         ;;
                     "LibreWolf")
                         case "$pkg_name" in
-                            deb) dpkg -s librewolf &>/dev/null ;;
+                            deb) _dpkg_is_installed librewolf ;;
                             rpm) rpm -q librewolf &>/dev/null ;;
                             *)   return 1 ;;
                         esac
                         ;;
                     "OBS Studio")
                         case "$pkg_name" in
-                            deb) dpkg -s obs-studio &>/dev/null || dpkg -s obs-studio-bin &>/dev/null ;;
+                            deb) _dpkg_is_installed obs-studio || _dpkg_is_installed obs-studio-bin ;;
                             rpm) rpm -q obs-studio &>/dev/null || rpm -q obs-studio-bin &>/dev/null ;;
                             snap) snap list obs-studio &>/dev/null ;;
                             *) return 1 ;;
@@ -403,7 +408,7 @@ _is_installed() {
                         ;;
                     "Spotify")
                         case "$pkg_name" in
-                            deb) dpkg -s spotify-client &>/dev/null ;;
+                            deb) _dpkg_is_installed spotify-client ;;
                             rpm) rpm -q spotify-client &>/dev/null ;;
                             snap) snap list spotify &>/dev/null ;;
                             *) return 1 ;;
@@ -411,7 +416,7 @@ _is_installed() {
                         ;;
                     "kdenlive")
                         case "$pkg_name" in
-                            deb)  dpkg -s kdenlive &>/dev/null ;;
+                            deb)  _dpkg_is_installed kdenlive ;;
                             rpm)  rpm -q kdenlive &>/dev/null ;;
                             snap) snap list kdenlive &>/dev/null ;;
                             *)    return 1 ;;
@@ -419,7 +424,7 @@ _is_installed() {
                         ;;
                     "Discord")
                         case "$pkg_name" in
-                            deb)  dpkg -s discord &>/dev/null ;;
+                            deb)  _dpkg_is_installed discord ;;
                             rpm)  rpm -q discord &>/dev/null ;;
                             snap) snap list discord &>/dev/null ;;
                             *)    return 1 ;;
@@ -427,7 +432,7 @@ _is_installed() {
                         ;;
                     "Teams")
                         case "$pkg_name" in
-                            deb)  dpkg -s teams-for-linux &>/dev/null ;;
+                            deb)  _dpkg_is_installed teams-for-linux ;;
                             rpm)  rpm -q teams-for-linux &>/dev/null ;;
                             snap) snap list teams-for-linux &>/dev/null ;;
                             *)    return 1 ;;
@@ -435,7 +440,7 @@ _is_installed() {
                         ;;
                     "Slack")
                         case "$pkg_name" in
-                            deb)  dpkg -s slack-desktop &>/dev/null ;;
+                            deb)  _dpkg_is_installed slack-desktop ;;
                             rpm)  rpm -q slack &>/dev/null ;;
                             snap) snap list slack &>/dev/null ;;
                             *)    return 1 ;;
@@ -443,7 +448,7 @@ _is_installed() {
                         ;;
                     "Telegram")
                         case "$pkg_name" in
-                            deb)     dpkg -s telegram-desktop &>/dev/null ;;
+                            deb)     _dpkg_is_installed telegram-desktop ;;
                             rpm)     rpm -q telegram-desktop &>/dev/null ;;
                             snap)    snap list telegram-desktop &>/dev/null ;;
                             tarball) [[ -x /opt/telegram-desktop/Telegram ]] || command -v telegram &>/dev/null ;;
@@ -452,7 +457,7 @@ _is_installed() {
                         ;;
                     "Zoom")
                         case "$pkg_name" in
-                            deb)  dpkg -s zoom &>/dev/null ;;
+                            deb)  _dpkg_is_installed zoom ;;
                             rpm)  rpm -q zoom &>/dev/null ;;
                             snap) snap list zoom-client &>/dev/null ;;
                             *)    return 1 ;;
@@ -468,7 +473,7 @@ _is_installed() {
                         case "$pkg_name" in
                             arch-fresh) pacman -Q libreoffice-fresh &>/dev/null ;;
                             arch-still) pacman -Q libreoffice-still &>/dev/null ;;
-                            deb)        dpkg -s libreoffice &>/dev/null ;;
+                            deb)        _dpkg_is_installed libreoffice ;;
                             rpm)        rpm -q libreoffice &>/dev/null ;;
                             snap)       snap list libreoffice &>/dev/null ;;
                             *)          return 1 ;;
@@ -482,7 +487,7 @@ _is_installed() {
                         ;;
                     "OpenRGB")
                         case "$pkg_name" in
-                            deb) dpkg -s openrgb &>/dev/null ;;
+                            deb) _dpkg_is_installed openrgb ;;
                             rpm) rpm -q openrgb &>/dev/null ;;
                             *)   return 1 ;;
                         esac

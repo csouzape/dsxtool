@@ -81,6 +81,7 @@ register_category_apps "Gaming" \
 register_category_apps "System Tools" \
     "htop" "pkg|htop|-|-" \
     "btop" "pkg|btop|-|-" \
+    "OpenRGB" "native|deb|-|-;native|rpm|-|-;flatpak|-|org.openrgb.OpenRGB|-" \
     "ncdu" "pkg|ncdu|-|-" \
     "tree" "pkg|tree|-|-" \
     "tmux" "pkg|tmux|-|-" \
@@ -154,7 +155,7 @@ _target_label() {
                     esac
                     ;;
                 "OperaGx")
-                    case "$pkg_name" in 
+                    case "$pkg_name" in
                         deb) printf 'Official (.deb)' ;;
                         rpm) printf 'Official (.rpm)' ;;
                         snap) printf 'Snap' ;;
@@ -221,6 +222,13 @@ _target_label() {
                     case "$pkg_name" in
                         snap) printf 'Snap' ;;
                         *) printf 'Official (GIMP)' ;;
+                    esac
+                    ;;
+                "OpenRGB")
+                    case "$pkg_name" in
+                        deb) printf 'Official (.deb)' ;;
+                        rpm) printf 'Official (.rpm)' ;;
+                        *) printf 'Official (OpenRGB)' ;;
                     esac
                     ;;
                 *) printf 'Native (%s)' "$pkg_name" ;;
@@ -371,7 +379,7 @@ _is_installed() {
                         esac
                         ;;
                     "OperaGx")
-                        case "$pkg_name" in 
+                        case "$pkg_name" in
                             deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
                             rpm) rpm -q opera-gx-stable &>/dev/null || rpm -q opera-gx-developer &>/dev/null ;;
                             snap) snap list opera-gx &>/dev/null ;;
@@ -418,7 +426,7 @@ _is_installed() {
                         esac
                         ;;
                     "Teams")
-                        case "$pkg_name" in 
+                        case "$pkg_name" in
                             deb)  dpkg -s teams-for-linux &>/dev/null ;;
                             rpm)  rpm -q teams-for-linux &>/dev/null ;;
                             snap) snap list teams-for-linux &>/dev/null ;;
@@ -470,6 +478,13 @@ _is_installed() {
                         case "$pkg_name" in
                             snap) snap list gimp &>/dev/null ;;
                             *)    return 1 ;;
+                        esac
+                        ;;
+                    "OpenRGB")
+                        case "$pkg_name" in
+                            deb) dpkg -s openrgb &>/dev/null ;;
+                            rpm) rpm -q openrgb &>/dev/null ;;
+                            *)   return 1 ;;
                         esac
                         ;;
                     "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
@@ -536,8 +551,8 @@ _remove_app() {
                                 deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
                                 rpm) rpm -q opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
                                 snap) snap list opera-gx-stable &>/dev/null ;;
-                                *) false ;; 
-                            esac 
+                                *) false ;;
+                            esac
                             ;;
                         "LibreWolf")
                             case "$pkg_name" in
@@ -579,7 +594,7 @@ _remove_app() {
                             esac
                             ;;
                         "Teams")
-                            case "$pkg_name" in 
+                            case "$pkg_name" in
                                 deb) dpkg -s teams-for-linux &>/dev/null ;;
                                 rpm) rpm -q teams-for-linux &>/dev/null ;;
                                 snap) snap list teams-for-linux &>/dev/null ;;
@@ -631,6 +646,14 @@ _remove_app() {
                             case "$pkg_name" in
                                 snap) snap list gimp &>/dev/null ;;
                                 *)    false ;;
+                            esac
+                            ;;
+                        "OpenRGB")
+                            case "$pkg_name" in
+                                deb)     dpkg -s openrgb &>/dev/null ;;
+                                rpm)     rpm -q openrgb &>/dev/null ;;
+                                flatpak) flatpak list --app 2>/dev/null | grep -q org.openrgb.OpenRGB ;;
+                                *)       false ;;
                             esac
                             ;;
                         "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
@@ -780,6 +803,13 @@ _remove_app() {
                 "GIMP")
                     case "$pkg_name" in
                         snap) sudo snap remove gimp ;;
+                    esac
+                    ;;
+                "OpenRGB")
+                    case "$pkg_name" in
+                        deb)     sudo apt-get remove -y openrgb ;;
+                        rpm)     sudo dnf remove -y openrgb ;;
+                        flatpak) flatpak uninstall -y org.openrgb.OpenRGB ;;
                     esac
                     ;;
                 "fd")
@@ -936,7 +966,7 @@ _download_file() {
     local url="$1"
     local output_path="$2"
     local ua="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
- 
+
     if command -v curl >/dev/null 2>&1; then
         curl -fsSL -A "$ua" --retry 3 --retry-delay 2 -o "$output_path" "$url" \
             || return 1
@@ -1067,7 +1097,7 @@ _install_native_app() {
                     sudo snap install opera-gx \
                         || die "Failed to install Opera GX via Snap."
                     ;;
-            esac 
+            esac
             ;;
         "Helium Browser")
             local repo="imputnet/helium-linux"
@@ -1115,10 +1145,10 @@ _install_native_app() {
                     curl -fsSL https://deb.opera.com/archive.key \
                         | sudo gpg --dearmor --yes -o /usr/share/keyrings/opera-browser.gpg \
                         || die "Failed to import Opera's GPG key."
- 
+
                     echo "deb [signed-by=/usr/share/keyrings/opera-browser.gpg] https://deb.opera.com/opera-stable/ stable non-free" \
                         | sudo tee /etc/apt/sources.list.d/opera-stable.list > /dev/null
- 
+
                     sudo DEBIAN_FRONTEND=noninteractive apt-get update \
                         || die "Failed to refresh APT after adding Opera's repository."
                     sudo DEBIAN_FRONTEND=noninteractive apt-get install -y opera-stable \
@@ -1128,7 +1158,7 @@ _install_native_app() {
                     log_info "Adding Opera's official DNF repository..."
                     sudo rpm --import https://rpm.opera.com/rpmrepo.key \
                         || die "Failed to import Opera's RPM signing key."
- 
+
                     sudo tee /etc/yum.repos.d/opera.repo > /dev/null << 'EOF'
 [opera]
 name=Opera packages
@@ -1138,7 +1168,7 @@ gpgcheck=1
 gpgkey=https://rpm.opera.com/rpmrepo.key
 enabled=1
 EOF
- 
+
                     sudo dnf install -y opera-stable \
                         || die "Failed to install Opera via DNF."
                     ;;
@@ -1208,7 +1238,7 @@ EOF
             esac
             ;;
         "Spotify")
-            case "$pkg_name" in 
+            case "$pkg_name" in
                 deb)
                     log_info "Adding Spotify's official APT repository..."
                     curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg \
@@ -1294,7 +1324,7 @@ EOF
                 arch)   pkg_install thunderbird ;;
                 debian) pkg_install thunderbird ;;
                 fedora) pkg_install thunderbird ;;
-                snap)  sudo snap install thunderbird || die "Failed to install Thunderbird via Snap." ;;            
+                snap)  sudo snap install thunderbird || die "Failed to install Thunderbird via Snap." ;;
             esac
             ;;
         "Teams")
@@ -1491,6 +1521,38 @@ EOF
                     ;;
                 *)
                     die "Unsupported GIMP package source: $pkg_name"
+                    ;;
+            esac
+            ;;
+        "OpenRGB")
+            case "$pkg_name" in
+                deb)
+                    log_info "Downloading OpenRGB (.deb) from official releases..."
+                    _download_file \
+                        "https://codeberg.org/OpenRGB/OpenRGB/releases/download/release_candidate_1.0rc3/openrgb_1.0rc3_amd64_trixie_6fbcf62.deb" \
+                        /tmp/openrgb.deb \
+                        || die "Failed to download OpenRGB."
+                    sudo dpkg -i /tmp/openrgb.deb 2>/dev/null || true
+                    sudo apt-get install -f -y \
+                        || die "Failed to fix OpenRGB dependencies."
+                    rm -f /tmp/openrgb.deb
+                    ;;
+                rpm)
+                    log_info "Downloading OpenRGB (.rpm) from official releases..."
+                    _download_file \
+                        "https://codeberg.org/OpenRGB/OpenRGB/releases/download/release_candidate_1.0rc3/openrgb_1.0rc3_x86_64_f43_6fbcf62.rpm" \
+                        /tmp/openrgb.rpm \
+                        || die "Failed to download OpenRGB."
+                    sudo dnf install -y /tmp/openrgb.rpm \
+                        || die "Failed to install OpenRGB."
+                    rm -f /tmp/openrgb.rpm
+                    ;;
+                flatpak)
+                    flatpak install -y flathub org.openrgb.OpenRGB \
+                        || die "Failed to install OpenRGB via Flatpak."
+                    ;;
+                *)
+                    die "Unsupported OpenRGB package source: $pkg_name"
                     ;;
             esac
             ;;

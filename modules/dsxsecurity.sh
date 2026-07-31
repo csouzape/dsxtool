@@ -2,7 +2,6 @@
 # This is Dsx security module
 # Detect all security modules and verify
 
-set -euo pipefail
 source "$BASE_DIR/core/common.sh"
 source "$BASE_DIR/core/detect.sh"
 
@@ -831,6 +830,7 @@ EOF
         log_success "No failed login attempts detected in the last 7 days."
     fi
 }
+
 security_check_package_integrity() {
     clear
     echo "[MODULE] DSXSecurity - Package Integrity"

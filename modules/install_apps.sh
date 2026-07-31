@@ -967,6 +967,22 @@ _download_file() {
     local output_path="$2"
     local ua="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
+    # Codeberg's Anubis anti-bot flags spoofed browser UAs and forces a JS
+    # proof-of-work challenge that curl/wget can't solve. Plain curl UA is
+    # exempted, so skip the spoof for this host.
+    if [[ "$url" == *"codeberg.org"* ]]; then
+        if command -v curl >/dev/null 2>&1; then
+            curl -fsSL --retry 3 --retry-delay 2 -o "$output_path" "$url" || return 1
+        elif command -v wget >/dev/null 2>&1; then
+            wget --progress=bar:force -O "$output_path" "$url" || return 1
+        else
+            log_warn "Neither curl nor wget is available. Installing curl first..."
+            pkg_install curl || return 1
+            curl -fsSL --retry 3 --retry-delay 2 -o "$output_path" "$url" || return 1
+        fi
+        return 0
+    fi
+
     if command -v curl >/dev/null 2>&1; then
         curl -fsSL -A "$ua" --retry 3 --retry-delay 2 -o "$output_path" "$url" \
             || return 1
@@ -980,6 +996,8 @@ _download_file() {
             || return 1
     fi
 }
+
+
 _install_native_app() {
     local app="$1"
     case "$app" in

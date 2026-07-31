@@ -506,173 +506,177 @@ _is_installed() {
 _remove_app() {
     local app="$1"
     local entry="${APP_REGISTRY[$app]:-}"
-    local selected_target="${APP_SELECTED_METHODS[$app]:-}"
+    local selected_target=""   # nunca confiar no cache aqui — sempre redetectar o que está de fato instalado
     local -a targets=()
     local target method pkg_name flatpak_id aur_pkg
 
+    IFS=';' read -r -a targets <<< "$entry"
+    for target in "${targets[@]}"; do
+        [[ -z "${target//[[:space:]]/}" ]] && continue
+        IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
+        case "$method" in
+            pkg)
+                case "$DISTRO" in
+                    arch)   pacman -Q "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
+                    debian) dpkg -s "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
+                    fedora) rpm -q "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
+                esac
+                ;;
+            flatpak)
+                flatpak list --app 2>/dev/null | grep -q "$flatpak_id" && selected_target="$target" && break
+                ;;
+            aur)
+                pacman -Q "$aur_pkg" &>/dev/null && selected_target="$target" && break
+                ;;
+            terminal)
+                command -v "$pkg_name" &>/dev/null && selected_target="$target" && break
+                ;;
+            native)
+                case "$app" in
+                    "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
+                    "Brave") command -v brave-browser &>/dev/null || command -v brave &>/dev/null ;;
+                    "Zen Browser") command -v zen-browser &>/dev/null || command -v zen &>/dev/null || command -v zen-browser-bin &>/dev/null || [[ -x "$HOME/.local/bin/zen" ]] || [[ -x "$HOME/.local/bin/zen-browser" ]] ;;
+                    "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
+                    "Opera")
+                        case "$pkg_name" in
+                            deb) dpkg -s opera-stable &>/dev/null || dpkg -s opera-developer &>/dev/null ;;
+                            rpm) rpm -q opera-stable &>/dev/null || rpm -q opera-developer &>/dev/null ;;
+                            snap) snap list opera &>/dev/null ;;
+                            *) false ;;
+                        esac
+                        ;;
+                    "OperaGx")
+                        case "$pkg_name" in
+                            deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
+                            rpm) rpm -q opera-gx-stable &>/dev/null || rpm -q opera-gx-developer &>/dev/null ;;
+                            snap) snap list opera-gx &>/dev/null ;;
+                            *) false ;;
+                        esac
+                        ;;
+                    "LibreWolf")
+                        case "$pkg_name" in
+                            deb) dpkg -s librewolf &>/dev/null ;;
+                            rpm) rpm -q librewolf &>/dev/null ;;
+                            *)   false ;;
+                        esac
+                        ;;
+                    "OBS Studio")
+                        case "$pkg_name" in
+                            deb) dpkg -s obs-studio &>/dev/null || dpkg -s obs-studio-bin &>/dev/null ;;
+                            rpm) rpm -q obs-studio &>/dev/null || rpm -q obs-studio-bin &>/dev/null ;;
+                            snap) snap list obs-studio &>/dev/null ;;
+                            *) false ;;
+                        esac
+                        ;;
+                    "Spotify")
+                        case "$pkg_name" in
+                            deb) dpkg -s spotify-client &>/dev/null ;;
+                            rpm) rpm -q spotify-client &>/dev/null ;;
+                            snap) snap list spotify &>/dev/null ;;
+                            *) false ;;
+                        esac
+                        ;;
+                    "kdenlive")
+                        case "$pkg_name" in
+                            deb)  dpkg -s kdenlive &>/dev/null ;;
+                            rpm)  rpm -q kdenlive &>/dev/null ;;
+                            snap) snap list kdenlive &>/dev/null ;;
+                            *)    false ;;
+                        esac
+                        ;;
+                    "Discord")
+                        case "$pkg_name" in
+                            deb)  dpkg -s discord &>/dev/null ;;
+                            rpm)  rpm -q discord &>/dev/null ;;
+                            snap) snap list discord &>/dev/null ;;
+                            *)    false ;;
+                        esac
+                        ;;
+                    "Teams")
+                        case "$pkg_name" in
+                            deb) dpkg -s teams-for-linux &>/dev/null ;;
+                            rpm) rpm -q teams-for-linux &>/dev/null ;;
+                            snap) snap list teams-for-linux &>/dev/null ;;
+                            *)    false ;;
+                        esac
+                        ;;
+                    "Slack")
+                        case "$pkg_name" in
+                            deb)  dpkg -s slack-desktop &>/dev/null ;;
+                            rpm)  rpm -q slack &>/dev/null ;;
+                            snap) snap list slack &>/dev/null ;;
+                            *)    false ;;
+                        esac
+                        ;;
+                    "Telegram")
+                        case "$pkg_name" in
+                            deb)     dpkg -s telegram-desktop &>/dev/null ;;
+                            rpm)     rpm -q telegram-desktop &>/dev/null ;;
+                            snap)    snap list telegram-desktop &>/dev/null ;;
+                            tarball) [[ -x /opt/telegram-desktop/Telegram ]] || command -v telegram &>/dev/null ;;
+                            *)       false ;;
+                        esac
+                        ;;
+                    "Zoom")
+                        case "$pkg_name" in
+                            deb)  dpkg -s zoom &>/dev/null ;;
+                            rpm)  rpm -q zoom &>/dev/null ;;
+                            snap) snap list zoom-client &>/dev/null ;;
+                            *)    false ;;
+                        esac
+                        ;;
+                    "Inkscape")
+                        case "$pkg_name" in
+                            snap) snap list inkscape &>/dev/null ;;
+                            *)    false ;;
+                        esac
+                        ;;
+                    "LibreOffice")
+                        case "$pkg_name" in
+                            arch-fresh) pacman -Q libreoffice-fresh &>/dev/null ;;
+                            arch-still) pacman -Q libreoffice-still &>/dev/null ;;
+                            deb)        dpkg -s libreoffice &>/dev/null ;;
+                            rpm)        rpm -q libreoffice &>/dev/null ;;
+                            snap)       snap list libreoffice &>/dev/null ;;
+                            *)          false ;;
+                        esac
+                        ;;
+                    "GIMP")
+                        case "$pkg_name" in
+                            snap) snap list gimp &>/dev/null ;;
+                            *)    false ;;
+                        esac
+                        ;;
+                    "OpenRGB")
+                        case "$pkg_name" in
+                            deb)     dpkg -s openrgb &>/dev/null ;;
+                            rpm)     rpm -q openrgb &>/dev/null ;;
+                            flatpak) flatpak list --app 2>/dev/null | grep -q org.openrgb.OpenRGB ;;
+                            *)       false ;;
+                        esac
+                        ;;
+                    "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
+                    "openssh")       command -v ssh &>/dev/null ;;
+                    *)               false ;;
+                esac
+                if [[ $? -eq 0 ]]; then
+                    selected_target="$target"
+                    break
+                fi
+                ;;
+        esac
+    done
+
     if [[ -z "$selected_target" ]]; then
-        IFS=';' read -r -a targets <<< "$entry"
-        for target in "${targets[@]}"; do
-            [[ -z "${target//[[:space:]]/}" ]] && continue
-            IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$target"
-            case "$method" in
-                pkg)
-                    case "$DISTRO" in
-                        arch)   pacman -Q "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
-                        debian) dpkg -s "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
-                        fedora) rpm -q "$pkg_name" &>/dev/null && selected_target="$target" && break ;;
-                    esac
-                    ;;
-                flatpak)
-                    flatpak list --app 2>/dev/null | grep -q "$flatpak_id" && selected_target="$target" && break
-                    ;;
-                aur)
-                    pacman -Q "$aur_pkg" &>/dev/null && selected_target="$target" && break
-                    ;;
-                terminal)
-                    command -v "$pkg_name" &>/dev/null && selected_target="$target" && break
-                    ;;
-                native)
-                    case "$app" in
-                        "Google Chrome") command -v google-chrome-stable &>/dev/null || command -v google-chrome &>/dev/null ;;
-                        "Brave") command -v brave-browser &>/dev/null || command -v brave &>/dev/null ;;
-                        "Zen Browser") command -v zen-browser &>/dev/null || command -v zen &>/dev/null || command -v zen-browser-bin &>/dev/null || [[ -x "$HOME/.local/bin/zen" ]] || [[ -x "$HOME/.local/bin/zen-browser" ]] ;;
-                        "Helium Browser") [[ -x /opt/helium/helium ]] || command -v helium &>/dev/null || command -v helium-browser &>/dev/null || command -v helium-browser-bin &>/dev/null ;;
-                        "Opera")
-                            case "$pkg_name" in
-                                deb) dpkg -s opera-stable &>/dev/null || dpkg -s opera-developer &>/dev/null ;;
-                                rpm) rpm -q opera-stable &>/dev/null || rpm -q opera-developer &>/dev/null ;;
-                                snap) snap list opera &>/dev/null ;;
-                                *) false ;;
-                            esac
-                            ;;
-                        "OperaGx")
-                            case "$pkg_name" in
-                                deb) dpkg -s opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
-                                rpm) rpm -q opera-gx-stable &>/dev/null || dpkg -s opera-gx-developer &>/dev/null ;;
-                                snap) snap list opera-gx-stable &>/dev/null ;;
-                                *) false ;;
-                            esac
-                            ;;
-                        "LibreWolf")
-                            case "$pkg_name" in
-                                deb) dpkg -s librewolf &>/dev/null ;;
-                                rpm) rpm -q librewolf &>/dev/null ;;
-                                *)   false ;;
-                            esac
-                            ;;
-                        "OBS Studio")
-                            case "$pkg_name" in
-                                deb) dpkg -s obs-studio &>/dev/null || dpkg -s obs-studio-bin &>/dev/null ;;
-                                rpm) rpm -q obs-studio &>/dev/null || rpm -q obs-studio-bin &>/dev/null ;;
-                                snap) snap list obs-studio &>/dev/null ;;
-                                *) false ;;
-                            esac
-                            ;;
-                        "Spotify")
-                            case "$pkg_name" in
-                                deb) dpkg -s spotify-client &>/dev/null ;;
-                                rpm) rpm -q spotify-client &>/dev/null ;;
-                                snap) snap list spotify &>/dev/null ;;
-                                *) false ;;
-                            esac
-                            ;;
-                        "kdenlive")
-                            case "$pkg_name" in
-                                deb)  dpkg -s kdenlive &>/dev/null ;;
-                                rpm)  rpm -q kdenlive &>/dev/null ;;
-                                snap) snap list kdenlive &>/dev/null ;;
-                                *)    false ;;
-                            esac
-                            ;;
-                        "Discord")
-                            case "$pkg_name" in
-                                deb)  dpkg -s discord &>/dev/null ;;
-                                rpm)  rpm -q discord &>/dev/null ;;
-                                snap) snap list discord &>/dev/null ;;
-                                *)    false ;;
-                            esac
-                            ;;
-                        "Teams")
-                            case "$pkg_name" in
-                                deb) dpkg -s teams-for-linux &>/dev/null ;;
-                                rpm) rpm -q teams-for-linux &>/dev/null ;;
-                                snap) snap list teams-for-linux &>/dev/null ;;
-                                *)    false ;;
-                            esac
-                            ;;
-                        "Slack")
-                            case "$pkg_name" in
-                                deb)  dpkg -s slack-desktop &>/dev/null ;;
-                                rpm)  rpm -q slack &>/dev/null ;;
-                                snap) snap list slack &>/dev/null ;;
-                                *)    false ;;
-                            esac
-                            ;;
-                        "Telegram")
-                            case "$pkg_name" in
-                                deb)     dpkg -s telegram-desktop &>/dev/null ;;
-                                rpm)     rpm -q telegram-desktop &>/dev/null ;;
-                                snap)    snap list telegram-desktop &>/dev/null ;;
-                                tarball) [[ -x /opt/telegram-desktop/Telegram ]] || command -v telegram &>/dev/null ;;
-                                *)       false ;;
-                            esac
-                            ;;
-                        "Zoom")
-                            case "$pkg_name" in
-                                deb)  dpkg -s zoom &>/dev/null ;;
-                                rpm)  rpm -q zoom &>/dev/null ;;
-                                snap) snap list zoom-client &>/dev/null ;;
-                                *)    false ;;
-                            esac
-                            ;;
-                        "Inkscape")
-                            case "$pkg_name" in
-                                snap) snap list inkscape &>/dev/null ;;
-                                *)    false ;;
-                            esac
-                            ;;
-                        "LibreOffice")
-                            case "$pkg_name" in
-                                arch-fresh) pacman -Q libreoffice-fresh &>/dev/null ;;
-                                arch-still) pacman -Q libreoffice-still &>/dev/null ;;
-                                deb)        dpkg -s libreoffice &>/dev/null ;;
-                                rpm)        rpm -q libreoffice &>/dev/null ;;
-                                snap)       snap list libreoffice &>/dev/null ;;
-                                *)          false ;;
-                            esac
-                            ;;
-                        "GIMP")
-                            case "$pkg_name" in
-                                snap) snap list gimp &>/dev/null ;;
-                                *)    false ;;
-                            esac
-                            ;;
-                        "OpenRGB")
-                            case "$pkg_name" in
-                                deb)     dpkg -s openrgb &>/dev/null ;;
-                                rpm)     rpm -q openrgb &>/dev/null ;;
-                                flatpak) flatpak list --app 2>/dev/null | grep -q org.openrgb.OpenRGB ;;
-                                *)       false ;;
-                            esac
-                            ;;
-                        "fd")            command -v fd &>/dev/null || command -v fdfind &>/dev/null ;;
-                        "openssh")       command -v ssh &>/dev/null ;;
-                        *)               false ;;
-                    esac
-                    if [[ $? -eq 0 ]]; then
-                        selected_target="$target"
-                        break
-                    fi
-                    ;;
-            esac
-        done
+        log_warn "$app doesn't seem to be installed. Nothing to remove."
+        return 0
     fi
 
     IFS='|' read -r method pkg_name flatpak_id aur_pkg <<< "$selected_target"
 
     log_info "Removing $app..."
 
+    local remove_status=0
     case "$method" in
         pkg)
             case "$DISTRO" in
@@ -680,12 +684,15 @@ _remove_app() {
                 debian) sudo apt-get remove -y "$pkg_name" ;;
                 fedora) sudo dnf remove -y "$pkg_name" ;;
             esac
+            remove_status=$?
             ;;
         flatpak)
             flatpak uninstall -y "$flatpak_id"
+            remove_status=$?
             ;;
         aur)
             sudo pacman -Rns --noconfirm "$aur_pkg"
+            remove_status=$?
             ;;
         terminal)
             case "$DISTRO" in
@@ -693,6 +700,7 @@ _remove_app() {
                 debian) sudo apt-get remove -y "$pkg_name" ;;
                 fedora) sudo dnf remove -y "$pkg_name" ;;
             esac
+            remove_status=$?
             ;;
         native)
             case "$app" in
@@ -830,12 +838,18 @@ _remove_app() {
                     die "No removal handler defined for: $app"
                     ;;
             esac
+            remove_status=$?
             ;;
         *)
             die "Unknown method '$method' for $app."
             ;;
     esac
 
+    if [[ $remove_status -ne 0 ]]; then
+        die "Failed to remove $app (method: $method, target: $pkg_name/$flatpak_id/$aur_pkg)."
+    fi
+
+    unset 'APP_SELECTED_METHODS[$app]'
     log_info "$app removed successfully."
 }
 

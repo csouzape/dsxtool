@@ -47,8 +47,6 @@ is_logging_active() {
     [[ "$_LOGGING_ACTIVE" -eq 1 ]]
 }
 
-# Run a module command and capture its output to a per-module log file.
-# Usage: module_runner "Module Name" "command to run"
 module_runner() {
     local module="$1"; shift
     local cmd="$*"
@@ -60,7 +58,7 @@ module_runner() {
 
     echo -e "${GREEN}[MODULE]${RESET} $module - running (logs saved only on error)."
 
-    # Source common and distro helpers in the subshell before running the module command.
+
     bash -lc "set -o pipefail; source \"$BASE_DIR/core/common.sh\"; source \"$BASE_DIR/core/detect.sh\"; detect_distro; source \"$BASE_DIR/core/distros/$DISTRO.sh\"; $cmd" 2>&1 | tee "$tmp_log"
     local rc=${PIPESTATUS[0]:-1}
 

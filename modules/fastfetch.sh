@@ -128,96 +128,68 @@ build_fastfetch_json() {
     } > "$config_file"
 }
 
-setup_fastfetch_config() {
-    local config_dir="$HOME/.config/fastfetch"
-    local config_file="$config_dir/config.jsonc"
-
-    if [[ -d "$config_dir" && ! -d "${config_dir}-bak" ]]; then
-        cp -r "$config_dir" "${config_dir}-bak"
-        log_info "Existing configuration backed up to ${config_dir}-bak."
+fastfetch_pick_example_preset() {
+    local example_dir="/usr/share/fastfetch/presets/examples"
+    if [[ ! -d "$example_dir" ]]; then
+        log_warn "Fastfetch example directory not found: $example_dir"
+        return 1
     fi
 
-    mkdir -p "$config_dir"
+    local example_paths=()
+    local example_names=()
+    while IFS= read -r file; do
+        example_paths+=("$file")
+        example_names+=("$(basename "$file")")
+    done < <(find "$example_dir" -maxdepth 1 -type f -name '*.jsonc' | sort -V)
 
-    local mode
-    read -rp "$(echo -e "${YELLOW}Fastfetch Config: [d]sxtool default / [c]ustomize now / [e]dit manually (d/c/e): ${RESET}")" mode < /dev/tty
-    mode="${mode:-p}"
-
-    case "$mode" in
-        c|C)
-            log_info "Select the modules to display."
-            mapfile -t selected_modules < <(fastfetch_pick_modules)
-            build_fastfetch_json "$config_file" "${selected_modules[@]}"
-            log_info "Custom configuration saved to $config_file."
-            ;;
-        e|E)
-            build_fastfetch_json "$config_file" "${FASTFETCH_DEFAULT_MODULES[@]}"
-            "${EDITOR:-nano}" "$config_file"
-            log_info "Manual edit saved to $config_file."
-            ;;
-        *)
-            if curl -fsSLo "$config_file" "$FASTFETcH_CONFIG_URL"; then
-                log_info "Fastfetch configuration downloaded to $config_file."
-            else
-                log_warn "Could not download config, writing built-in default instead."
-                build_fastfetch_json "$config_file" "${FASTFETCH_DEFAULT_MODULES[@]}"
-            fi
-            ;;
-    esac
-}
-
-FASTFETCH_CONFIG_URL="${FASTFETCH_CONFIG_URL:-https://raw.githubusercontent.com/csouzape/bashconfig/main/fastfetch/config.jsonc}"
-
-open_in_editor() {
-    local file="$1"
-    local candidates=("nvim" "vim" "nano" "vi" "emacs" "code" "micro")
-    local available=()
-    local editor_bin
-
-    if [[ -n "$EDITOR" ]] && command -v "$EDITOR" &>/dev/null; then
-        available+=("$EDITOR")
-    fi
-    if [[ -n "$VISUAL" && "$VISUAL" != "$EDITOR" ]] && command -v "$VISUAL" &>/dev/null; then
-        available+=("$VISUAL")
+    if [[ "${#example_names[@]}" -eq 0 ]]; then
+        log_warn "No fastfetch example presets found in $example_dir."
+        return 1
     fi
 
-    local candidate
-    for candidate in "${candidates[@]}"; do
-        if command -v "$candidate" &>/dev/null; then
-            if [[ ! " ${available[*]} " =~ " ${candidate} " ]]; then
-                available+=("$candidate")
-            fi
+    local selected preview_cmd
+    if command -v bat >/dev/null 2>&1; then
+        preview_cmd='bat --style=numbers --color=always --paging=never {}'
+    else
+        preview_cmd='sed -n "1,120p" {}'
+    fi
+
+    if ! command -v fzf >/dev/null 2>&1; then
+        log_warn "fzf not found, falling back to numeric selection."
+        local i
+        for i in "${!example_names[@]}"; do
+            printf '%s) %s\n' "$((i+1))" "${example_names[$i]}"
+        done
+
+        local choice
+        read -rp "$(echo -e "${YELLOW}Choose an example number: ${RESET}")" choice < /dev/tty
+        if ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#example_names[@]} )); then
+            return 1
+        fi
+
+        echo "${example_paths[$((choice-1))]}"
+        return 0
+    fi
+
+    selected="$(printf '%s\n' "${example_names[@]}" | \
+        fzf --height=60% --border \
+            --header="Select a native fastfetch example preset" \
+            --prompt="Fastfetch examples > " \
+            --preview="${preview_cmd}" \
+            --preview-window=right:70%:wrap)"
+
+    if [[ -z "$selected" ]]; then
+        return 1
+    fi
+
+    for i in "${!example_names[@]}"; do
+        if [[ "${example_names[$i]}" == "$selected" ]]; then
+            echo "${example_paths[$i]}"
+            return 0
         fi
     done
 
-    if [[ "${#available[@]}" -eq 0 ]]; then
-        log_warn "Any editor found. Edit manually: $file"
-        return 0
-    fi
-
-    if [[ "${#available[@]}" -eq 1 ]]; then
-        editor_bin="${available[0]}"
-        log_info "Using $editor_bin (Only editor available)."
-    elif command -v fzf &>/dev/null; then
-        editor_bin="$(printf '%s\n' "${available[@]}" | \
-            fzf --height=40% --border --prompt="Choice the editor > ")"
-    else
-        log_info "Available editors:"
-        local i
-        for i in "${!available[@]}"; do
-            echo "  $((i+1))) ${available[$i]}"
-        done
-        local choice
-        read -rp "$(echo -e "${YELLOW}Choice the editor (number): ${RESET}")" choice < /dev/tty
-        editor_bin="${available[$((choice-1))]}"
-    fi
-
-    if [[ -z "$editor_bin" ]]; then
-        log_warn "No editor selected. Skipping manual edit."
-        return 0
-    fi
-
-    "$editor_bin" "$file" < /dev/tty
+    return 1
 }
 
 setup_fastfetch_config() {
@@ -230,9 +202,8 @@ setup_fastfetch_config() {
     fi
 
     mkdir -p "$config_dir"
-
     local mode
-    read -rp "$(echo -e "${YELLOW}Fastfetch Config: [d]sxtool default / [c]ustomize now / [e]edit json manually (d/c/e): ${RESET}")" mode < /dev/tty
+    read -rp "$(echo -e "${YELLOW}Fastfetch Config: [d]sxtool default / [c]ustomize now / [e]dit json manually / [x] use native example preset (d/c/e/x): ${RESET}")" mode < /dev/tty
     mode="${mode:-p}"
 
     case "$mode" in
@@ -242,6 +213,17 @@ setup_fastfetch_config() {
             mapfile -t selected_modules < <(fastfetch_pick_modules)
             build_fastfetch_json "$config_file" "${selected_modules[@]}"
             log_info "Config save on $config_file."
+            ;;
+        x|X)
+            log_info "Choose a native fastfetch example preset."
+            local example_file
+            if example_file="$(fastfetch_pick_example_preset)"; then
+                cp "$example_file" "$config_file"
+                log_info "Example preset saved to $config_file."
+            else
+                log_warn "No example preset selected. Using built-in default config."
+                build_fastfetch_json "$config_file" "${FASTFETCH_DEFAULT_MODULES[@]}"
+            fi
             ;;
         e|E)
             build_fastfetch_json "$config_file" "${FASTFETCH_DEFAULT_MODULES[@]}"

@@ -93,7 +93,7 @@ get_preview() {
             echo "  • Arch Linux only"
             echo "  • Requires non-root user"
             ;;
-        "DSXSWAP (BETA)")
+        "DSXSwap")
             echo "Configure swap space on your system."
             echo
             echo "  • Create and manage swap files"

@@ -107,14 +107,13 @@ get_preview() {
             echo "  • Opcional: override FRM, Discord RPC, GameMode, gamepad"
             echo "  • Salva o arquivo JSON em ~/.var/app/org.vinegarhq.Sober/config/sober/config.json"
             ;;
-        "Setup NVIDIA Drivers")
-            echo "Install proprietary NVIDIA drivers."
+        "Setup Drivers")
+            echo "Detects your GPU vendor and installs the right driver stack."
             echo
-            echo "  • Auto-detects GPU via lspci"
-            echo "  • Picks driver series (current / 470xx / 390xx)"
-            echo "  • Installs 32-bit libs + DKMS/akmod"
-            echo "  • Enables DRM modeset (Wayland-ready)"
-            echo "  • Warns on Secure Boot"
+            echo "  • Auto-detects GPU via lspci (NVIDIA / AMD / Intel)"
+            echo "  • NVIDIA: delegates to dedicated module (series pick, DKMS/akmod, Secure Boot warning)"
+            echo "  • AMD: mesa, Vulkan (RADV), VA-API/VDPAU, 32-bit libs"
+            echo "  • Intel: mesa, Vulkan, VA-API media driver"
             ;;
         "System Maintenance")
             echo "Clean up and tune your system."

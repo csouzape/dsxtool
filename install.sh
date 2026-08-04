@@ -182,7 +182,7 @@ build_menu() {
         echo "21 - Setup paru (AUR helper)"
     fi
 
-    if [[ "$DISTRO" == "ubuntu" ]]; then
+    if [[ "${DISTRO_RAW:-}" == "ubuntu" ]]; then
         echo "22 - Setup Ubuntu Debullshit"
     fi
 

@@ -100,6 +100,13 @@ get_preview() {
             echo "  • Adjust swappiness settings"
             echo "  • Monitor swap usage"
             ;;
+        "DSXSecurity")
+            echo "Firewall, SSH hardening, and security checks in one module."
+            echo
+            echo "  • nftables firewall with Home / Public / Gaming profiles"
+            echo "  • SSH hardening: change port, disable root/password login, restore backup"
+            echo "  • Security updates, package integrity, and login activity checks"
+            ;;
         "Sober Optimization")
             echo "Configura otimizações para o Sober."
             echo

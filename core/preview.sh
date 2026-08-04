@@ -101,7 +101,7 @@ get_preview() {
             echo "  • Monitor swap usage"
             ;;
         "Sober Optimization")
-            echo "Configura otimizações para o Sober." 
+            echo "Configura otimizações para o Sober."
             echo
             echo "  • Ajusta modo gráfico para performance"
             echo "  • Opcional: override FRM, Discord RPC, GameMode, gamepad"
@@ -136,6 +136,13 @@ get_preview() {
             echo "  • Installs fastfetch (.deb on Debian/Ubuntu)"
             echo "  • Deploys a default config (backs up existing)"
             echo "  • Optional: run on every new shell"
+            ;;
+        "Setup Multimedia")
+            echo "Install and configure Multimedia dependencies."
+            echo
+            echo "  • Installs codecs (ffmpeg, gstreamer plugins, libdvdcss)"
+            echo "  • Installs media players (vlc, mpv)"
+            echo "  • Configures hardware acceleration (VAAPI/VDPAU) where available"
             ;;
         "Exit")
             echo "Exit dsxtool."

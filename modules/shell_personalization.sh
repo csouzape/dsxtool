@@ -101,7 +101,7 @@ setup_shell() {
               --no-info)
 
     case "$choice" in
-        bash)
+        "bash (Starship Config)")
             install_bash
             set_default_shell "$(command -v bash)"
             ;;

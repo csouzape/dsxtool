@@ -239,7 +239,7 @@ dsxtool_main() {
             "Setup Virtualization")        clear; install_virtualization_module ;;
             "Setup Shell")                 clear; install_shell_module ;;
             "Setup Gaming")                clear; setup_gaming_module ;;
-            "DSXSWAP (BETA)")              clear; dsxswap_module ;;
+            "DSXSwap")                     clear; dsxswap_module ;;
             "DSXSecurity")                 clear; dsxsecurity_module ;;
             "Setup Bluetooth")             clear; bluetooth_module ;;
             "Setup Printer")               clear; setup_printer_module ;;

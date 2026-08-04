@@ -125,6 +125,7 @@ install_yay_module()            { module_runner "Setup yay" "source \"$BASE_DIR/
 install_paru_module()           { module_runner "Setup paru" "source \"$BASE_DIR/modules/setupparu.sh\"; setup_paru" || log_warn "paru setup finished with errors."; }
 install_fonts_module()          { module_runner "Install Fonts" "source \"$BASE_DIR/modules/fonts.sh\"; setup_fonts" || log_warn "Fonts setup finished with errors."; }
 install_flatpak_module()        { module_runner "Setup Flatpak" "source \"$BASE_DIR/modules/flatpak.sh\"; setup_flatpak" || log_warn "Flatpak setup finished with errors."; }
+install_rpmfusion_module()       { module_runner "Setup RPM Fusion" "source \"$BASE_DIR/modules/rpmfusion.sh\"; setup_rpmfusion" || log_warn "RPM Fusion setup finished with errors."; }
 install_virtualization_module() { module_runner "Setup Virtualization" "source \"$BASE_DIR/modules/setup_virtualization.sh\"; setup_virtualization" || log_warn "Virtualization setup finished with errors."; }
 install_shell_module()          { module_runner "Setup Shell" "source \"$BASE_DIR/modules/shell_personalization.sh\"; setup_shell" || log_warn "Shell setup finished with errors."; }
 change_desktop_module()         { module_runner "Change Desktop" "source \"$BASE_DIR/modules/change_desktop.sh\"; prompt_change_desktop" || log_warn "Desktop setup finished with errors."; }
@@ -171,9 +172,13 @@ build_menu() {
         "17 - Setup Fastfetch" \
         "18 - Setup Multimedia"
 
+    if [[ "$DISTRO" == "fedora" ]]; then
+        echo "19 - Setup RPM Fusion"
+    fi
+
     if [[ "$DISTRO" == "arch" ]]; then
-        echo "19 - Setup yay (AUR helper)"
-        echo "20 - Setup paru (AUR helper)"
+        echo "20 - Setup yay (AUR helper)"
+        echo "21 - Setup paru (AUR helper)"
     fi
     echo "0 - Exit"
 }
@@ -236,6 +241,7 @@ dsxtool_main() {
             "Change Desktop Environment")  clear; change_desktop_module ;;
             "Fonts Downloader")            clear; install_fonts_module ;;
             "Setup Flatpak")               clear; install_flatpak_module ;;
+            "Setup RPM Fusion")            clear; install_rpmfusion_module ;;
             "Setup Virtualization")        clear; install_virtualization_module ;;
             "Setup Shell")                 clear; install_shell_module ;;
             "Setup Gaming")                clear; setup_gaming_module ;;

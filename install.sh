@@ -139,6 +139,7 @@ sober_optimization_module()     { module_runner "Sober Optimization" "source \"$
 setup_maintenance_module()      { module_runner "System Maintenance" "source \"$BASE_DIR/modules/maintenance.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
 setup_fastfetch_module()        { module_runner "Setup Fastfetch" "source \"$BASE_DIR/modules/fastfetch.sh\"; setup_fastfetch" || log_warn "Fastfetch setup finished with errors."; }
 setup_multimedia_module()       { module_runner "Setup Multimedia" "source \"$BASE_DIR/modules/multimedia.sh\"; install_multimedia" || log_warn "Multimedia setup finished with errors."; }
+setup_ubuntu_debulshit_module() { module_runner "Setup Ubuntu Debullshit" "source \"$BASE_DIR/modules/ubuntu_debulshit.sh\"; setup_ubuntu_debulshit" || log_warn "Ubuntu Debullshit setup finished with errors."; }
 
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
@@ -180,6 +181,11 @@ build_menu() {
         echo "20 - Setup yay (AUR helper)"
         echo "21 - Setup paru (AUR helper)"
     fi
+
+    if [[ "$DISTRO" == "ubuntu" ]]; then
+        echo "22 - Setup Ubuntu Debullshit"
+    fi
+
     echo "0 - Exit"
 }
 
@@ -256,6 +262,7 @@ dsxtool_main() {
             "System Maintenance")          clear; setup_maintenance_module ;;
             "Setup Fastfetch")             clear; setup_fastfetch_module ;;
             "Setup Multimedia")            clear; setup_multimedia_module ;;
+            "Setup Ubuntu Debullshit")     clear; setup_ubuntu_debulshit_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

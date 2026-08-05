@@ -1,4 +1,4 @@
-
+ 
 
 <h1 align="center">dsxtool</h1>
 
@@ -13,7 +13,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/bash-4.0+-4EAA25?style=flat&logo=gnubash&logoColor=white" />
-  <img src="https://img.shields.io/github/license/csouzape/dsxtool" />
+  <img src="https://img.shields.io/badge/license-GPLv2-brightgreen?style=flat&logo=gnu" />
   <a href="https://dsxtool.vercel.app"><img src="https://img.shields.io/badge/part%20of-DSX%20ecosystem-cba6f7?style=flat" /></a>
 </p>
 
@@ -33,7 +33,7 @@
 
 ## Overview
 
-**dsxtool** is a Bash-based toolbox for automating common Linux post-install tasks. It detects your distribution automatically and provides an interactive `fzf` menu to install and configure tools, desktop environments, power management, virtualization, fonts, AUR helpers, and more.
+**dsxtool** is a Bash-based toolbox for automating common Linux post-install tasks. It detects your distribution automatically and provides an interactive `fzf` menu to install and configure tools[...]
 
 Supports **Arch Linux**, **Debian/Ubuntu**, and **Fedora**.
 
@@ -131,7 +131,7 @@ dsxtool/
 
 ## How It Works
 
-On launch, `install.sh` sources `core/common.sh` and `core/detect.sh`, which sets the `$DISTRO` variable to `arch`, `debian`, or `fedora`. The corresponding distro file under `core/distros/` is then sourced, providing unified `pkg_install`, `pkg_remove`, and `pkg_exists` functions used across all modules.
+On launch, `install.sh` sources `core/common.sh` and `core/detect.sh`, which sets the `$DISTRO` variable to `arch`, `debian`, or `fedora`. The corresponding distro file under `core/distros/` is t[...]
 
 Each menu option sources its module on demand and calls a single entry-point function — keeping the codebase modular and easy to extend.
 
@@ -155,7 +155,7 @@ Before opening a new issue, check if it already exists. Use the provided templat
 ### Development Notes
 
 - Modules should remain **self-contained Bash scripts** inside `modules/`
-- New features must expose **a single entry-point function**
+- New features must expose **a single entry-point function`
 - All package operations must use the **distro abstraction layer** (`pkg_install`, `pkg_remove`, `pkg_exists`)
 - Avoid hardcoding distro-specific logic inside modules
 

@@ -163,4 +163,5 @@ Before opening a new issue, check if it already exists. Use the provided templat
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the GNU General Public License v2.0.
+See the LICENSE file for details.

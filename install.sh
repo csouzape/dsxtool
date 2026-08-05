@@ -125,6 +125,7 @@ install_yay_module()            { module_runner "Setup yay" "source \"$BASE_DIR/
 install_paru_module()           { module_runner "Setup paru" "source \"$BASE_DIR/modules/setupparu.sh\"; setup_paru" || log_warn "paru setup finished with errors."; }
 install_fonts_module()          { module_runner "Install Fonts" "source \"$BASE_DIR/modules/fonts.sh\"; setup_fonts" || log_warn "Fonts setup finished with errors."; }
 install_flatpak_module()        { module_runner "Setup Flatpak" "source \"$BASE_DIR/modules/flatpak.sh\"; setup_flatpak" || log_warn "Flatpak setup finished with errors."; }
+install_rpmfusion_module()       { module_runner "Setup RPM Fusion" "source \"$BASE_DIR/modules/rpmfusion.sh\"; setup_rpmfusion" || log_warn "RPM Fusion setup finished with errors."; }
 install_virtualization_module() { module_runner "Setup Virtualization" "source \"$BASE_DIR/modules/setup_virtualization.sh\"; setup_virtualization" || log_warn "Virtualization setup finished with errors."; }
 install_shell_module()          { module_runner "Setup Shell" "source \"$BASE_DIR/modules/shell_personalization.sh\"; setup_shell" || log_warn "Shell setup finished with errors."; }
 change_desktop_module()         { module_runner "Change Desktop" "source \"$BASE_DIR/modules/change_desktop.sh\"; prompt_change_desktop" || log_warn "Desktop setup finished with errors."; }
@@ -138,6 +139,7 @@ sober_optimization_module()     { module_runner "Sober Optimization" "source \"$
 setup_maintenance_module()      { module_runner "System Maintenance" "source \"$BASE_DIR/modules/maintenance.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
 setup_fastfetch_module()        { module_runner "Setup Fastfetch" "source \"$BASE_DIR/modules/fastfetch.sh\"; setup_fastfetch" || log_warn "Fastfetch setup finished with errors."; }
 setup_multimedia_module()       { module_runner "Setup Multimedia" "source \"$BASE_DIR/modules/multimedia.sh\"; install_multimedia" || log_warn "Multimedia setup finished with errors."; }
+setup_ubuntu_debulshit_module() { module_runner "Setup Ubuntu Debullshit" "source \"$BASE_DIR/modules/ubuntu_debulshit.sh\"; setup_ubuntu_debulshit" || log_warn "Ubuntu Debullshit setup finished with errors."; }
 
 BANNER=$(cat <<'EOF'
   ██████╗ ███████╗██╗  ██╗████████╗ ██████╗  ██████╗ ██╗
@@ -171,10 +173,19 @@ build_menu() {
         "17 - Setup Fastfetch" \
         "18 - Setup Multimedia"
 
-    if [[ "$DISTRO" == "arch" ]]; then
-        echo "19 - Setup yay (AUR helper)"
-        echo "20 - Setup paru (AUR helper)"
+    if [[ "$DISTRO" == "fedora" ]]; then
+        echo "19 - Setup RPM Fusion"
     fi
+
+    if [[ "$DISTRO" == "arch" ]]; then
+        echo "20 - Setup yay (AUR helper)"
+        echo "21 - Setup paru (AUR helper)"
+    fi
+
+    if [[ "${DISTRO_RAW:-}" == "ubuntu" ]]; then
+        echo "22 - Setup Ubuntu Debullshit"
+    fi
+
     echo "0 - Exit"
 }
 
@@ -236,10 +247,11 @@ dsxtool_main() {
             "Change Desktop Environment")  clear; change_desktop_module ;;
             "Fonts Downloader")            clear; install_fonts_module ;;
             "Setup Flatpak")               clear; install_flatpak_module ;;
+            "Setup RPM Fusion")            clear; install_rpmfusion_module ;;
             "Setup Virtualization")        clear; install_virtualization_module ;;
             "Setup Shell")                 clear; install_shell_module ;;
             "Setup Gaming")                clear; setup_gaming_module ;;
-            "DSXSwap")              clear; dsxswap_module ;;
+            "DSXSwap")                     clear; dsxswap_module ;;
             "DSXSecurity")                 clear; dsxsecurity_module ;;
             "Setup Bluetooth")             clear; bluetooth_module ;;
             "Setup Printer")               clear; setup_printer_module ;;
@@ -250,6 +262,7 @@ dsxtool_main() {
             "System Maintenance")          clear; setup_maintenance_module ;;
             "Setup Fastfetch")             clear; setup_fastfetch_module ;;
             "Setup Multimedia")            clear; setup_multimedia_module ;;
+            "Setup Ubuntu Debullshit")     clear; setup_ubuntu_debulshit_module ;;
             "Exit")                        log_info "Exiting"; exit 0 ;;
             *)                             continue ;;
         esac

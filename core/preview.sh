@@ -93,28 +93,34 @@ get_preview() {
             echo "  • Arch Linux only"
             echo "  • Requires non-root user"
             ;;
-        "DSXSWAP (BETA)")
+        "DSXSwap")
             echo "Configure swap space on your system."
             echo
             echo "  • Create and manage swap files"
             echo "  • Adjust swappiness settings"
             echo "  • Monitor swap usage"
             ;;
+        "DSXSecurity")
+            echo "Firewall, SSH hardening, and security checks in one module."
+            echo
+            echo "  • nftables firewall with Home / Public / Gaming profiles"
+            echo "  • SSH hardening: change port, disable root/password login, restore backup"
+            echo "  • Security updates, package integrity, and login activity checks"
+            ;;
         "Sober Optimization")
-            echo "Configura otimizações para o Sober." 
+            echo "Configura otimizações para o Sober."
             echo
             echo "  • Ajusta modo gráfico para performance"
             echo "  • Opcional: override FRM, Discord RPC, GameMode, gamepad"
             echo "  • Salva o arquivo JSON em ~/.var/app/org.vinegarhq.Sober/config/sober/config.json"
             ;;
-        "Setup NVIDIA Drivers")
-            echo "Install proprietary NVIDIA drivers."
+        "Setup Drivers")
+            echo "Detects your GPU vendor and installs the right driver stack."
             echo
-            echo "  • Auto-detects GPU via lspci"
-            echo "  • Picks driver series (current / 470xx / 390xx)"
-            echo "  • Installs 32-bit libs + DKMS/akmod"
-            echo "  • Enables DRM modeset (Wayland-ready)"
-            echo "  • Warns on Secure Boot"
+            echo "  • Auto-detects GPU via lspci (NVIDIA / AMD / Intel)"
+            echo "  • NVIDIA: delegates to dedicated module (series pick, DKMS/akmod, Secure Boot warning)"
+            echo "  • AMD: mesa, Vulkan (RADV), VA-API/VDPAU, 32-bit libs"
+            echo "  • Intel: mesa, Vulkan, VA-API media driver"
             ;;
         "System Maintenance")
             echo "Clean up and tune your system."
@@ -136,6 +142,13 @@ get_preview() {
             echo "  • Installs fastfetch (.deb on Debian/Ubuntu)"
             echo "  • Deploys a default config (backs up existing)"
             echo "  • Optional: run on every new shell"
+            ;;
+        "Setup Multimedia")
+            echo "Install and configure Multimedia dependencies."
+            echo
+            echo "  • Installs codecs (ffmpeg, gstreamer plugins, libdvdcss)"
+            echo "  • Installs media players (vlc, mpv)"
+            echo "  • Configures hardware acceleration (VAAPI/VDPAU) where available"
             ;;
         "Exit")
             echo "Exit dsxtool."

@@ -72,20 +72,43 @@ installFont() {
 }
 
 installStarshipAndFzf() {
+	log_info "Entering installStarshipAndFzf"
+
 	if command_exists starship; then
 		log_info "Starship already installed."
 	else
 		log_info "Installing Starship prompt..."
-		curl -sS https://starship.rs/install.sh | sh -s -- -y || log_warn "Failed to install starship automatically."
+
+		if curl -fsSL https://starship.rs/install.sh | sh -s -- -y; then
+			log_info "Starship installer finished."
+		else
+			die "Starship installer failed."
+		fi
+
+		export PATH="$HOME/.local/bin:$PATH"
+
+		if command_exists starship; then
+			log_info "Starship installed successfully: $(command -v starship)"
+		elif [[ -x "$HOME/.local/bin/starship" ]]; then
+			log_warn "Starship installed at $HOME/.local/bin/starship, but ~/.local/bin is not in PATH."
+		else
+			die "Starship installation completed, but the binary was not found."
+		fi
 	fi
 
 	if command_exists fzf; then
 		log_info "fzf already installed."
 	else
 		log_info "Installing fzf..."
-		git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf || log_warn "Failed to clone fzf repo."
-		if [ -f "$HOME/.fzf/install" ]; then
-			"$HOME/.fzf/install" --all || log_warn "fzf installer failed."
+
+		if git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"; then
+			if [[ -f "$HOME/.fzf/install" ]]; then
+				"$HOME/.fzf/install" --all || die "fzf installer failed."
+			else
+				die "fzf install script not found."
+			fi
+		else
+			die "Failed to clone fzf repository."
 		fi
 	fi
 }
@@ -162,11 +185,6 @@ main() {
 	installZoxide
 	linkConfig
 }
-
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-	main
+if ! (return 0 2>/dev/null); then
+	main "$@"
 fi
-
-
-
-

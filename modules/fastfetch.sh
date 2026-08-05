@@ -231,7 +231,7 @@ setup_fastfetch_config() {
             log_info "Config saved on $config_file."
             ;;
         *)
-            if curl -fsSLo "$config_file" "$FASTFETCH_CONFIG_URL"; then
+            if [[ -n "${FASTFETCH_CONFIG_URL:-}" ]] && curl -fsSLo "$config_file" "$FASTFETCH_CONFIG_URL"; then
                 log_info "Fastfetch configuration downloaded to $config_file."
             else
                 log_warn "Could not download config, writing built-in default instead."

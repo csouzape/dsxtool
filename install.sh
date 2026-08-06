@@ -138,7 +138,7 @@ dsxswap_module()                { module_runner "DSXSWAP" "source \"$BASE_DIR/mo
 dsxsecurity_module()            { module_runner "DSXSecurity" "source \"$BASE_DIR/modules/dsxsecurity.sh\"; main" || log_warn "Security setup finished with errors."; }
 setup_drivers_module()          { module_runner "Setup Drivers" "source \"$BASE_DIR/modules/drivers.sh\"; setup_drivers" || log_warn "Driver setup finished with errors."; }
 sober_optimization_module()     { module_runner "Sober Optimization" "source \"$BASE_DIR/modules/sober_optimization.sh\"; install" || log_warn "Sober optimization finished with errors."; }
-setup_maintenance_module()      { module_runner "System Maintenance" "source \"$BASE_DIR/modules/maintenance.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
+setup_maintenance_module()      { module_runner "DSXHealth" "source \"$BASE_DIR/modules/dsxhealth.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
 setup_fastfetch_module()        { module_runner "Setup Fastfetch" "source \"$BASE_DIR/modules/fastfetch.sh\"; setup_fastfetch" || log_warn "Fastfetch setup finished with errors."; }
 setup_multimedia_module()       { module_runner "Setup Multimedia" "source \"$BASE_DIR/modules/multimedia.sh\"; install_multimedia" || log_warn "Multimedia setup finished with errors."; }
 setup_ubuntu_debulshit_module() { module_runner "Setup Ubuntu Debullshit" "source \"$BASE_DIR/modules/ubuntu_debulshit.sh\"; setup_ubuntu_debulshit" || log_warn "Ubuntu Debullshit setup finished with errors."; }
@@ -171,7 +171,7 @@ build_menu() {
         "13 - DSXSecurity" \
         "14 - Sober Optimization" \
         "15 - Setup Drivers" \
-        "16 - System Maintenance" \
+        "16 - DSXHealth" \
         "17 - Setup Fastfetch" \
         "18 - Setup Multimedia"
 
@@ -261,7 +261,7 @@ dsxtool_main() {
             "Setup paru (AUR helper)")     clear; install_paru_module ;;
             "Sober Optimization")          clear; sober_optimization_module ;;
             "Setup Drivers")               clear; setup_drivers_module ;;
-            "System Maintenance")          clear; setup_maintenance_module ;;
+            "DSXHealth")                  clear; setup_maintenance_module ;;
             "Setup Fastfetch")             clear; setup_fastfetch_module ;;
             "Setup Multimedia")            clear; setup_multimedia_module ;;
             "Setup Ubuntu Debullshit")     clear; setup_ubuntu_debulshit_module ;;

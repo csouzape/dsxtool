@@ -122,17 +122,16 @@ get_preview() {
             echo "  • AMD: mesa, Vulkan (RADV), VA-API/VDPAU, 32-bit libs"
             echo "  • Intel: mesa, Vulkan, VA-API media driver"
             ;;
-        "System Maintenance")
-            echo "Clean up and tune your system."
+        "DSXHealth")
+            echo "Keep your system clean, light, and healthy with simple maintenance tasks."
             echo
-            echo "  • Update system packages"
-            echo "  • Clean package manager cache"
-            echo "  • Remove orphan packages"
-            echo "  • Vacuum systemd journal logs"
-            echo "  • Clean user cache (~/.cache)"
-            echo "  • TRIM SSD (fstrim)"
-            echo "  • Remove unused Flatpak runtimes"
-            echo "  • Check failed services"
+            echo "  • Update the system"
+            echo "  • Clear old package cache"
+            echo "  • Remove unused programs"
+            echo "  • Clean temporary files"
+            echo "  • Empty trash"
+            echo "  • Check what is using space"
+            echo "  • Check for system problems"
             echo
             echo "  Multi-select with TAB."
             ;;

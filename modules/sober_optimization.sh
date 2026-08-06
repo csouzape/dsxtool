@@ -23,7 +23,7 @@ install() {
     chmod +x "$install_script"
 
     if [[ -e /dev/tty ]]; then
-        bash "$install_script" </dev/tty >/dev/tty || {
+        bash "$install_script" </dev/tty 2>&1 || {
             echo "Sober optimization installation failed." >&2
             rm -rf "$repo_dir"
             return 1

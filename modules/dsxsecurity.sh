@@ -649,6 +649,186 @@ ssh_menu() {
     done
 }
 
+fail2ban_installed() {
+    command -v fail2ban-client >/dev/null 2>&1
+}
+
+fail2ban_install() {
+    if fail2ban_installed; then
+        log_info "Fail2Ban is already installed."
+        return 0
+    fi
+
+    read -rn 1 -p "Install Fail2Ban to block repeated login attacks? (y/n): " confirm
+    echo
+    [[ "$confirm" =~ ^[Yy]$ ]] || {
+        log_info "Fail2Ban installation canceled."
+        return 1
+    }
+
+    pkg_install fail2ban || {
+        log_error "Failed to install Fail2Ban."
+        return 1
+    }
+
+    log_success "Fail2Ban installed."
+}
+
+fail2ban_restart_service() {
+    sudo systemctl restart fail2ban || {
+        log_error "Failed to restart Fail2Ban."
+        return 1
+    }
+}
+
+fail2ban_enable() {
+    log_info "Enabling Fail2Ban..."
+    service_enable fail2ban || {
+        log_error "Failed to enable Fail2Ban."
+        return 1
+    }
+    log_success "Fail2Ban enabled."
+}
+
+fail2ban_disable() {
+    log_info "Disabling Fail2Ban..."
+    service_disable fail2ban || {
+        log_error "Failed to disable Fail2Ban."
+        return 1
+    }
+    log_success "Fail2Ban disabled."
+}
+
+fail2ban_get_jails() {
+    if ! fail2ban_installed; then
+        echo "none"
+        return
+    fi
+
+    fail2ban-client status 2>/dev/null | grep -oP 'Jail list:\s*\K.*' || echo "none"
+}
+
+fail2ban_show_status() {
+    if ! fail2ban_installed; then
+        log_warn "Fail2Ban is not installed."
+        return
+    fi
+
+    local active boot jails
+    if systemctl is-active --quiet fail2ban; then
+        active="Active"
+    else
+        active="Inactive"
+    fi
+
+    if systemctl is-enabled --quiet fail2ban 2>/dev/null; then
+        boot="Enabled"
+    else
+        boot="Disabled"
+    fi
+
+    jails=$(fail2ban_get_jails)
+    if [[ -z "$jails" || "$jails" == "none" ]]; then
+        jails="(no active jails)"
+    fi
+
+    cat <<EOF
+╭──────────────────────────────────────────────────────────────╮
+│                    DSXSecurity Fail2Ban                      │
+├──────────────────────────────────────────────────────────────┤
+│ Service status   $active
+│ Starts on boot   $boot
+│ Active jails      $jails
+╰──────────────────────────────────────────────────────────────╯
+EOF
+}
+
+fail2ban_show_banned_ips() {
+    if ! fail2ban_installed; then
+        log_warn "Fail2Ban is not installed."
+        return
+    fi
+
+    local jails jail banned_list count
+    jails=$(fail2ban_get_jails)
+    if [[ -z "$jails" || "$jails" == "none" ]]; then
+        log_warn "No active Fail2Ban jails found."
+        return
+    fi
+
+    echo "Fail2Ban current banned IPs:"
+    echo
+    for jail in ${jails//,/ }; do
+        banned_list=$(fail2ban-client status "$jail" 2>/dev/null | sed -n 's/^Banned IP list:\s*//p')
+        if [[ -z "$banned_list" || "$banned_list" == "None" ]]; then
+            count=0
+        else
+            count=$(echo "$banned_list" | tr ',' '\n' | grep -cve '^\s*$')
+        fi
+        printf "● %s: %s banned IP(s)\n" "$jail" "$count"
+        if (( count > 0 )); then
+            echo "  $banned_list"
+        fi
+        echo
+    done
+}
+
+fail2ban_configure_ssh_jail() {
+    if ! fail2ban_installed; then
+        log_warn "Fail2Ban is not installed."
+        return 1
+    fi
+
+    local cfg="/etc/fail2ban/jail.d/dsxsecurity.conf"
+    sudo mkdir -p "$(dirname "$cfg")"
+    sudo tee "$cfg" >/dev/null <<'EOF'
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = %(sshd_log)s
+maxretry = 5
+bantime = 3600
+findtime = 600
+EOF
+
+    log_info "Configured SSH protection in $cfg."
+    if systemctl is-active --quiet fail2ban; then
+        fail2ban_restart_service || return 1
+    fi
+    log_success "Fail2Ban SSH jail configured."
+}
+
+fail2ban_menu() {
+    local option
+    while true; do
+        option=$(printf "%s\n" \
+                "Status" \
+                "Install" \
+                "Enable" \
+                "Disable" \
+                "Configure SSH Jail" \
+                "Show Banned IPs" \
+                "Back" | \
+            fzf \
+                --prompt "Fail2Ban Menu > " \
+                --height=60% \
+                --border \
+                --reverse \
+                --cycle) || true
+
+        case "$option" in
+            "Status") fail2ban_show_status; pause ;;
+            "Install") fail2ban_install; pause ;;
+            "Enable") fail2ban_enable; pause ;;
+            "Disable") fail2ban_disable; pause ;;
+            "Configure SSH Jail") fail2ban_configure_ssh_jail; pause ;;
+            "Show Banned IPs") fail2ban_show_banned_ips; pause ;;
+            "Back"|"") return 0 ;;
+        esac
+    done
+}
+
 
 firewall_menu() {
     clear
@@ -921,6 +1101,7 @@ main() {
                 "Overview" \
                 "Firewall" \
                 "SSH" \
+                "Fail2Ban" \
                 "Check Security Updates" \
                 "Package Integrity" \
                 "Login Activity" \
@@ -939,6 +1120,7 @@ main() {
                         "Overview") echo "See a quick summary of the security status." ;;
                         "Firewall") echo "Manage the system firewall: status, install, enable, disable, and switch between Home, Public, and Gaming profiles." ;;
                         "SSH") echo "Audit and harden the SSH service: check status, change port, disable root login, disable password login, restore backup." ;;
+                        "Fail2Ban") echo "Protect SSH and other login services from repeated brute-force attacks. Ideal for remote servers, public Wi-Fi laptops, and machines exposed to network logins." ;;
                         "Check Security Updates") echo "Check for security updates and install any available patches." ;;
                         "Package Integrity") echo "Check the integrity of installed packages." ;;
                         "Login Activity") echo "View login activity and failed login attempts." ;;
@@ -952,6 +1134,7 @@ main() {
             "Overview") security_overview; pause ;;
             "Firewall") firewall_menu ;;
             "SSH") ssh_menu ;;
+            "Fail2Ban") fail2ban_menu ;;
             "Check Security Updates") security_check_updates; pause ;;
             "Package Integrity") security_check_package_integrity; pause ;;
             "Login Activity") security_login_activity; pause ;;

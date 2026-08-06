@@ -63,6 +63,10 @@ FASTFETCH_DEFAULT_MODULES=(
     "de" "wm" "terminal" "cpu" "gpu" "memory" "disk" "break" "colors"
 )
 
+FASTFETCH_REMOTE_CONFIG_URL="https://raw.githubusercontent.com/csouzape/bashconfig/main/fastfetch/config.jsonc"
+FASTFETCH_LOGO_SOURCE="auto"
+FASTFETCH_DISPLAY_SEPARATOR=" 󰑃  "
+
 fastfetch_pick_modules() {
     if ! command -v fzf &>/dev/null; then
         log_warn "fzf not found, using default modules."
@@ -110,10 +114,10 @@ build_fastfetch_json() {
         echo '{'
         echo '    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",'
         echo '    "logo": {'
-        echo '        "type": "auto",'
-        echo '        "color": { "1": "'"$color"'" }'
+        echo '        "source": "auto",'
+        echo '        "padding": { "top": 1 }'
         echo '    },'
-        echo '    "display": { "separator": "  " },'
+        echo '    "display": { "separator": " 󰑃  " },'
         echo '    "modules": ['
         local i last=$((${#modules[@]} - 1))
         for i in "${!modules[@]}"; do
@@ -207,6 +211,15 @@ setup_fastfetch_config() {
     mode="${mode:-p}"
 
     case "$mode" in
+        d|D)
+            log_info "Cloning remote Fastfetch config from bashconfig."
+            if curl -fsSLo "$config_file" "$FASTFETCH_REMOTE_CONFIG_URL"; then
+                log_info "Remote Fastfetch config saved to $config_file."
+            else
+                log_error "Failed to download remote Fastfetch config."
+                return 1
+            fi
+            ;;
         c|C)
             log_info "Select the modules to display."
             local selected_modules
@@ -231,13 +244,9 @@ setup_fastfetch_config() {
             log_info "Config saved on $config_file."
             ;;
         *)
-            if [[ -n "${FASTFETCH_CONFIG_URL:-}" ]] && curl -fsSLo "$config_file" "$FASTFETCH_CONFIG_URL"; then
-                log_info "Fastfetch configuration downloaded to $config_file."
-            else
-                log_warn "Could not download config, writing built-in default instead."
-                build_fastfetch_json "$config_file" "${FASTFETCH_DEFAULT_MODULES[@]}"
-                log_info "Fastfetch configuration written to $config_file."
-            fi
+            log_info "No remote Fastfetch config URL configured. Writing built-in default config."
+            build_fastfetch_json "$config_file" "${FASTFETCH_DEFAULT_MODULES[@]}"
+            log_info "Fastfetch configuration written to $config_file."
             ;;
     esac
 }

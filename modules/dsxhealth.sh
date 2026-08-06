@@ -260,7 +260,6 @@ full_cleanup() {
     _run_task "Trash"             empty_trash
     _run_task "Temp Files"        clean_temp
     _run_task "Unused Flatpaks"   clean_flatpak
-    _run_task "SSD Trim"          trim_ssd
 }
 
 _run_task() {
@@ -310,35 +309,32 @@ _print_summary() {
 # menu in install.sh, otherwise returning to the main menu shows this ASCII.
 _MAINT_BANNER=$(printf '\e[38;2;249;226;175m')
 _MAINT_BANNER+=$(cat <<'EOF'
-███╗   ███╗ █████╗ ██╗███╗   ██╗████████╗███████╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗
-████╗ ████║██╔══██╗██║████╗  ██║╚══██╔══╝██╔════╝████╗  ██║██╔══██╗████╗  ██║██╔════╝██╔════╝
-██╔████╔██║███████║██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║███████║██╔██╗ ██║██║     █████╗
-██║╚██╔╝██║██╔══██║██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║██╔══██║██║╚██╗██║██║     ██╔══╝
-██║ ╚═╝ ██║██║  ██║██║██║ ╚████║   ██║   ███████╗██║ ╚████║██║  ██║██║ ╚████║╚██████╗███████╗
-╚═╝     ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚═╝  ╚═══╝╚═╝  ╚═══╝ ╚═════╝╚══════╝
-
+██████╗ ███████╗██╗  ██╗██╗  ██╗███████╗ █████╗ ██╗  ████████╗██╗  ██╗
+██╔══██╗██╔════╝╚██╗██╔╝██║  ██║██╔════╝██╔══██╗██║  ╚══██╔══╝██║  ██║
+██║  ██║███████╗ ╚███╔╝ ███████║█████╗  ███████║██║     ██║   ███████║
+██║  ██║╚════██║ ██╔██╗ ██╔══██║██╔══╝  ██╔══██║██║     ██║   ██╔══██║
+██████╔╝███████║██╔╝ ██╗██║  ██║███████╗██║  ██║███████╗██║   ██║  ██║
+╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝   ╚═╝  ╚═╝
 EOF
 )
 _MAINT_BANNER+=$(printf '\e[0m')
 
 _maintenance_preview() {
     case "$1" in
-        "1 - Update System")           echo "Updates all system packages using the distro package manager (pacman, apt, or dnf)." ;;
-        "2 - Clean Package Cache")     echo "Removes old packages from the local cache, freeing disk space without affecting installed packages." ;;
-        "3 - Remove Orphan Packages")  echo "Removes packages installed as dependencies that are no longer required by anything." ;;
-        "4 - Clean Journal Logs")      echo "Vacuums old systemd journal logs, keeping the last 2 weeks and capping size at 200M." ;;
-        "5 - Clean Coredumps")         echo "Deletes crash core dumps stored under /var/lib/systemd/coredump." ;;
-        "6 - Clean User Cache")        echo "Cleans the current user ~/.cache directory by removing application temporary files." ;;
-        "7 - Clean Thumbnail Cache")   echo "Removes cached image thumbnails stored under ~/.cache/thumbnails." ;;
-        "8 - Empty Trash")             echo "Permanently empties the user trash (~/.local/share/Trash)." ;;
-        "9 - Clean Temp Files")        echo "Removes files older than 7 days from /tmp and /var/tmp." ;;
-        "10 - Clean Unused Flatpaks")  echo "Removes Flatpak runtimes and extensions not used by any installed application." ;;
-        "11 - Prune Docker")           echo "Frees space by removing dangling/unused Docker images, containers and networks." ;;
-        "12 - Trim SSD")               echo "Runs fstrim on all mounted file systems to optimize SSD performance and lifespan." ;;
-        "13 - Check Failed Services")  echo "Lists all failed systemd services, useful for diagnosing system issues." ;;
-        "14 - Disk Usage Report")      echo "Shows filesystem usage and the largest directories/caches in your home." ;;
-        "15 - Full Cleanup")           echo "Runs every safe cleanup task in sequence and reports the total space reclaimed." ;;
-        "0 - Exit")                    echo "Exits the maintenance menu and returns to the main menu." ;;
+        "1 - Update System")            echo "Updates the system so your apps and security fixes stay current." ;;
+        "2 - Empty Trash")              echo "Permanently deletes files in the trash folder." ;;
+        "3 - Clean Temp Files")         echo "Removes temporary files from /tmp and /var/tmp that are no longer needed." ;;
+        "4 - Clear Old Package Cache")  echo "Removes old package versions saved by the system to free space safely." ;;
+        "5 - Remove Unused Programs")   echo "Deletes packages that were only needed for other programs and are no longer used." ;;
+        "6 - Clear App Temp Files")     echo "Deletes temporary files left behind by apps and the desktop environment." ;;
+        "7 - Clear Thumbnail Cache")    echo "Removes cached thumbnails so the image cache does not grow too much." ;;
+        "8 - Clear Old System Logs")    echo "Removes old log entries so the system stays lighter and easier to manage." ;;
+        "9 - Check for Problems")       echo "Shows whether any important background services are failing." ;;
+        "10 - See What Uses Space")     echo "Shows which folders are using the most disk space." ;;
+        "11 - Remove Unused Flatpak")   echo "Cleans up Flatpak runtimes and extensions you no longer use." ;;
+        "12 - Clean Docker Leftovers")  echo "Removes unused Docker data to free space if you use containers." ;;
+        "13 - Full Cleanup")           echo "Runs the most useful cleanup actions in one go." ;;
+        "0 - Exit")                     echo "Closes this menu and returns to the main dsxtool menu." ;;
     esac
 }
 export -f _maintenance_preview
@@ -357,20 +353,18 @@ system_maintenance() {
 
         selections=$(printf '%s\n' \
             "1 - Update System" \
-            "2 - Clean Package Cache" \
-            "3 - Remove Orphan Packages" \
-            "4 - Clean Journal Logs" \
-            "5 - Clean Coredumps" \
-            "6 - Clean User Cache" \
-            "7 - Clean Thumbnail Cache" \
-            "8 - Empty Trash" \
-            "9 - Clean Temp Files" \
-            "10 - Clean Unused Flatpaks" \
-            "11 - Prune Docker" \
-            "12 - Trim SSD" \
-            "13 - Check Failed Services" \
-            "14 - Disk Usage Report" \
-            "15 - Full Cleanup" \
+            "2 - Empty Trash" \
+            "3 - Clean Temp Files" \
+            "4 - Clear Old Package Cache" \
+            "5 - Remove Unused Programs" \
+            "6 - Clear App Temp Files" \
+            "7 - Clear Thumbnail Cache" \
+            "8 - Clear Old System Logs" \
+            "9 - Check for Problems" \
+            "10 - See What Uses Space" \
+            "11 - Remove Unused Flatpak" \
+            "12 - Clean Docker Leftovers" \
+            "13 - Full Cleanup" \
             "0 - Exit" \
             | _fzf_menu -m \
                   --ansi \
@@ -396,23 +390,21 @@ system_maintenance() {
         while read -r task; do
             [[ -z "$task" ]] && continue
             case "$task" in
-                "1 - Update System")          _run_task "Update System"          pkg_update ;;
-                "2 - Clean Package Cache")    _run_task "Clean Package Cache"     pkg_clean_cache ;;
-                "3 - Remove Orphan Packages") _run_task "Remove Orphan Packages"  pkg_remove_orphans ;;
-                "4 - Clean Journal Logs")     _run_task "Clean Journal Logs"      clean_journal ;;
-                "5 - Clean Coredumps")        _run_task "Clean Coredumps"         clean_coredumps ;;
-                "6 - Clean User Cache")       _run_task "Clean User Cache"        clean_user_cache ;;
-                "7 - Clean Thumbnail Cache")  _run_task "Clean Thumbnail Cache"   clean_thumbnails ;;
-                "8 - Empty Trash")            _run_task "Empty Trash"             empty_trash ;;
-                "9 - Clean Temp Files")       _run_task "Clean Temp Files"        clean_temp ;;
-                "10 - Clean Unused Flatpaks") _run_task "Clean Unused Flatpaks"   clean_flatpak ;;
-                "11 - Prune Docker")          _run_task "Prune Docker"            prune_docker ;;
-                "12 - Trim SSD")              _run_task "Trim SSD"                trim_ssd ;;
-                "13 - Check Failed Services") _run_task "Check Failed Services"   check_failed_services ;;
-                "14 - Disk Usage Report")     _run_task "Disk Usage Report"       disk_report ;;
-                "15 - Full Cleanup")          _run_task "Full Cleanup"            full_cleanup ;;
-                "0 - Exit"|"exit")           log_info "Returning to main menu."; return 0 ;;
-                *)                            log_warn "Unknown task: $task"; continue ;;
+                "1 - Update System")           _run_task "Update System"             pkg_update ;;
+                "2 - Empty Trash")             _run_task "Empty Trash"              empty_trash ;;
+                "3 - Clean Temp Files")        _run_task "Clean Temp Files"         clean_temp ;;
+                "4 - Clear Old Package Cache") _run_task "Clear Old Package Cache"  pkg_clean_cache ;;
+                "5 - Remove Unused Programs")  _run_task "Remove Unused Programs"   pkg_remove_orphans ;;
+                "6 - Clear App Temp Files")    _run_task "Clear App Temp Files"     clean_user_cache ;;
+                "7 - Clear Thumbnail Cache")   _run_task "Clear Thumbnail Cache"    clean_thumbnails ;;
+                "8 - Clear Old System Logs")   _run_task "Clear Old System Logs"    clean_journal ;;
+                "9 - Check for Problems")      _run_task "Check for Problems"       check_failed_services ;;
+                "10 - See What Uses Space")    _run_task "See What Uses Space"      disk_report ;;
+                "11 - Remove Unused Flatpak")  _run_task "Remove Unused Flatpak"    clean_flatpak ;;
+                "12 - Clean Docker Leftovers") _run_task "Clean Docker Leftovers"   prune_docker ;;
+                "13 - Full Cleanup")           _run_task "Full Cleanup"             full_cleanup ;;
+                "0 - Exit"|"exit")            log_info "Returning to main menu."; return 0 ;;
+                *)                             log_warn "Unknown task: $task"; continue ;;
             esac
             ran_any=1
         done <<< "$selections"

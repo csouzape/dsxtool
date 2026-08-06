@@ -80,7 +80,7 @@ yay -S dsxtool  #or git for you preference
 | **DSXSWAP (BETA)** | Configure swap files and swap settings |
 | **Setup Fastfetch** | Installs and configures Fastfetch |
 | **Setup Bash** | Installs Bash script utilities and shell setup helpers |
-| **System Maintenance** | Cleans cache, removes orphan packages, trims disks, and prunes package manager data |
+| **DSXHealth** | Cleans cache, removes unused packages, and helps keep the system tidy and healthy |
 | **Setup yay** *(Arch only)* | Installs the yay AUR helper |
 | **Setup paru** *(Arch only)* | Installs the paru AUR helper |
 
@@ -113,7 +113,7 @@ dsxtool/
     ├── flatpak.sh
     ├── fonts.sh
     ├── install_apps.sh
-    ├── maintenance.sh
+    ├── dsxhealth.sh
     ├── nvidia.sh
     ├── setup_bluetooth.sh
     ├── setup_gaming.sh

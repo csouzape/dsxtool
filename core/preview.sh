@@ -123,7 +123,7 @@ get_preview() {
             echo "  • Intel: mesa, Vulkan, VA-API media driver"
             ;;
         "DSXHealth")
-            echo "Useful cleanup tasks for beginners and everyday use."
+            echo "Keep your system clean, light, and healthy with simple maintenance tasks."
             echo
             echo "  • Update the system"
             echo "  • Clear old package cache"

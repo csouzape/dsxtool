@@ -8,7 +8,7 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 RESET='\033[0m'
 
-# Logging defaults (use start_logging to enable capture to file)
+# Logging defaults (dsxtool starts a global log session automatically)
 LOG_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dsxtool/logs"
 LOG_FILE=""
 _LOGGING_ACTIVE=0
@@ -28,7 +28,7 @@ on_error() {
             echo "Logs are available at: $LOG_FILE"
         fi
     else
-        echo "No log file available. To enable logs, call start_logging() before running actions."
+        echo "No log file available. Logging may not have started correctly."
     fi
 }
 
@@ -38,7 +38,7 @@ start_logging() {
     # Redirect stdout/stderr to tee so output still appears on console
     exec > >(tee -a "$LOG_FILE") 2>&1
     _LOGGING_ACTIVE=1
-    echo -e "${GREEN}[INFO]${RESET} Logging started: $LOG_FILE"
+    echo -e "${GREEN}[INFO]${RESET} dsxtool log session started: $LOG_FILE"
     # Install ERR trap to offer saving logs on error
     trap 'on_error $?' ERR
 }
@@ -53,22 +53,17 @@ module_runner() {
     mkdir -p "$LOG_DIR"
     local safe
     safe=$(printf '%s' "$module" | tr ' /' '__' | tr -cd 'A-Za-z0-9_.-')
-    local tmp_log
-    tmp_log=$(mktemp)
+    local module_log="$LOG_DIR/${safe}_$(date +%Y%m%d-%H%M%S).log"
 
-    echo -e "${GREEN}[MODULE]${RESET} $module - running (logs saved only on error)."
+    echo -e "${GREEN}[MODULE]${RESET} $module - running (capturing output to $module_log)."
 
-
-    bash -lc "set -o pipefail; source \"$BASE_DIR/core/common.sh\"; source \"$BASE_DIR/core/detect.sh\"; detect_distro; source \"$BASE_DIR/core/distros/$DISTRO.sh\"; $cmd" 2>&1 | tee "$tmp_log"
+    bash -lc "set -o pipefail; source \"$BASE_DIR/core/common.sh\"; source \"$BASE_DIR/core/detect.sh\"; detect_distro; source \"$BASE_DIR/core/distros/$DISTRO.sh\"; $cmd" 2>&1 | tee "$module_log"
     local rc=${PIPESTATUS[0]:-1}
 
     if [[ $rc -ne 0 ]]; then
-        local module_log="$LOG_DIR/${safe}_$(date +%Y%m%d-%H%M%S).log"
-        mv "$tmp_log" "$module_log" || cp -f -- "$tmp_log" "$module_log"
         echo -e "${RED}[MODULE ERROR]${RESET} $module failed (exit $rc). Log saved: $module_log"
     else
-        rm -f -- "$tmp_log"
-        echo -e "${GREEN}[MODULE]${RESET} $module completed successfully."
+        echo -e "${GREEN}[MODULE]${RESET} $module completed successfully. Log path: $module_log"
     fi
 
     return $rc

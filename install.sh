@@ -7,6 +7,8 @@ export BASE_DIR
 source "$BASE_DIR/core/common.sh"
 source "$BASE_DIR/core/detect.sh"
 
+start_logging
+
 detect_distro
 
 if [[ ! -f "$BASE_DIR/core/distros/$DISTRO.sh" ]]; then

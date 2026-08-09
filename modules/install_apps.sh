@@ -33,7 +33,7 @@ register_category_apps "Browsers" \
     "Zen Browser" "native|-|-|-;flatpak|-|app.zen_browser.zen|-;aur|-|-|zen-browser-bin" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
     "Vivaldi" "flatpak|-|com.vivaldi.Vivaldi|-" \
-    "Floorp" "flatpak|-|one.ablaze.floorp|-" \
+    "Floorp" "native|deb|-|-;flatpak|-|one.ablaze.floorp|-" \
     "Helium Browser" "native|-|-|-" \
     "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin" \
     "OperaGx" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.opera-gx|-|;aur|-|-|opera-gx-bin" \
@@ -157,6 +157,7 @@ _target_label() {
                 "Google Chrome") printf 'Official (Google Chrome)' ;;
                 "Brave") printf 'Official (Brave)' ;;
                 "Zen Browser") printf 'Official (Zen Browser)' ;;
+                "Floorp") printf 'Official (.deb)' ;;
                 "Opera")
                     case "$pkg_name" in
                         deb) printf 'Official (.deb)' ;;
@@ -1100,6 +1101,41 @@ _install_native_app() {
                     ;;
                 *)
                     die "Unsupported distro for Zen Browser: $DISTRO"
+                    ;;
+            esac
+            ;;
+        "Floorp")
+            case "$DISTRO" in
+                arch)
+                    pkg_install floorp \
+                        || die "Failed to install Floorp via Arch repositories."
+                    ;;
+                debian)
+                    log_info "Adding Floorp's official APT repository..."
+                    if ! command -v gpg >/dev/null 2>&1; then
+                        pkg_install gnupg || die "Failed to install gnupg for Floorp signing key."
+                    fi
+
+                    sudo install -d -m 0755 /etc/apt/keyrings
+                    curl -fsSL https://ppa.floorp.io/KEY.gpg \
+                        | sudo gpg --dearmor --yes -o /etc/apt/keyrings/floorp.gpg \
+                        || die "Failed to import Floorp's GPG key."
+
+                    echo "deb [signed-by=/etc/apt/keyrings/floorp.gpg] https://ppa.floorp.io $(. /etc/os-release; echo "$VERSION_CODENAME") main" \
+                        | sudo tee /etc/apt/sources.list.d/floorp.list > /dev/null
+
+                    sudo apt-get update \
+                        || die "Failed to refresh APT after adding Floorp's repository."
+                    sudo apt-get install -y floorp \
+                        || die "Failed to install Floorp via APT."
+                    ;;
+                fedora)
+                    log_info "Installing Floorp from the Fedora package repositories..."
+                    pkg_install floorp \
+                        || die "Failed to install Floorp via Fedora repositories."
+                    ;;
+                *)
+                    die "Unsupported distro for Floorp: $DISTRO"
                     ;;
             esac
             ;;

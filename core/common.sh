@@ -137,5 +137,12 @@ _check_not_root() {
 }
 
 prompt_continue() {
-    read -rp "$(echo -e "${YELLOW}Press Enter to continue...${RESET}")"
+    # In scripted or module-run contexts there may be no TTY attached.
+    # Skip the prompt instead of failing the whole maintenance module.
+    if [[ ! -t 0 ]]; then
+        return 0
+    fi
+
+    read -rp "$(echo -e "${YELLOW}Press Enter to continue...${RESET}")" || true
+    return 0
 }

@@ -74,13 +74,15 @@ backup_folder(){
 select_backup_targets(){
     local -a candidates=()
     mapfile -t candidates < <(backup_folder) || return 1
+    candidates+=("Exit")
 
     local -a selected=()
     mapfile -t selected < <(
         printf '%s\n' "${candidates[@]}" |
         fzf --multi \
+            --layout=reverse \
             --prompt="Select what to include in the backup > " \
-            --header="TAB to mark multiple | ENTER to confirm" \
+            --header="TAB to mark multiple | ENTER to confirm | select Exit to cancel" \
             --preview='du -sh {} 2>/dev/null'
     )
 
@@ -89,10 +91,17 @@ select_backup_targets(){
         return 1
     fi
 
+    local item
+    for item in "${selected[@]}"; do
+        if [[ "$item" == "Exit" ]]; then
+            log_info "Exit selected. Backup aborted." >&2
+            return 1
+        fi
+    done
+
     printf '%s\n' "${selected[@]}"
     return 0
 }
-
 
 prepare_backup_destination(){
     if [[ ! -d "$DSX_BACKUP_ROOT" ]]; then

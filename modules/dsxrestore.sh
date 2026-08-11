@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -euo pipefail
 # modules/dsxrestore.sh
 # Intelligent backup/restore manager for dotfiles, configs, and other important files.
 # Features planned:
@@ -9,35 +9,189 @@
 # - App snapshot
 # - restore functionality for installed applications and their configurations.
 
-check_dependencies() {
-    local dependencies=("git" "unzip")
-    local missing=()
+readonly DSX_BACKUP_ROOT="${DSX_BACKUP_ROOT:-$HOME/.local/share/dsxtool/backups}"
 
+check_dependencies() {
+    local dependencies=("git" "unzip" "fzf" "tar")
     for dep in "${dependencies[@]}"; do
-        if ! pkg_exists "$dep"; then
-            missing+=("$dep")
+        log_info "Checking dependency: $dep"
+        if ! command -v "$dep" &> /dev/null; then
+            log_warn "$dep not found. Installing..."
+            if pkg_install "$dep"; then
+                log_info "$dep installed successfully."
+            else
+                log_error "Failed to install $dep."
+                return 1
+            fi
+        else
+            log_info "$dep already installed. ($(command -v "$dep"))."
+        fi
+    done
+}
+backup_folder(){
+    local -a candidates=()
+    local -a found=()
+
+    candidates+=("$HOME/.config")
+
+    if command -v xdg-user-dir &> /dev/null; then
+        local xdg_keys=("DESKTOP" "DOWNLOAD" "DOCUMENTS" "PICTURES" "MUSIC" "VIDEOS" "PUBLICSHARE" "TEMPLATES")
+        local key dir
+        for key in "${xdg_keys[@]}"; do
+            dir=$(xdg-user-dir "$key" 2>/dev/null)
+            [[ -n "$dir" && "$dir" != "$HOME" ]] && candidates+=("$dir")
+        done
+    else
+        log_warn "xdg-user-dir not found, falling back to common EN/PT-BR paths" >&2
+        candidates+=(
+            "$HOME/Downloads" "$HOME/Documents" "$HOME/Documentos"
+            "$HOME/Pictures"  "$HOME/Imagens"
+            "$HOME/Music"     "$HOME/Músicas"
+            "$HOME/Videos"    "$HOME/Vídeos"
+        )
+    fi
+
+    local seen=()
+    for folder in "${candidates[@]}"; do
+        [[ -d "$folder" ]] || continue
+        if [[ ! " ${seen[*]} " =~ " ${folder} " ]]; then
+            seen+=("$folder")
+            found+=("$folder")
+            log_info "Found: $folder" >&2
         fi
     done
 
-    # Nada faltando, segue o fluxo normalmente
-    if [[ ${#missing[@]} -eq 0 ]]; then
-        log_success "All dependencies are already satisfied."
-        return 0
-    fi
-
-    log_warn "Missing dependencies: ${missing[*]}"
-    read -rp "$(echo -e "${YELLOW}Install them now? [Y/n]${RESET} ")" reply
-
-    if [[ "${reply,,}" =~ ^(n|no)$ ]]; then
-        log_error "Cannot continue without: ${missing[*]}"
+    if [[ ${#found[@]} -eq 0 ]]; then
+        log_error "No target folders found on the system." >&2
         return 1
     fi
 
-    for dep in "${missing[@]}"; do
-        log_info "Installing $dep..."
-        pkg_install "$dep" || die "Failed to install dependency: $dep"
-    done
-
-    log_success "All dependencies installed."
+    printf '%s\n' "${found[@]}"
     return 0
+}
+
+
+select_backup_targets(){
+    local -a candidates=()
+    mapfile -t candidates < <(backup_folder) || return 1
+
+    local -a selected=()
+    mapfile -t selected < <(
+        printf '%s\n' "${candidates[@]}" |
+        fzf --multi \
+            --prompt="Select what to include in the backup > " \
+            --header="TAB to mark multiple | ENTER to confirm" \
+            --preview='du -sh {} 2>/dev/null'
+    )
+
+    if [[ ${#selected[@]} -eq 0 ]]; then
+        log_warn "Nothing selected. Backup aborted." >&2
+        return 1
+    fi
+
+    printf '%s\n' "${selected[@]}"
+    return 0
+}
+
+
+prepare_backup_destination(){
+    if [[ ! -d "$DSX_BACKUP_ROOT" ]]; then
+        log_warn "Backup directory doesn't exist, creating: $DSX_BACKUP_ROOT"
+        mkdir -p "$DSX_BACKUP_ROOT" || { log_error "Couldn't create $DSX_BACKUP_ROOT"; return 1; }
+    fi
+
+    if [[ ! -w "$DSX_BACKUP_ROOT" ]]; then
+        log_error "No write permission on $DSX_BACKUP_ROOT"
+        return 1
+    fi
+
+    local min_space_kb=512000
+    local available_kb
+    available_kb=$(df --output=avail "$DSX_BACKUP_ROOT" | tail -n1 | tr -d ' ')
+    if (( available_kb < min_space_kb )); then
+        log_error "Not enough space on $DSX_BACKUP_ROOT (${available_kb}KB available)"
+        return 1
+    fi
+
+    return 0
+}
+
+create_backup(){
+    local -a targets=("$@")
+    if [[ ${#targets[@]} -eq 0 ]]; then
+        log_error "create_backup called with no targets."
+        return 1
+    fi
+
+    local timestamp archive_name archive_path
+    timestamp=$(date +%Y%m%d-%H%M%S)
+    archive_name="dsxbackup_${timestamp}.tar.gz"
+    archive_path="${DSX_BACKUP_ROOT}/${archive_name}"
+
+    log_info "Building archive: $archive_name"
+    log_info "Targets: ${targets[*]}"
+
+    if tar -czf "$archive_path" \
+        --ignore-failed-read \
+        -C / \
+        "${targets[@]#/}"; then
+        local size
+        size=$(du -sh "$archive_path" | cut -f1)
+        log_info "Backup done: $archive_path ($size)"
+    else
+        log_error "tar failed, backup is incomplete."
+        rm -f "$archive_path"
+        return 1
+    fi
+
+    return 0
+}
+
+readonly BANNER=$(cat <<'EOF'
+██████╗ ███████╗██╗  ██╗██████╗ ███████╗███████╗████████╗ ██████╗ ██████╗ ███████╗
+██╔══██╗██╔════╝╚██╗██╔╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██╔════╝
+██║  ██║███████╗ ╚███╔╝ ██████╔╝█████╗  ███████╗   ██║   ██║   ██║██████╔╝█████╗  
+██║  ██║╚════██║ ██╔██╗ ██╔══██╗██╔══╝  ╚════██║   ██║   ██║   ██║██╔══██╗██╔══╝  
+██████╔╝███████║██╔╝ ██╗██║  ██║███████╗███████║   ██║   ╚██████╔╝██║  ██║███████╗
+╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝
+EOF
+)
+
+main(){
+    check_dependencies || return 1
+
+    local USER_NAME
+    USER_NAME="${SUDO_USER:-$USER}"
+
+    local FZF_COLORS="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244"
+
+    local choice
+    choice=$(printf '%s\n' "Create backup" "Exit" | fzf \
+        --layout=reverse \
+        --prompt="DSXRestore > " \
+        --color="$FZF_COLORS" \
+        --header="$BANNER
+
+  user: $USER_NAME
+  destination: $DSX_BACKUP_ROOT
+  ─────────────────────────────────────────────
+  Enter to select, Ctrl-C to cancel." \
+        --preview="echo 'Scan .config and XDG user folders (Downloads, Pictures, Documents, etc), let you pick which ones to include, and pack them into a timestamped tar.gz under $DSX_BACKUP_ROOT.'" \
+        --preview-window=right:50%:wrap,border-left \
+        --border=rounded \
+        --pointer="▶" \
+        --info=inline)
+
+    case "$choice" in
+        "Create backup")
+            prepare_backup_destination || return 1
+            local -a targets=()
+            mapfile -t targets < <(select_backup_targets) || return 1
+            create_backup "${targets[@]}" || return 1
+            ;;
+        "Exit"|"")
+            log_info "Exiting DSXRestore."
+            return 0
+            ;;
+    esac
 }

@@ -28,6 +28,7 @@ check_dependencies() {
         fi
     done
 }
+
 backup_folder(){
     local -a candidates=()
     local -a found=()
@@ -70,21 +71,24 @@ backup_folder(){
     return 0
 }
 
-
 select_backup_targets(){
     local -a candidates=()
     mapfile -t candidates < <(backup_folder) || return 1
     candidates+=("Exit")
 
     local -a selected=()
-    mapfile -t selected < <(
+    # Capturamos a saída do fzf de forma segura sem quebrar o pipefail caso o usuário cancele (ESC)
+    if ! mapfile -t selected < <(
         printf '%s\n' "${candidates[@]}" |
         fzf --multi \
             --layout=reverse \
             --prompt="Select what to include in the backup > " \
             --header="TAB to mark multiple | ENTER to confirm | select Exit to cancel" \
             --preview='du -sh {} 2>/dev/null'
-    )
+    ); then
+        log_warn "Backup selection cancelled." >&2
+        return 1
+    fi
 
     if [[ ${#selected[@]} -eq 0 ]]; then
         log_warn "Nothing selected. Backup aborted." >&2
@@ -175,7 +179,8 @@ main(){
     local FZF_COLORS="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244"
 
     local choice
-    choice=$(printf '%s\n' "Create backup" "Exit" | fzf \
+    # Protegemos a chamada do fzf principal para evitar crash caso o usuário cancele com ESC
+    if ! choice=$(printf '%s\n' "Create backup" "Exit" | fzf \
         --layout=reverse \
         --prompt="DSXRestore > " \
         --color="$FZF_COLORS" \
@@ -189,7 +194,10 @@ main(){
         --preview-window=right:50%:wrap,border-left \
         --border=rounded \
         --pointer="▶" \
-        --info=inline)
+        --info=inline); then
+        log_info "Exiting DSXRestore."
+        return 0
+    fi
 
     case "$choice" in
         "Create backup")

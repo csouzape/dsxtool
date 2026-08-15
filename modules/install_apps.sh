@@ -75,7 +75,7 @@ register_category_apps "Productivity" \
     "Flameshot" "pkg|flameshot|org.flameshot.Flameshot|-" \
     "GIMP" "pkg|gimp|-|-;native|snap|-|-;flatpak|-|org.gimp.GIMP|-;aur|-|-|gimp-git" \
     "Inkscape" "pkg|inkscape|-|-;native|snap|-|-;flatpak|-|org.inkscape.Inkscape|-;aur|-|-|inkscape-bin" \
-    "Nextcloud" "flatpak|-|org.nextcloud.Nextcloud|-" \
+    "Nextcloud" "flatpak|-|com.nextcloud.desktopclient.nextcloud|-" \
     "KeePassXC" "pkg|keepassxc|-|-;flatpak|-|org.keepassxc.KeePassXC|-" \
 
 register_category_apps "Gaming" \

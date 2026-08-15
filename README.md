@@ -28,7 +28,7 @@
 | [dsxtool](https://github.com/csouzape/dsxtool) | Post-install automation with interactive fzf TUI |
 | [dsxswap](https://github.com/csouzape/dsxtool/blob/testing/modules/dsxswap.sh) | Configure your swapfile and swaptype |
 | [dsxsecurity](https://github.com/csouzape/blob/testing/modules/dsxsecurity.sh) | Configure security settings |
-
+| [dsxhealth](https://github.com/csouzape/dsxtool/blob/testing/modules/dsxhealth.sh)    | Easily maintain your system |  
 ---
 
 ## Overview

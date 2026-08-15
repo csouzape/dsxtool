@@ -32,6 +32,8 @@ register_category_apps "Browsers" \
     "Brave" "native|-|-|-;flatpak|-|com.brave.Browser|-;aur|-|-|brave-bin" \
     "Zen Browser" "native|-|-|-;flatpak|-|app.zen_browser.zen|-;aur|-|-|zen-browser-bin" \
     "Google Chrome" "native|-|-|-;flatpak|-|com.google.Chrome|-;aur|-|-|google-chrome-bin" \
+    "Vivaldi" "flatpak|-|com.vivaldi.Vivaldi|-" \
+    "Floorp" "native|deb|-|-;flatpak|-|one.ablaze.floorp|-" \
     "Helium Browser" "native|-|-|-" \
     "Opera" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.Opera|-|;aur|-|-|opera-bin" \
     "OperaGx" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.opera.opera-gx|-|;aur|-|-|opera-gx-bin" \
@@ -44,6 +46,8 @@ register_category_apps "Media" \
     "Rhythmbox" "pkg|rhythmbox|org.gnome.Rhythmbox3|-" \
     "OBS Studio" "pkg|obs-studio|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.obsproject.OBS|-;aur|-|-|obs-studio-bin" \
     "MPV" "pkg|mpv|-|-" \
+    "Audacity" "pkg|audacity|-|-;flatpak|-|org.audacityteam.Audacity|-" \
+    "qBittorrent" "pkg|qbittorrent|-|-;flatpak|-|org.qbittorrent.qBittorrent|-" \
     "Handbrake" "pkg|handbrake|fr.handbrake.ghb|-" \
     "kdenlive" "pkg|kdenlive|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.kde.kdenlive|-;aur|-|-|kdenlive" \
     "Synergy" "native|-|-|-" \
@@ -54,20 +58,25 @@ register_category_apps "Communication" \
     "Discord" "pkg|discord|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.discordapp.Discord|-;aur|-|-|discord-latest-bin" \
     "Telegram" "pkg|telegram-desktop|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;native|tarball|-|-;flatpak|-|org.telegram.desktop|-;aur|-|-|telegram-desktop-bin" \
     "Signal" "flatpak|-|org.signal.Signal|-" \
-   "Slack" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.slack.Slack|-;aur|-|-|slack-desktop" \
+    "Slack" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|com.slack.Slack|-;aur|-|-|slack-desktop" \
     "Zoom" "native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|us.zoom.Zoom|-;aur|-|-|zoom" \
-    "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin"
+    "Teams" "native|deb|-|-;native|rpm|-|-;native|snap|-|-|;flatpak|-|com.github.IsmaelMartinez.teams_for_linux|-;aur|-|-|teams-for-linux-bin" \
+    "Element" "flatpak|-|im.riot.Riot|-;pkg|element-desktop|-|-" \
 
 register_category_apps "Productivity" \
     "LibreOffice" "native|arch-fresh|-|-;native|arch-still|-|-;native|deb|-|-;native|rpm|-|-;native|snap|-|-;flatpak|-|org.libreoffice.LibreOffice|-" \
     "Obsidian" "flatpak|-|md.obsidian.Obsidian|-" \
     "Thunderbird" "pkg|thunderbird|-|-;native|snap|-|-;flatpak|-|org.mozilla.Thunderbird|-" \
     "Bitwarden" "flatpak|-|com.bitwarden.desktop|-" \
+    "FileZilla" "pkg|filezilla|-|-;flatpak|-|org.filezillaproject.Filezilla|-" \
+    "OnlyOffice" "flatpak|-|org.onlyoffice.desktopeditors|-" \
     "SyncThingy" "flatpak|-|com.github.zocker_160.SyncThingy|-" \
     "Syncthing Tray" "flatpak|-|io.github.martchus.syncthingtray|-" \
     "Flameshot" "pkg|flameshot|org.flameshot.Flameshot|-" \
     "GIMP" "pkg|gimp|-|-;native|snap|-|-;flatpak|-|org.gimp.GIMP|-;aur|-|-|gimp-git" \
     "Inkscape" "pkg|inkscape|-|-;native|snap|-|-;flatpak|-|org.inkscape.Inkscape|-;aur|-|-|inkscape-bin" \
+    "Nextcloud" "flatpak|-|com.nextcloud.desktopclient.nextcloud|-" \
+    "KeePassXC" "pkg|keepassxc|-|-;flatpak|-|org.keepassxc.KeePassXC|-" \
 
 register_category_apps "Gaming" \
     "Steam" "pkg|steam|com.valvesoftware.Steam|-" \
@@ -81,6 +90,8 @@ register_category_apps "Gaming" \
 register_category_apps "System Tools" \
     "htop" "pkg|htop|-|-" \
     "btop" "pkg|btop|-|-" \
+    "GParted" "pkg|gparted|-|-;flatpak|-|org.gnome.GParted|-" \
+    "Transmission" "pkg|transmission-gtk|-|-;flatpak|-|com.transmissionbt.Transmission|-" \
     "OpenRGB" "native|deb|-|-;native|rpm|-|-;flatpak|-|org.openrgb.OpenRGB|-" \
     "ncdu" "pkg|ncdu|-|-" \
     "tree" "pkg|tree|-|-" \
@@ -146,6 +157,7 @@ _target_label() {
                 "Google Chrome") printf 'Official (Google Chrome)' ;;
                 "Brave") printf 'Official (Brave)' ;;
                 "Zen Browser") printf 'Official (Zen Browser)' ;;
+                "Floorp") printf 'Official (.deb)' ;;
                 "Opera")
                     case "$pkg_name" in
                         deb) printf 'Official (.deb)' ;;
@@ -1089,6 +1101,41 @@ _install_native_app() {
                     ;;
                 *)
                     die "Unsupported distro for Zen Browser: $DISTRO"
+                    ;;
+            esac
+            ;;
+        "Floorp")
+            case "$DISTRO" in
+                arch)
+                    pkg_install floorp \
+                        || die "Failed to install Floorp via Arch repositories."
+                    ;;
+                debian)
+                    log_info "Adding Floorp's official APT repository..."
+                    if ! command -v gpg >/dev/null 2>&1; then
+                        pkg_install gnupg || die "Failed to install gnupg for Floorp signing key."
+                    fi
+
+                    sudo install -d -m 0755 /etc/apt/keyrings
+                    curl -fsSL https://ppa.floorp.io/KEY.gpg \
+                        | sudo gpg --dearmor --yes -o /etc/apt/keyrings/floorp.gpg \
+                        || die "Failed to import Floorp's GPG key."
+
+                    echo "deb [signed-by=/etc/apt/keyrings/floorp.gpg] https://ppa.floorp.io $(. /etc/os-release; echo "$VERSION_CODENAME") main" \
+                        | sudo tee /etc/apt/sources.list.d/floorp.list > /dev/null
+
+                    sudo apt-get update \
+                        || die "Failed to refresh APT after adding Floorp's repository."
+                    sudo apt-get install -y floorp \
+                        || die "Failed to install Floorp via APT."
+                    ;;
+                fedora)
+                    log_info "Installing Floorp from the Fedora package repositories..."
+                    pkg_install floorp \
+                        || die "Failed to install Floorp via Fedora repositories."
+                    ;;
+                *)
+                    die "Unsupported distro for Floorp: $DISTRO"
                     ;;
             esac
             ;;

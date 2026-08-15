@@ -137,6 +137,7 @@ setup_printer_module()          { module_runner "Setup Printer" "source \"$BASE_
 dsxswap_module()                { module_runner "DSXSWAP" "source \"$BASE_DIR/modules/dsxswap.sh\"; main" || log_warn "Swap configuration finished with errors."; }
 dsxsecurity_module()            { module_runner "DSXSecurity" "source \"$BASE_DIR/modules/dsxsecurity.sh\"; main" || log_warn "Security setup finished with errors."; }
 dsxhealth_module()              { module_runner "DSXHealth" "source \"$BASE_DIR/modules/dsxhealth.sh\"; system_maintenance" || log_warn "Maintenance tasks finished with errors."; }
+dsxrestore_module()             { module_runner "DSXRestore" "source \"$BASE_DIR/modules/dsxrestore.sh\"; main" || log_warn "Restore tasks finished with errors."; }
 setup_drivers_module()          { module_runner "Setup Drivers" "source \"$BASE_DIR/modules/drivers.sh\"; setup_drivers" || log_warn "Driver setup finished with errors."; }
 sober_optimization_module()     { module_runner "Sober Optimization" "source \"$BASE_DIR/modules/sober_optimization.sh\"; install" || log_warn "Sober optimization finished with errors."; }
 setup_fastfetch_module()        { module_runner "Setup Fastfetch" "source \"$BASE_DIR/modules/fastfetch.sh\"; setup_fastfetch" || log_warn "Fastfetch setup finished with errors."; }
@@ -170,22 +171,23 @@ build_menu() {
         "12 - DSXSwap" \
         "13 - DSXSecurity" \
         "14 - DSXHealth" \
-        "15 - Sober Optimization" \
-        "16 - Setup Drivers" \
-        "17 - Setup Fastfetch" \
-        "18 - Setup Multimedia"
+        "15 - DSXRestore" \
+        "16 - Sober Optimization" \
+        "17 - Setup Drivers" \
+        "18 - Setup Fastfetch" \
+        "19 - Setup Multimedia"
 
     if [[ "$DISTRO" == "fedora" ]]; then
-        echo "19 - Setup RPM Fusion"
+        echo "20 - Setup RPM Fusion"
     fi
 
     if [[ "$DISTRO" == "arch" ]]; then
-        echo "20 - Setup yay (AUR helper)"
-        echo "21 - Setup paru (AUR helper)"
+        echo "21 - Setup yay (AUR helper)"
+        echo "22 - Setup paru (AUR helper)"
     fi
 
     if [[ "${DISTRO_RAW:-}" == "ubuntu" ]]; then
-        echo "22 - Setup Ubuntu Debullshit"
+        echo "23 - Setup Ubuntu Debullshit"
     fi
 
     echo "0 - Exit"
@@ -256,6 +258,7 @@ dsxtool_main() {
             "DSXSwap")                     clear; dsxswap_module ;;
             "DSXSecurity")                 clear; dsxsecurity_module ;;
             "DSXHealth")                  clear; dsxhealth_module ;;
+            "DSXRestore")                  clear; dsxrestore_module ;;
             "Setup Bluetooth")             clear; bluetooth_module ;;
             "Setup Printer")               clear; setup_printer_module ;;
             "Setup yay (AUR helper)")      clear; install_yay_module ;;

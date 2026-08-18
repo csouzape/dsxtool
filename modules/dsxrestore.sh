@@ -10,6 +10,7 @@ set -euo pipefail
 # - restore functionality for installed applications and their configurations.
 
 readonly DSX_BACKUP_ROOT="${DSX_BACKUP_ROOT:-$HOME/.local/share/dsxtool/backups}"
+readonly DSX_BACKUP_MIN_SPACE_KB="${DSX_BACKUP_MIN_SPACE_KB:-512000}"
 
 check_dependencies() {
     local dependencies=("git" "unzip" "fzf" "tar")
@@ -55,6 +56,12 @@ backup_folder(){
     local seen=()
     for folder in "${candidates[@]}"; do
         [[ -d "$folder" ]] || continue
+        # Only accept absolute paths: create_backup relies on this invariant
+        # when stripping the leading "/" for tar's -C / usage.
+        if [[ "$folder" != /* ]]; then
+            log_warn "Skipping non-absolute candidate: $folder" >&2
+            continue
+        fi
         if [[ ! " ${seen[*]} " =~ " ${folder} " ]]; then
             seen+=("$folder")
             found+=("$folder")
@@ -77,7 +84,7 @@ select_backup_targets(){
     candidates+=("Exit")
 
     local -a selected=()
-    # Capturamos a saída do fzf de forma segura sem quebrar o pipefail caso o usuário cancele (ESC)
+    # Capture fzf output safely without breaking pipefail if the user cancels (ESC)
     if ! mapfile -t selected < <(
         printf '%s\n' "${candidates[@]}" |
         fzf --multi \
@@ -118,11 +125,10 @@ prepare_backup_destination(){
         return 1
     fi
 
-    local min_space_kb=512000
     local available_kb
     available_kb=$(df --output=avail "$DSX_BACKUP_ROOT" | tail -n1 | tr -d ' ')
-    if (( available_kb < min_space_kb )); then
-        log_error "Not enough space on $DSX_BACKUP_ROOT (${available_kb}KB available)"
+    if (( available_kb < DSX_BACKUP_MIN_SPACE_KB )); then
+        log_error "Not enough space on $DSX_BACKUP_ROOT (${available_kb}KB available, ${DSX_BACKUP_MIN_SPACE_KB}KB required)"
         return 1
     fi
 
@@ -136,18 +142,39 @@ create_backup(){
         return 1
     fi
 
+    # Re-validate targets right before archiving: they must exist, be absolute,
+    # and still be present (selection and creation happen at different times).
+    local -a valid_targets=()
+    local target
+    for target in "${targets[@]}"; do
+        if [[ "$target" != /* ]]; then
+            log_warn "Skipping non-absolute target: $target"
+            continue
+        fi
+        if [[ ! -e "$target" ]]; then
+            log_warn "Skipping missing target (may have been removed): $target"
+            continue
+        fi
+        valid_targets+=("$target")
+    done
+
+    if [[ ${#valid_targets[@]} -eq 0 ]]; then
+        log_error "No valid targets remain; aborting backup."
+        return 1
+    fi
+
     local timestamp archive_name archive_path
     timestamp=$(date +%Y%m%d-%H%M%S)
     archive_name="dsxbackup_${timestamp}.tar.gz"
     archive_path="${DSX_BACKUP_ROOT}/${archive_name}"
 
     log_info "Building archive: $archive_name"
-    log_info "Targets: ${targets[*]}"
+    log_info "Targets: ${valid_targets[*]}"
 
     if tar -czf "$archive_path" \
         --ignore-failed-read \
         -C / \
-        "${targets[@]#/}"; then
+        "${valid_targets[@]#/}"; then
         local size
         size=$(du -sh "$archive_path" | cut -f1)
         log_info "Backup done: $archive_path ($size)"
@@ -160,15 +187,20 @@ create_backup(){
     return 0
 }
 
-readonly BANNER=$(cat <<'EOF'
+# Guarded so this module can be safely sourced more than once
+# (e.g. when the parent menu reloads modules) without a
+# "readonly variable" error killing the whole tool.
+if [[ -z "${BANNER:-}" ]]; then
+    readonly BANNER=$(cat <<'EOF'
 ██████╗ ███████╗██╗  ██╗██████╗ ███████╗███████╗████████╗ ██████╗ ██████╗ ███████╗
 ██╔══██╗██╔════╝╚██╗██╔╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██╔════╝
-██║  ██║███████╗ ╚███╔╝ ██████╔╝█████╗  ███████╗   ██║   ██║   ██║██████╔╝█████╗  
-██║  ██║╚════██║ ██╔██╗ ██╔══██╗██╔══╝  ╚════██║   ██║   ██║   ██║██╔══██╗██╔══╝  
+██║  ██║███████╗ ╚███╔╝ ██████╔╝█████╗  ███████╗   ██║   ██║   ██║██████╔╝█████╗
+██║  ██║╚════██║ ██╔██╗ ██╔══██╗██╔══╝  ╚════██║   ██║   ██║   ██║██╔══██╗██╔══╝
 ██████╔╝███████║██╔╝ ██╗██║  ██║███████╗███████║   ██║   ╚██████╔╝██║  ██║███████╗
 ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝
 EOF
 )
+fi
 
 main(){
     check_dependencies || return 1
@@ -179,7 +211,7 @@ main(){
     local FZF_COLORS="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244"
 
     local choice
-    # Protegemos a chamada do fzf principal para evitar crash caso o usuário cancele com ESC
+    # Guard the main fzf call to avoid crashing if the user cancels with ESC
     if ! choice=$(printf '%s\n' "Create backup" "Exit" | fzf \
         --layout=reverse \
         --prompt="DSXRestore > " \

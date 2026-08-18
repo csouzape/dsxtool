@@ -170,11 +170,19 @@ create_backup(){
     archive_name="dsxbackup_${timestamp}.tar.gz"
     archive_path="${DSX_BACKUP_ROOT}/${archive_name}"
 
+    local estimated_size
+    estimated_size=$(du -shc "${valid_targets[@]}" 2>/dev/null | tail -n1 | cut -f1)
+
     log_info "Building archive: $archive_name"
     log_info "Targets: ${valid_targets[*]}"
+    log_info "Estimated uncompressed size: ${estimated_size:-unknown} (compression may take a while, please wait)"
 
+    # --checkpoint prints a dot-style progress marker every N blocks so a large
+    # or slow (e.g. gzip on weak CPUs) archive doesn't look like it's hung.
     if tar -czf "$archive_path" \
         --ignore-failed-read \
+        --checkpoint=200 \
+        --checkpoint-action=echo="Archiving... %u files" \
         -C / \
         "${valid_targets[@]#/}"; then
         local size

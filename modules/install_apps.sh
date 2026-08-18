@@ -1842,6 +1842,7 @@ menu_terminals() {
 }
 
 setup_apps() {
+    clear
     while true; do
         local choice
         choice=$(printf '%s\n' \

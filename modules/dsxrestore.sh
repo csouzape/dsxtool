@@ -38,10 +38,12 @@ backup_folder(){
 
     if command -v xdg-user-dir &> /dev/null; then
         local xdg_keys=("DESKTOP" "DOWNLOAD" "DOCUMENTS" "PICTURES" "MUSIC" "VIDEOS" "PUBLICSHARE" "TEMPLATES")
-        local key dir
+        local key dir dir_normalized home_normalized
+        home_normalized="${HOME%/}"
         for key in "${xdg_keys[@]}"; do
             dir=$(xdg-user-dir "$key" 2>/dev/null)
-            [[ -n "$dir" && "$dir" != "$HOME" ]] && candidates+=("$dir")
+            dir_normalized="${dir%/}"
+            [[ -n "$dir_normalized" && "$dir_normalized" != "$home_normalized" ]] && candidates+=("$dir_normalized")
         done
     else
         log_warn "xdg-user-dir not found, falling back to common EN/PT-BR paths" >&2

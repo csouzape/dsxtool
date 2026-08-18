@@ -177,14 +177,22 @@ create_backup(){
     log_info "Targets: ${valid_targets[*]}"
     log_info "Estimated uncompressed size: ${estimated_size:-unknown} (compression may take a while, please wait)"
 
+    # GNU tar accepts multiple -C options: each one changes directory only for
+    # the arguments that follow it. Using a per-target "-C <parent> <basename>"
+    # pair means the archive stores just the selected folder (e.g. "Imagens/...")
+    # instead of the full absolute path ("home/carlos/Imagens/...").
+    local -a tar_args=()
+    for target in "${valid_targets[@]}"; do
+        tar_args+=("-C" "$(dirname -- "$target")" "$(basename -- "$target")")
+    done
+
     # --checkpoint prints a dot-style progress marker every N blocks so a large
     # or slow (e.g. gzip on weak CPUs) archive doesn't look like it's hung.
     if tar -czf "$archive_path" \
         --ignore-failed-read \
         --checkpoint=200 \
         --checkpoint-action=echo="Archiving... %u files" \
-        -C / \
-        "${valid_targets[@]#/}"; then
+        "${tar_args[@]}"; then
         local size
         size=$(du -sh "$archive_path" | cut -f1)
         log_info "Backup done: $archive_path ($size)"

@@ -13,7 +13,7 @@ readonly DSX_BACKUP_ROOT="${DSX_BACKUP_ROOT:-$HOME/.local/share/dsxtool/backups}
 readonly DSX_BACKUP_MIN_SPACE_KB="${DSX_BACKUP_MIN_SPACE_KB:-512000}"
 
 check_dependencies() {
-    local dependencies=("git" "unzip" "fzf" "tar")
+    local dependencies=("git" "unzip" "fzf" "tar" "pv")
     for dep in "${dependencies[@]}"; do
         log_info "Checking dependency: $dep"
         if ! command -v "$dep" &> /dev/null; then
@@ -170,12 +170,13 @@ create_backup(){
     archive_name="dsxbackup_${timestamp}.tar.gz"
     archive_path="${DSX_BACKUP_ROOT}/${archive_name}"
 
-    local estimated_size
-    estimated_size=$(du -shc "${valid_targets[@]}" 2>/dev/null | tail -n1 | cut -f1)
+    local total_bytes estimated_size
+    total_bytes=$(du -sbc "${valid_targets[@]}" 2>/dev/null | tail -n1 | cut -f1)
+    estimated_size=$(numfmt --to=iec --suffix=B "${total_bytes:-0}" 2>/dev/null || echo "unknown")
 
     log_info "Building archive: $archive_name"
     log_info "Targets: ${valid_targets[*]}"
-    log_info "Estimated uncompressed size: ${estimated_size:-unknown} (compression may take a while, please wait)"
+    log_info "Estimated size: ${estimated_size} (compression may take a while, please wait)"
 
     # GNU tar accepts multiple -C options: each one changes directory only for
     # the arguments that follow it. Using a per-target "-C <parent> <basename>"
@@ -186,13 +187,16 @@ create_backup(){
         tar_args+=("-C" "$(dirname -- "$target")" "$(basename -- "$target")")
     done
 
-    # --checkpoint prints a dot-style progress marker every N blocks so a large
-    # or slow (e.g. gzip on weak CPUs) archive doesn't look like it's hung.
-    if tar -czf "$archive_path" \
+    # tar just streams the raw archive (fast); pv measures the raw byte volume
+    # passing through and shows a real 0-100% progress bar with ETA/speed;
+    # gzip does the actual compression at the end of the pipe. set -o pipefail
+    # (from set -euo pipefail at the top of the script) ensures a failure in
+    # any stage of this pipe still trips the "if" below.
+    if tar -cf - \
         --ignore-failed-read \
-        --checkpoint=200 \
-        --checkpoint-action=echo="Archiving... %u files" \
-        "${tar_args[@]}"; then
+        "${tar_args[@]}" \
+        | pv -f -s "${total_bytes:-0}" -N "Archiving" \
+        | gzip > "$archive_path"; then
         local size
         size=$(du -sh "$archive_path" | cut -f1)
         log_info "Backup done: $archive_path ($size)"

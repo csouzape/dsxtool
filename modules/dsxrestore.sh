@@ -138,6 +138,7 @@ prepare_backup_destination(){
 }
 
 create_backup(){
+    clear
     local -a targets=("$@")
     if [[ ${#targets[@]} -eq 0 ]]; then
         log_error "create_backup called with no targets."

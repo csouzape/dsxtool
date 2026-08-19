@@ -236,6 +236,8 @@ get_flatpak_apps(){
 }
 
 
+
+
 get_base_group_packages(){
     pacman -Qqg base base-devel 2>/dev/null
 }
@@ -288,6 +290,86 @@ filter_user_packages(){
         [[ $is_system -eq 0 ]] && printf '%s\n' "$pkg"
     done
 }
+
+create_app_snapshot(){
+    prepare_backup_destination || return 1
+
+    local timestamp snapshot_dir
+    timestamp=$(date +%Y%m%d-%H%M%S)
+    snapshot_dir="${DSX_BACKUP_ROOT}/app-snapshot-${timestamp}"
+
+    mkdir -p "$snapshot_dir" || { log_error "Couldn't create $snapshot_dir"; return 1; }
+
+    log_info "Capturing installed package lists..."
+
+    local pacman_count=0 foreign_count=0 flatpak_count=0
+
+    get_pacman_explicit | filter_user_packages > "${snapshot_dir}/pacman-explicit.txt"
+    pacman_count=$(wc -l < "${snapshot_dir}/pacman-explicit.txt")
+    log_info "User-installed packages (filtered): $pacman_count"
+
+    get_pacman_foreign > "${snapshot_dir}/pacman-foreign.txt"
+    foreign_count=$(wc -l < "${snapshot_dir}/pacman-foreign.txt")
+    log_info "AUR/foreign packages: $foreign_count"
+
+    if get_flatpak_apps > "${snapshot_dir}/flatpak-apps.txt" && [[ -s "${snapshot_dir}/flatpak-apps.txt" ]]; then
+        flatpak_count=$(wc -l < "${snapshot_dir}/flatpak-apps.txt")
+        log_info "Flatpak apps: $flatpak_count"
+    else
+        rm -f "${snapshot_dir}/flatpak-apps.txt"
+        log_info "Flatpak not found or no apps installed, skipping."
+    fi
+
+    [[ -f /etc/pacman.conf ]] && cp /etc/pacman.conf "${snapshot_dir}/pacman.conf"
+
+    {
+        echo "Snapshot taken: $(date)"
+        echo "Host: $(hostname)"
+        echo "Official packages: $pacman_count"
+        echo "AUR/foreign packages: $foreign_count"
+        echo "Flatpak apps: $flatpak_count"
+    } > "${snapshot_dir}/snapshot-info.txt"
+
+    local archive_name="dsxappsnapshot_${timestamp}.tar.gz"
+    local archive_path="${DSX_BACKUP_ROOT}/${archive_name}"
+
+    if tar -czf "$archive_path" -C "$DSX_BACKUP_ROOT" "app-snapshot-${timestamp}"; then
+        rm -rf "$snapshot_dir"
+        local size
+        size=$(du -sh "$archive_path" | cut -f1)
+        log_info "App snapshot done: $archive_path ($size)"
+    else
+        log_error "Failed to archive app snapshot."
+        rm -rf "$snapshot_dir"
+        return 1
+    fi
+
+    return 0
+}
+
+
+find_app_snapshots(){
+    local -a search_roots=("/")
+    local -a prune_paths=(
+        "/proc" "/sys" "/dev" "/run" "/tmp"
+        "/var/tmp" "/var/cache" "/var/lib/docker"
+        "/snap" "/nix"
+    )
+
+    local -a prune_args=()
+    local p
+    for p in "${prune_paths[@]}"; do
+        prune_args+=(-path "$p" -o)
+    done
+    # Remove the trailing "-o"
+    unset 'prune_args[${#prune_args[@]}-1]'
+
+    find "${search_roots[@]}" \
+        \( "${prune_args[@]}" \) -prune -o \
+        -type f -name 'dsxappsnapshot_*.tar.gz' -print 2>/dev/null \
+        | sort -r
+}
+
 
 create_app_snapshot(){
     prepare_backup_destination || return 1
@@ -407,6 +489,108 @@ restore_app_snapshot(){
 }
 
 
+# ── App snapshot: cleanup ────────────────────────────────────────────
+
+clean_app_snapshots(){
+    local FZF_COLORS="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244"
+
+    log_info "Searching the system for app snapshots (this may take a moment)..."
+    local -a archives=()
+    mapfile -t archives < <(find_app_snapshots)
+
+    if [[ ${#archives[@]} -eq 0 ]]; then
+        log_warn "No app snapshots found on the system."
+        return 0
+    fi
+
+    local mode
+    if ! mode=$(printf '%s\n' "Select manually" "Keep only N most recent" "Delete all" "Cancel" | fzf \
+        --layout=reverse \
+        --prompt="Clean app snapshots > " \
+        --color="$FZF_COLORS" \
+        --header="Found ${#archives[@]} snapshot(s) | Enter to select, Ctrl-C to cancel" \
+        --border=rounded \
+        --pointer="▶" \
+        --info=inline); then
+        log_info "Cleanup cancelled."
+        return 0
+    fi
+
+    local -a to_delete=()
+    case "$mode" in
+        "Select manually")
+            if ! mapfile -t to_delete < <(
+                printf '%s\n' "${archives[@]}" | fzf --multi \
+                  --layout=reverse \
+                  --prompt="Select snapshots to delete > " \
+                  --color="$FZF_COLORS" \
+                  --header="TAB to mark multiple | ENTER to confirm | ESC/Ctrl-C to cancel" \
+                  --preview='tar -xzOf {} --wildcards "*/snapshot-info.txt" 2>/dev/null; echo; echo "Size: $(du -sh {} 2>/dev/null | cut -f1)"' \
+                  --preview-window=right:50%:wrap,border-left \
+                  --border=rounded \
+                  --pointer="▶" \
+                  --marker="✔" \
+                  --info=inline
+            ); then
+                log_info "Cleanup cancelled."
+                return 0
+            fi
+            ;;
+        "Keep only N most recent")
+            local keep
+            read -rp "How many recent snapshots to keep? " keep < /dev/tty
+            if [[ ! "$keep" =~ ^[0-9]+$ ]]; then
+                log_error "Invalid number: $keep"
+                return 1
+            fi
+            # find_app_snapshots already returns newest-first (sort -r)
+            if (( keep >= ${#archives[@]} )); then
+                log_info "Nothing to remove ($keep >= ${#archives[@]} snapshots found)."
+                return 0
+            fi
+            to_delete=("${archives[@]:$keep}")
+            ;;
+        "Delete all")
+            to_delete=("${archives[@]}")
+            ;;
+        "Cancel"|"")
+            log_info "Cleanup cancelled."
+            return 0
+            ;;
+    esac
+
+    if [[ ${#to_delete[@]} -eq 0 ]]; then
+        log_warn "Nothing selected. Cleanup aborted."
+        return 0
+    fi
+
+    log_warn "The following snapshot(s) will be permanently deleted:"
+    printf '  %s\n' "${to_delete[@]}"
+
+    local confirm
+    read -rp "Confirm deletion? [y/N] " confirm < /dev/tty
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        log_info "Cleanup cancelled."
+        return 0
+    fi
+
+    local archive freed_kb=0 size_kb
+    for archive in "${to_delete[@]}"; do
+        if [[ -f "$archive" ]]; then
+            size_kb=$(du -k "$archive" 2>/dev/null | cut -f1)
+            if rm -f "$archive"; then
+                log_info "Deleted: $archive"
+                freed_kb=$((freed_kb + ${size_kb:-0}))
+            else
+                log_warn "Failed to delete: $archive"
+            fi
+        fi
+    done
+
+    log_info "Cleanup complete. Freed: $(numfmt --to=iec --suffix=B $((freed_kb * 1024)) 2>/dev/null || echo "${freed_kb}KB")"
+    return 0
+}
+
 if [[ -z "${BANNER:-}" ]]; then
   readonly BANNER=$(
     cat <<'EOF'
@@ -428,7 +612,7 @@ main(){
     USER_NAME="${SUDO_USER:-$USER}"
     local FZF_COLORS="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244"
     local choice
-    if ! choice=$(printf '%s\n' "Create backup" "App snapshot" "Restore app snapshot" "Exit" | fzf \
+    if ! choice=$(printf '%s\n' "Create backup" "App snapshot" "Restore app snapshot"  "Clean app snapshots" "Exit" | fzf \
         --layout=reverse \
         --prompt="DSXRestore > " \
         --color="$FZF_COLORS" \
@@ -448,6 +632,9 @@ main(){
                     ;;
                 "Restore app snapshot")
                     echo "Pick a previously created app-snapshot archive and reinstall its packages: official via pacman, AUR via yay/paru (if installed), and Flatpak apps via flathub."
+                    ;;
+                "Clean app snapshots")
+                    echo "Remove old app-snapshot archives: pick manually, keep only the N most recent, or wipe them all. Asks for confirmation before deleting."
                     ;;
                 "Exit")
                     echo "Quit DSXRestore."
@@ -473,32 +660,36 @@ main(){
             create_app_snapshot || return 1
             ;;
         "Restore app snapshot")
+            log_info "Searching the system for app snapshots (this may take a moment)..."
             local -a archives=()
-            mapfile -t archives < <(find "$DSX_BACKUP_ROOT" -maxdepth 1 -name 'dsxappsnapshot_*.tar.gz' 2>/dev/null | sort -r)
+            mapfile -t archives < <(find_app_snapshots)
 
-            if [[ ${#archives[@]} -eq 0 ]]; then
-                log_warn "No app snapshots found in $DSX_BACKUP_ROOT."
-                return 0
-            fi
+             if [[ ${#archives[@]} -eq 0 ]]; then
+                    log_warn "No app snapshots found on the system."
+                    return 0
+             fi
 
-            local selected_archive
+             local selected_archive
             if ! selected_archive=$(printf '%s\n' "${archives[@]}" | fzf \
-                --layout=reverse \
-                --prompt="Select snapshot to restore > " \
-                --color="$FZF_COLORS" \
-                --header="Enter to select, Ctrl-C to cancel" \
-                --preview='tar -xzOf {} --wildcards "*/snapshot-info.txt" 2>/dev/null' \
-                --preview-window=right:50%:wrap,border-left \
-                --border=rounded \
-                --pointer="▶" \
-                --info=inline); then
-                log_info "Restore cancelled."
-                return 0
-            fi
+              --layout=reverse \
+              --prompt="Select snapshot to restore > " \
+              --color="$FZF_COLORS" \
+              --header="Enter to select, Ctrl-C to cancel" \
+              --preview='tar -xzOf {} --wildcards "*/snapshot-info.txt" 2>/dev/null' \
+              --preview-window=right:50%:wrap,border-left \
+              --border=rounded \
+              --pointer="▶" \
+              --info=inline); then
+                  log_info "Restore cancelled."
+                  return 0
+           fi
 
             [[ -z "$selected_archive" ]] && { log_info "Restore cancelled."; return 0; }
 
             restore_app_snapshot "$selected_archive" || return 1
+            ;;
+        "Clean app snapshots")
+            clean_app_snapshots || return 1
             ;;
         "Exit"|"")
             log_info "Exiting DSXRestore."

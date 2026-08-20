@@ -339,7 +339,7 @@ find_app_snapshots(){
     for p in "${prune_paths[@]}"; do
         prune_args+=(-path "$p" -o)
     done
-    # Remove the trailing "-o"
+
     unset 'prune_args[${#prune_args[@]}-1]'
 
     find "${search_roots[@]}" \

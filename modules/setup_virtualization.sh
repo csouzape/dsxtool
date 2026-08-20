@@ -171,6 +171,7 @@ _setup_virtualbox() {
 
 
 setup_virtualization() {
+    clear
     local choice
     choice=$(printf '%s\n' \
         "  virt-manager (KVM/QEMU) — recommended" \

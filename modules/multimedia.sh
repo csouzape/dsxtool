@@ -67,6 +67,8 @@ install_multimedia_fedora(){
 
 
 install_multimedia(){
+    clear
+
     case "$DISTRO" in
         arch)   install_multimedia_arch ;;
         debian) install_multimedia_debian ;;

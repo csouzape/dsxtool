@@ -58,8 +58,7 @@ backup_folder() {
   local seen=()
   for folder in "${candidates[@]}"; do
     [[ -d "$folder" ]] || continue
-    # Only accept absolute paths: create_backup relies on this invariant
-    # when stripping the leading "/" for tar's -C / usage.
+
     if [[ "$folder" != /* ]]; then
       log_warn "Skipping non-absolute candidate: $folder" >&2
       continue
@@ -86,7 +85,6 @@ select_backup_targets() {
   candidates+=("Exit")
 
   local -a selected=()
-  # Capture fzf output safely without breaking pipefail if the user cancels (ESC)
   if ! mapfile -t selected < <(
     printf '%s\n' "${candidates[@]}" |
       fzf --multi \
@@ -148,8 +146,6 @@ create_backup() {
     return 1
   fi
 
-  # Re-validate targets right before archiving: they must exist, be absolute,
-  # and still be present (selection and creation happen at different times).
   local -a valid_targets=()
   local target
   for target in "${targets[@]}"; do
@@ -182,20 +178,11 @@ create_backup() {
   log_info "Targets: ${valid_targets[*]}"
   log_info "Estimated size: ${estimated_size} (compression may take a while, please wait)"
 
-  # GNU tar accepts multiple -C options: each one changes directory only for
-  # the arguments that follow it. Using a per-target "-C <parent> <basename>"
-  # pair means the archive stores just the selected folder (e.g. "Imagens/...")
-  # instead of the full absolute path ("home/carlos/Imagens/...").
   local -a tar_args=()
   for target in "${valid_targets[@]}"; do
     tar_args+=("-C" "$(dirname -- "$target")" "$(basename -- "$target")")
   done
 
-  # tar just streams the raw archive (fast); pv measures the raw byte volume
-  # passing through and shows a real 0-100% progress bar with ETA/speed;
-  # gzip does the actual compression at the end of the pipe. set -o pipefail
-  # (from set -euo pipefail at the top of the script) ensures a failure in
-  # any stage of this pipe still trips the "if" below.
   if tar -cf - \
     --ignore-failed-read \
     "${tar_args[@]}" |
@@ -215,28 +202,19 @@ create_backup() {
 
 # ── App snapshot: package lists ──────────────────────────────────────
 
-# Explicitly installed packages from official repos (excludes deps pulled in
-# automatically, so the list stays clean and reproducible).
 get_pacman_explicit(){
     pacman -Qqen 2>/dev/null
 }
 
-# Foreign packages (AUR or manually built) — these aren't in official repos,
-# so restoring needs an AUR helper (yay/paru), not plain pacman.
 get_pacman_foreign(){
     pacman -Qqem 2>/dev/null
 }
 
-# Flatpak apps, if flatpak is installed. Silent no-op otherwise so the
-# snapshot doesn't fail on machines without it.
 get_flatpak_apps(){
     if command -v flatpak &> /dev/null; then
         flatpak list --app --columns=application 2>/dev/null
     fi
 }
-
-
-
 
 get_base_group_packages(){
     pacman -Qqg base base-devel 2>/dev/null
@@ -252,7 +230,7 @@ filter_user_packages(){
         mapfile -t patterns < <(grep -vE '^\s*(#|$)' "$exclude_file")
     else
         patterns=(
-            '^linux-.*'              # kernel + variants
+            '^linux-.*'
             '.*-firmware$'
             '^mesa'
             '^lib32-.*'
@@ -260,7 +238,7 @@ filter_user_packages(){
             '^opencl-.*'
             '^(intel|amd|nvidia)-.*'
             '^xf86-(video|input)-.*'
-            '^cachyos-.*'            # distro-specific meta/tools
+            '^cachyos-.*'
             '^systemd.*'
             '^networkmanager.*'
             '^pipewire.*'
@@ -369,7 +347,6 @@ find_app_snapshots(){
         -type f -name 'dsxappsnapshot_*.tar.gz' -print 2>/dev/null \
         | sort -r
 }
-
 
 create_app_snapshot(){
     prepare_backup_destination || return 1
@@ -488,7 +465,6 @@ restore_app_snapshot(){
     return 0
 }
 
-
 # ── App snapshot: cleanup ────────────────────────────────────────────
 
 clean_app_snapshots(){
@@ -543,7 +519,7 @@ clean_app_snapshots(){
                 log_error "Invalid number: $keep"
                 return 1
             fi
-            # find_app_snapshots already returns newest-first (sort -r)
+
             if (( keep >= ${#archives[@]} )); then
                 log_info "Nothing to remove ($keep >= ${#archives[@]} snapshots found)."
                 return 0

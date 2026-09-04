@@ -1045,9 +1045,11 @@ _install_native_app() {
                         "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
                         /tmp/google-chrome.deb \
                         || die "Failed to download Google Chrome."
-                    sudo dpkg -i /tmp/google-chrome.deb 2>/dev/null || true
+                    sudo dpkg -i /tmp/google-chrome.deb \
+                        || log_warn "Google Chrome has unmet dependencies; attempting repair."
                     sudo apt-get install -f -y \
                         || die "Failed to fix Google Chrome dependencies."
+                    pkg_exists google-chrome-stable || die "Google Chrome package is not installed."
                     rm -f /tmp/google-chrome.deb
                     ;;
                 fedora)
@@ -1377,9 +1379,11 @@ EOF
                 "https://discord.com/api/download?platform=linux&format=deb" \
                 /tmp/discord.deb \
                 || die "Failed to download Discord."
-            sudo dpkg -i /tmp/discord.deb 2>/dev/null || true
+            sudo dpkg -i /tmp/discord.deb \
+                || log_warn "Discord has unmet dependencies; attempting repair."
             sudo apt-get install -f -y \
                 || die "Failed to fix Discord dependencies."
+            pkg_exists discord || die "Discord package is not installed."
             rm -f /tmp/discord.deb
             ;;
                 rpm)
@@ -1616,7 +1620,8 @@ EOF
                         "https://codeberg.org/OpenRGB/OpenRGB/releases/download/release_candidate_1.0rc3/openrgb_1.0rc3_amd64_trixie_6fbcf62.deb" \
                         /tmp/openrgb.deb \
                         || die "Failed to download OpenRGB."
-                    sudo dpkg -i /tmp/openrgb.deb 2>/dev/null || true
+                    sudo dpkg -i /tmp/openrgb.deb \
+                        || log_warn "OpenRGB has unmet dependencies; attempting repair."
                     sudo apt-get install -f -y \
                         || die "Failed to fix OpenRGB dependencies."
                     rm -f /tmp/openrgb.deb
@@ -1685,7 +1690,8 @@ EOF
                     log_info "YouTube Music Desktop DEB URL: $deb_url"
                     wget --progress=bar:force -O /tmp/ytmdesktop.deb "$deb_url" \
                         || die "Failed to download YouTube Music Desktop."
-                    sudo dpkg -i /tmp/ytmdesktop.deb 2>/dev/null || true
+                    sudo dpkg -i /tmp/ytmdesktop.deb \
+                        || log_warn "YouTube Music Desktop has unmet dependencies; attempting repair."
                     sudo apt-get install -f -y || die "Failed to fix YouTube Music Desktop dependencies."
                     rm -f /tmp/ytmdesktop.deb
                     ;;
@@ -1742,7 +1748,8 @@ EOF
                     log_info "Downloading Synergy (.deb)..."
                     wget --progress=bar:force "URL_DO_SYNERGY_DEB" -O /tmp/synergy.deb \
                         || die "Failed to download Synergy."
-                    sudo dpkg -i /tmp/synergy.deb 2>/dev/null || true
+                    sudo dpkg -i /tmp/synergy.deb \
+                        || log_warn "Synergy has unmet dependencies; attempting repair."
                     sudo apt-get install -f -y || die "Failed to fix Synergy dependencies."
                     rm -f /tmp/synergy.deb
                     ;;

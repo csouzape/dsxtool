@@ -56,8 +56,8 @@ _install_gaming_arch() {
 
 _install_gaming_debian() {
     log_info "Adding i386 architecture..."
-    sudo dpkg --add-architecture i386
-    sudo apt-get update -y
+    sudo dpkg --add-architecture i386 || die "Failed to add i386 architecture."
+    sudo apt-get update -y || die "Failed to update package lists after adding i386."
 
     local deps=(
         wine dbus git
@@ -82,7 +82,8 @@ _install_gaming_debian() {
     if [[ -n "$lutris_url" ]]; then
         curl -sSLo /tmp/lutris.deb "$lutris_url" \
             || die "Failed to download Lutris."
-        sudo dpkg -i /tmp/lutris.deb || sudo apt-get install -f -y
+        sudo dpkg -i /tmp/lutris.deb || sudo apt-get install -f -y \
+            || die "Failed to install Lutris and repair its dependencies."
         rm -f /tmp/lutris.deb
         log_info "Lutris installed."
     else

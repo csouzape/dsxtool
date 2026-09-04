@@ -39,7 +39,11 @@ setup_paru() {
         || { rm -rf "$tmp_dir"; die "Failed to build/install paru."; }
 
     rm -rf "$tmp_dir"
-    log_info "paru installed successfully."
+    if ! command -v paru &>/dev/null; then
+        die "paru build completed, but the paru command is not available."
+    fi
+
+    log_success "paru installed successfully."
 }
 
 

@@ -46,7 +46,7 @@ _install_drivers_amd_arch() {
 
 _install_drivers_amd_debian() {
     log_info "Installing AMD graphics stack (Debian/Ubuntu)..."
-    sudo dpkg --add-architecture i386 2>/dev/null || true
+    sudo dpkg --add-architecture i386 || die "Failed to add i386 architecture for AMD drivers."
     sudo apt-get update -y || die "apt-get update failed."
     pkg_install \
         mesa-vulkan-drivers libgl1-mesa-dri \
@@ -77,7 +77,7 @@ _install_drivers_intel_arch() {
 
 _install_drivers_intel_debian() {
     log_info "Installing Intel graphics stack (Debian/Ubuntu)..."
-    sudo dpkg --add-architecture i386 2>/dev/null || true
+    sudo dpkg --add-architecture i386 || die "Failed to add i386 architecture for Intel drivers."
     sudo apt-get update -y || die "apt-get update failed."
     pkg_install \
         mesa-vulkan-drivers libgl1-mesa-dri \

@@ -115,8 +115,11 @@ clean_journal() {
 clean_coredumps() {
     log_step "Clearing systemd coredumps..."
     if [[ -d /var/lib/systemd/coredump ]]; then
-        sudo find /var/lib/systemd/coredump -type f -delete 2>/dev/null || true
-        log_info "Coredumps cleared."
+        if sudo find /var/lib/systemd/coredump -type f -delete; then
+            log_info "Coredumps cleared."
+        else
+            log_warn "Some coredumps could not be removed."
+        fi
     else
         log_skip "No coredump directory found."
     fi
@@ -124,21 +127,30 @@ clean_coredumps() {
 
 clean_user_cache() {
     log_step "Cleaning user cache (~/.cache)..."
-    rm -rf "${HOME:?}/.cache/"* 2>/dev/null || true
-    log_info "User cache cleaned."
+    if rm -rf "${HOME:?}/.cache/"*; then
+        log_info "User cache cleaned."
+    else
+        log_warn "Some user cache files could not be removed."
+    fi
 }
 
 clean_thumbnails() {
     log_step "Cleaning thumbnail cache (~/.cache/thumbnails)..."
-    rm -rf "${HOME:?}/.cache/thumbnails/"* 2>/dev/null || true
-    log_info "Thumbnail cache cleaned."
+    if rm -rf "${HOME:?}/.cache/thumbnails/"*; then
+        log_info "Thumbnail cache cleaned."
+    else
+        log_warn "Some thumbnail files could not be removed."
+    fi
 }
 
 empty_trash() {
     log_step "Emptying trash..."
-    rm -rf "${HOME:?}/.local/share/Trash/files/"* \
-           "${HOME:?}/.local/share/Trash/info/"* 2>/dev/null || true
-    log_info "Trash emptied."
+    if rm -rf "${HOME:?}/.local/share/Trash/files/"* \
+              "${HOME:?}/.local/share/Trash/info/"*; then
+        log_info "Trash emptied."
+    else
+        log_warn "Some trash files could not be removed."
+    fi
 }
 
 clean_temp() {
@@ -152,13 +164,13 @@ clean_temp() {
     case "$choice" in
         "Remove everything")
             log_warn "Removing ALL files in /tmp and /var/tmp, including files in use..."
-            sudo find /tmp     -mindepth 1 -xdev -delete 2>/dev/null || true
-            sudo find /var/tmp -mindepth 1 -xdev -delete 2>/dev/null || true
+            sudo find /tmp     -mindepth 1 -xdev -delete || log_warn "Some files in /tmp could not be removed."
+            sudo find /var/tmp -mindepth 1 -xdev -delete || log_warn "Some files in /var/tmp could not be removed."
             ;;
         "Older than 7 days (safe)"|*)
             log_step "Removing temp files older than 7 days (/tmp, /var/tmp)..."
-            sudo find /tmp     -mindepth 1 -xdev -atime +7 -delete 2>/dev/null || true
-            sudo find /var/tmp -mindepth 1 -xdev -atime +7 -delete 2>/dev/null || true
+            sudo find /tmp     -mindepth 1 -xdev -atime +7 -delete || log_warn "Some old files in /tmp could not be removed."
+            sudo find /var/tmp -mindepth 1 -xdev -atime +7 -delete || log_warn "Some old files in /var/tmp could not be removed."
             ;;
     esac
 

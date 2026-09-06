@@ -38,5 +38,9 @@ setup_yay() {
         || { rm -rf "$tmp_dir"; die "Failed to build/install yay."; }
 
     rm -rf "$tmp_dir"
-    log_info "yay installed successfully."
+    if ! command -v yay &>/dev/null; then
+        die "yay build completed, but the yay command is not available."
+    fi
+
+    log_success "yay installed successfully."
 }

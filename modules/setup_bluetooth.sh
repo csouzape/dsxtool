@@ -10,13 +10,11 @@ install_bluetooth() {
     log_info "Installing Bluetooth packages..."
 
     case "$DISTRO" in
-        arch)   pkg_install bluez bluez-utils ;;
-        debian) pkg_install bluez bluez-utils ;;
-        fedora) pkg_install bluez bluez-utils ;;
+        arch|debian|fedora) pkg_install bluez bluez-utils || die "Failed to install Bluetooth packages." ;;
         *)      die "Unsupported distro for Bluetooth setup: $DISTRO" ;;
     esac
 
-    log_info "Bluetooth packages installed successfully."
+    log_success "Bluetooth packages installed successfully."
 }
 
 _bluetooth_service() {
@@ -29,13 +27,11 @@ _bluetooth_gui() {
     log_info "Installing Bluetooth GUI (blueman)..."
 
     case "$DISTRO" in
-        arch)   pkg_install blueman ;;
-        debian) pkg_install blueman ;;
-        fedora) pkg_install blueman ;;
+        arch|debian|fedora) pkg_install blueman || die "Failed to install blueman." ;;
         *)      log_warn "Unsupported distro for blueman." ;;
     esac
 
-    log_info "blueman installed successfully."
+    log_success "blueman installed successfully."
 }
 
 setup_bluetooth() {

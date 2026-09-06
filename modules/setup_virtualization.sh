@@ -12,6 +12,7 @@ _fzf_menu() {
 }
 
 install_virtualization() {
+    local -a failed=()
     local -a arch_packages=(
         qemu-desktop virt-manager virt-viewer
         dnsmasq vde2 openbsd-netcat
@@ -35,12 +36,10 @@ install_virtualization() {
     case "$DISTRO" in
         arch)
             log_info "Installing virtualization packages for Arch..."
-            sudo pacman -S --noconfirm 2>/dev/null || true
             if ! sudo pacman -S --noconfirm --needed "${arch_packages[@]}"; then
                 log_warn "Some packages failed. Trying to install available ones individually..."
-                local failed=()
                 for pkg in "${arch_packages[@]}"; do
-                    sudo pacman -S --noconfirm --needed "$pkg" 2>/dev/null \
+                    sudo pacman -S --noconfirm --needed "$pkg" \
                         || { log_warn "Skipping unavailable package: $pkg"; failed+=("$pkg"); }
                 done
                 if [[ ${#failed[@]} -gt 0 ]]; then
@@ -62,7 +61,11 @@ install_virtualization() {
             ;;
     esac
 
-    log_info "Virtualization packages installed successfully."
+    if [[ "$DISTRO" == "arch" && ${#failed[@]} -gt 0 ]]; then
+        die "Virtualization setup incomplete; some packages could not be installed."
+    fi
+
+    log_success "Virtualization packages installed successfully."
 }
 
 _libvirt_setup() {
@@ -171,6 +174,7 @@ _setup_virtualbox() {
 
 
 setup_virtualization() {
+    clear
     local choice
     choice=$(printf '%s\n' \
         "  virt-manager (KVM/QEMU) — recommended" \

@@ -203,11 +203,39 @@ create_backup() {
 # ── App snapshot: package lists ──────────────────────────────────────
 
 get_pacman_explicit(){
-    pacman -Qqen 2>/dev/null
+    case "$DISTRO" in
+        arch)
+            pacman -Qqen 2>/dev/null
+            ;;
+        debian)
+            apt-mark showmanual 2>/dev/null
+            ;;
+        fedora)
+            dnf repoquery --userinstalled --qf '%{name}' 2>/dev/null
+            ;;
+        *)
+            log_warn "get_pacman_explicit: unsupported distribution: $DISTRO '$DISTRO'" >&2
+            ;;
+    esac
 }
 
 get_pacman_foreign(){
-    pacman -Qqem 2>/dev/null
+    case "$DISTRO" in
+        arch)
+            pacman -Qqem 2>/dev/null
+            ;;
+        debian)
+            # No reliable native equivalent to "foreign" packages in apt.
+            # Returning empty is safer than a heuristic with false positives.
+            true
+           ;;
+        fedora)
+            dnf repoquery --extras --qf '%{name}' 2>/dev/null
+            ;;
+        *)
+            log_warn "get_pacman_foreign: unsupported distribution: $DISTRO '$DISTRO'" >&2
+            ;;
+    esac
 }
 
 get_flatpak_apps(){
@@ -216,38 +244,52 @@ get_flatpak_apps(){
     fi
 }
 
-get_base_group_packages(){
-    pacman -Qqg base base-devel 2>/dev/null
+get_base_group_packages() {
+    case "$DISTRO" in
+        arch)
+            pacman -Qqg base base-devel 2>/dev/null
+            ;;
+        debian)
+            dpkg-query -W -f='${Priority} ${Package}\n' 2>/dev/null \
+                | awk '$1 == "required" || $1 == "important" { print $2 }'
+            ;;
+        fedora)
+            dnf repoquery -g core --qf '%{name}' 2>/dev/null
+            ;;
+        *)
+            log_warn "get_base_group_packages: unsupported DISTRO '$DISTRO'" >&2
+            ;;
+    esac
 }
 
-filter_user_packages(){
+filter_user_packages() {
     local -a base_pkgs=()
     mapfile -t base_pkgs < <(get_base_group_packages)
 
-    local exclude_file="${DSX_EXCLUDE_PATTERNS_FILE:-$HOME/.config/dsxtool/app-snapshot-exclude.txt}"
+    local exclude_file="${DSX_EXCLUDE_PATTERNS_FILE:-$HOME/.config/dsxtool/app-snapshot-exclude-${DISTRO}.txt}"
     local -a patterns=()
     if [[ -f "$exclude_file" ]]; then
         mapfile -t patterns < <(grep -vE '^\s*(#|$)' "$exclude_file")
     else
-        patterns=(
-            '^linux-.*'
-            '.*-firmware$'
-            '^mesa'
-            '^lib32-.*'
-            '^vulkan-.*'
-            '^opencl-.*'
-            '^(intel|amd|nvidia)-.*'
-            '^xf86-(video|input)-.*'
-            '^cachyos-.*'
-            '^systemd.*'
-            '^networkmanager.*'
-            '^pipewire.*'
-            '^wireplumber$'
-            '^bluez.*'
-            '^sof-firmware$'
-            '^plymouth$'
-            '^(grub|efibootmgr|mkinitcpio).*'
-        )
+        case "$DISTRO" in
+            arch)
+                patterns=( '^linux-.*' '.*-firmware$' '^mesa' '^lib32-.*' '^vulkan-.*' '^opencl-.*' \
+                           '^(intel|amd|nvidia)-.*' '^xf86-(video|input)-.*' '^cachyos-.*' '^systemd.*' \
+                           '^networkmanager.*' '^pipewire.*' '^wireplumber$' '^bluez.*' '^sof-firmware$' \
+                           '^plymouth$' '^(grub|efibootmgr|mkinitcpio).*' )
+                ;;
+            debian)
+                patterns=( '^linux-image-.*' '^linux-headers-.*' '.*-firmware$' '^mesa-.*' \
+                           '^xserver-xorg-video-.*' '^xserver-xorg-input-.*' '^systemd.*' \
+                           '^network-manager.*' '^pipewire.*' '^wireplumber$' '^bluez.*' \
+                           '^plymouth.*' '^grub-.*' '^initramfs-tools.*' )
+                ;;
+            fedora)
+                patterns=( '^kernel(-core|-modules)?$' '.*-firmware$' '^mesa-.*' \
+                           '^xorg-x11-drv-.*' '^systemd.*' '^NetworkManager.*' '^pipewire.*' \
+                           '^wireplumber$' '^bluez.*' '^plymouth.*' '^grub2-.*' '^dracut.*' )
+                ;;
+        esac
     fi
 
     local pkg is_system sp pattern
@@ -298,7 +340,19 @@ create_app_snapshot(){
         log_info "Flatpak not found or no apps installed, skipping."
     fi
 
-    [[ -f /etc/pacman.conf ]] && cp /etc/pacman.conf "${snapshot_dir}/pacman.conf"
+    case "$DISTRO" in
+        arch)
+            [[ -f /etc/pacman.conf ]] && cp /etc/pacman.conf "${snapshot_dir}/pacman.conf"
+            ;;
+        debian)
+            [[ -f /etc/apt/sources.list ]] && cp /etc/apt/sources.list "${snapshot_dir}/sources.list"
+            [[ -d /etc/apt/sources.list.d ]] && cp -r /etc/apt/sources.list.d "${snapshot_dir}/sources.list.d"
+            ;;
+        fedora)
+            [[ -f /etc/dnf/dnf.conf ]] && cp /etc/dnf/dnf.conf "${snapshot_dir}/dnf.conf"
+            [[ -d /etc/yum.repos.d ]] && cp -r /etc/yum.repos.d "${snapshot_dir}/yum.repos.d"
+            ;;
+    esac
 
     {
         echo "Snapshot taken: $(date)"
@@ -348,61 +402,7 @@ find_app_snapshots(){
         | sort -r
 }
 
-create_app_snapshot(){
-    prepare_backup_destination || return 1
 
-    local timestamp snapshot_dir
-    timestamp=$(date +%Y%m%d-%H%M%S)
-    snapshot_dir="${DSX_BACKUP_ROOT}/app-snapshot-${timestamp}"
-
-    mkdir -p "$snapshot_dir" || { log_error "Couldn't create $snapshot_dir"; return 1; }
-
-    log_info "Capturing installed package lists..."
-
-    local pacman_count=0 foreign_count=0 flatpak_count=0
-
-    get_pacman_explicit | filter_user_packages > "${snapshot_dir}/pacman-explicit.txt"
-    pacman_count=$(wc -l < "${snapshot_dir}/pacman-explicit.txt")
-    log_info "User-installed packages (filtered): $pacman_count"
-
-    get_pacman_foreign > "${snapshot_dir}/pacman-foreign.txt"
-    foreign_count=$(wc -l < "${snapshot_dir}/pacman-foreign.txt")
-    log_info "AUR/foreign packages: $foreign_count"
-
-    if get_flatpak_apps > "${snapshot_dir}/flatpak-apps.txt" && [[ -s "${snapshot_dir}/flatpak-apps.txt" ]]; then
-        flatpak_count=$(wc -l < "${snapshot_dir}/flatpak-apps.txt")
-        log_info "Flatpak apps: $flatpak_count"
-    else
-        rm -f "${snapshot_dir}/flatpak-apps.txt"
-        log_info "Flatpak not found or no apps installed, skipping."
-    fi
-
-    [[ -f /etc/pacman.conf ]] && cp /etc/pacman.conf "${snapshot_dir}/pacman.conf"
-
-    {
-        echo "Snapshot taken: $(date)"
-        echo "Host: $(hostname)"
-        echo "Official packages: $pacman_count"
-        echo "AUR/foreign packages: $foreign_count"
-        echo "Flatpak apps: $flatpak_count"
-    } > "${snapshot_dir}/snapshot-info.txt"
-
-    local archive_name="dsxappsnapshot_${timestamp}.tar.gz"
-    local archive_path="${DSX_BACKUP_ROOT}/${archive_name}"
-
-    if tar -czf "$archive_path" -C "$DSX_BACKUP_ROOT" "app-snapshot-${timestamp}"; then
-        rm -rf "$snapshot_dir"
-        local size
-        size=$(du -sh "$archive_path" | cut -f1)
-        log_info "App snapshot done: $archive_path ($size)"
-    else
-        log_error "Failed to archive app snapshot."
-        rm -rf "$snapshot_dir"
-        return 1
-    fi
-
-    return 0
-}
 
 # ── App snapshot: restore ────────────────────────────────────────────
 
@@ -429,27 +429,60 @@ restore_app_snapshot(){
     fi
 
     if [[ -s "${restore_dir}/pacman-explicit.txt" ]]; then
-        log_info "Installing official packages via pacman..."
-        if ! sudo pacman -S --needed - < "${restore_dir}/pacman-explicit.txt"; then
-            log_warn "Some official packages failed to install. Check the log."
-        fi
+        log_info "Installing official packages..."
+        local -a pkgs=()
+        mapfile -t pkgs < "${restore_dir}/pacman-explicit.txt"
+
+        case "$DISTRO" in
+            arch)
+                if ! sudo pacman -S --needed "${pkgs[@]}"; then
+                    log_warn "Some official packages failed to install. Check the log."
+                fi
+                ;;
+            debian)
+                if ! sudo apt install -y "${pkgs[@]}"; then
+                    log_warn "Some official packages failed to install. Check the log."
+                fi
+                ;;
+            fedora)
+                if ! sudo dnf install -y "${pkgs[@]}"; then
+                    log_warn "Some official packages failed to install. Check the log."
+                fi
+                ;;
+            *)
+                log_warn "Unsupported DISTRO '$DISTRO', skipping official package restore."
+                ;;
+        esac
     fi
 
     if [[ -s "${restore_dir}/pacman-foreign.txt" ]]; then
-        local aur_helper=""
-        for helper in yay paru; do
-            command -v "$helper" &> /dev/null && { aur_helper="$helper"; break; }
-        done
+        case "$DISTRO" in
+            arch)
+                local aur_helper=""
+                for helper in yay paru; do
+                    command -v "$helper" &> /dev/null && { aur_helper="$helper"; break; }
+                done
 
-        if [[ -n "$aur_helper" ]]; then
-            log_info "Installing AUR packages via $aur_helper..."
-            if ! "$aur_helper" -S --needed - < "${restore_dir}/pacman-foreign.txt"; then
-                log_warn "Some AUR packages failed to install. Check the log."
-            fi
-        else
-            log_warn "No AUR helper (yay/paru) found. Skipping AUR packages:"
-            cat "${restore_dir}/pacman-foreign.txt"
-        fi
+                if [[ -n "$aur_helper" ]]; then
+                    local -a foreign_pkgs=()
+                    mapfile -t foreign_pkgs < "${restore_dir}/pacman-foreign.txt"
+                    log_info "Installing AUR packages via $aur_helper..."
+                    if ! "$aur_helper" -S --needed "${foreign_pkgs[@]}"; then
+                        log_warn "Some AUR packages failed to install. Check the log."
+                    fi
+                else
+                    log_warn "No AUR helper (yay/paru) found. Skipping AUR packages:"
+                    cat "${restore_dir}/pacman-foreign.txt"
+                fi
+                ;;
+            fedora)
+                log_warn "The following packages came from non-default repos and were not reinstalled automatically (origin repo may not exist on this system):"
+                cat "${restore_dir}/pacman-foreign.txt"
+                ;;
+            *)
+                : # nothing to do — file is empty for debian, or DISTRO unsupported
+                ;;
+        esac
     fi
 
     if [[ -s "${restore_dir}/flatpak-apps.txt" ]] && command -v flatpak &> /dev/null; then
@@ -604,10 +637,10 @@ main(){
                     echo "Scan .config and XDG user folders (Downloads, Pictures, Documents, etc), let you pick which ones to include, and pack them into a timestamped tar.gz under '"$DSX_BACKUP_ROOT"'."
                     ;;
                 "App snapshot")
-                    echo "Capture the list of installed packages (pacman, AUR/foreign, Flatpak) plus pacman.conf into a small tar.gz under '"$DSX_BACKUP_ROOT"'. Lightweight and portable — no binaries or configs, just what to reinstall."
+                    echo "Capture the list of installed packages, plus repo configuration, into a small tar.gz under '"$DSX_BACKUP_ROOT"'. Lightweight and portable — no binaries or configs, just what to reinstall."
                     ;;
                 "Restore app snapshot")
-                    echo "Pick a previously created app-snapshot archive and reinstall its packages: official via pacman, AUR via yay/paru (if installed), and Flatpak apps via flathub."
+                    echo "Pick a previously created app-snapshot archive and reinstall its packages using your system's package manager, plus Flatpak apps via flathub."
                     ;;
                 "Clean app snapshots")
                     echo "Remove old app-snapshot archives: pick manually, keep only the N most recent, or wipe them all. Asks for confirmation before deleting."

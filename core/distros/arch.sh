@@ -13,10 +13,15 @@ pkg_update() {
 }
 
 pkg_install() {
-    local output status
-    output=$(sudo pacman -S --noconfirm --needed "$@" 2>&1)
-    status=$?
-    echo "$output"
+    local output_file output status
+    output_file=$(mktemp)
+
+    set +e
+    sudo pacman -S --noconfirm --needed "$@" 2>&1 | tee "$output_file"
+    status=${PIPESTATUS[0]}
+    set -e
+    output=$(<"$output_file")
+    rm -f "$output_file"
 
     if [[ $status -ne 0 ]] && grep -qE "estão em conflito|are in conflict" <<< "$output"; then
         _resolve_pacman_conflict "$@"
@@ -28,10 +33,15 @@ pkg_install() {
 
 _resolve_pacman_conflict() {
     local pkgs=("$@")
-    local output line pkg_b sep
+    local output_file output line pkg_b sep status
 
-    output=$(sudo pacman -S --needed --noconfirm "${pkgs[@]}" 2>&1)
-    echo "$output"
+    output_file=$(mktemp)
+    set +e
+    sudo pacman -S --needed --noconfirm "${pkgs[@]}" 2>&1 | tee "$output_file"
+    status=${PIPESTATUS[0]}
+    set -e
+    output=$(<"$output_file")
+    rm -f "$output_file"
 
     if grep -q "estão em conflito" <<< "$output"; then
         line=$(grep -oP '^:: \K.*(?= estão em conflito)' <<< "$output" | head -1)
@@ -43,7 +53,7 @@ _resolve_pacman_conflict() {
 
     if [[ -z "$line" ]]; then
         log_warn "Could not identify the conflicting package."
-        return 1
+        return "$status"
     fi
 
     pkg_b=$(awk -F"$sep" '{print $2}' <<< "$line" | sed -E 's/-[0-9].*//')

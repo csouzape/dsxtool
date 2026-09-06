@@ -18,16 +18,16 @@ install_cups() {
     fi 
     
     log_info "Installing CUPS..."
-    pkg_install cups
+    pkg_install cups || die "Failed to install CUPS."
 }
 
 install_epson_driver() {
     log_info "Installing Epson Driver..."
 
     case "$DISTRO" in
-        arch)   pkg_install epson-inkjet-printer-escpr ;;
-        debian) pkg_install printer-driver-escpr ;;
-        fedora) pkg_install epson-inkjet-printer-escpr ;;
+        arch)   pkg_install epson-inkjet-printer-escpr || die "Failed to install the Epson driver." ;;
+        debian) pkg_install printer-driver-escpr || die "Failed to install the Epson driver." ;;
+        fedora) pkg_install epson-inkjet-printer-escpr || die "Failed to install the Epson driver." ;;
          *)      log_warn "Unsupported distro for epson driver." ;;
     esac
 }
@@ -36,9 +36,9 @@ install_hp_driver() {
     log_info "Installing HP Driver..."
 
     case "$DISTRO" in 
-        arch) pkg_install hplip ;; 
-        debian) pkg_install hplip ;; 
-        fedora) pkg_install hplip ;; 
+        arch) pkg_install hplip || die "Failed to install the HP driver." ;;
+        debian) pkg_install hplip || die "Failed to install the HP driver." ;;
+        fedora) pkg_install hplip || die "Failed to install the HP driver." ;;
         *)    log_warn "Unsupported distro for HP driver." ;; 
     esac
 }

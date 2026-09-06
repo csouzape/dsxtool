@@ -4,6 +4,8 @@ set -uo pipefail
 
 
 _enable_multilib_arch() {
+    [[ "${DISTRO:-}" == "arch" ]] || return 0
+
     if grep -q "^\s*\[multilib\]" /etc/pacman.conf; then
         log_info "multilib is already enabled."
         return 0
@@ -91,6 +93,7 @@ _install_gaming_debian() {
         pkg_install lutris || log_warn "Lutris not available in apt."
     fi
 }
+
 _install_gaming_fedora() {
     log_info "Adding RPM Fusion repositories..."
     local fedora_ver
@@ -110,14 +113,29 @@ _install_gaming_fedora() {
 }
 
 setup_gaming() {
-    log_info "Setting up gaming environment..."
-    log_warn "This will install Wine, Steam, Lutris and gaming libraries."
-    log_warn "On Arch, multilib will be enabled if not already."
+    case "$DISTRO" in
+        arch)
+            log_info "Setting up gaming environment for Arch..."
+            log_warn "This will install Wine, Steam, Lutris and gaming libraries."
+            log_warn "Multilib will be enabled if not already."
+            ;;
+        debian)
+            log_info "Setting up gaming environment for Debian/Ubuntu..."
+            log_warn "This will install Wine, Steam, Lutris and i386 gaming libraries."
+            ;;
+        fedora)
+            log_info "Setting up gaming environment for Fedora..."
+            log_warn "This will install Wine, Steam, Lutris and gaming dependencies."
+            ;;
+        *)
+            die "Unsupported distro for gaming setup: $DISTRO"
+            ;;
+    esac
     echo ""
 
     read -rp "Continue? (y/n): " confirm < /dev/tty
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        log_warn "Gaming setup cancelled."
+        log_warn "Gaming setup cancelled for $DISTRO."
         return 0
     fi
 
@@ -128,6 +146,6 @@ setup_gaming() {
         *)      die "Unsupported distro for gaming setup: $DISTRO" ;;
     esac
 
-    log_info "Gaming setup completed successfully."
+    log_info "Gaming setup for $DISTRO completed successfully."
     log_info "Tip: run 'gamemoded -t' to test GameMode, and 'mangohud <game>' to enable the overlay."
 }

@@ -126,6 +126,7 @@ install_apps_module()           { module_runner "Install Apps" "source \"$BASE_D
 install_yay_module()            { module_runner "Setup yay" "source \"$BASE_DIR/modules/setupyay.sh\"; setup_yay" || log_warn "yay setup finished with errors."; }
 install_paru_module()           { module_runner "Setup paru" "source \"$BASE_DIR/modules/setupparu.sh\"; setup_paru" || log_warn "paru setup finished with errors."; }
 install_fonts_module()          { module_runner "Install Fonts" "source \"$BASE_DIR/modules/fonts.sh\"; setup_fonts" || log_warn "Fonts setup finished with errors."; }
+setup_hyprdots_module()          { module_runner "Setup HyprDots" "source \"$BASE_DIR/modules/hyprdots.sh\"; main" || log_warn "HyprDots setup finished with errors."; }
 install_flatpak_module()        { module_runner "Setup Flatpak" "source \"$BASE_DIR/modules/flatpak.sh\"; setup_flatpak" || log_warn "Flatpak setup finished with errors."; }
 install_rpmfusion_module()       { module_runner "Setup RPM Fusion" "source \"$BASE_DIR/modules/rpmfusion.sh\"; setup_rpmfusion" || log_warn "RPM Fusion setup finished with errors."; }
 install_virtualization_module() { module_runner "Setup Virtualization" "source \"$BASE_DIR/modules/setup_virtualization.sh\"; setup_virtualization" || log_warn "Virtualization setup finished with errors."; }
@@ -166,7 +167,8 @@ build_menu() {
         "8 - Setup Gaming" \
         "9 - Setup Bluetooth" \
         "10 - Setup Printer" \
-        "11 - DSXSwap" \
+        "11 - Setup HyprDots" \
+        "12 - DSXSwap" \
         "13 - DSXSecurity" \
         "14 - DSXHealth" \
         "15 - DSXRestore" \
@@ -252,6 +254,7 @@ dsxtool_main() {
             "Setup Virtualization")        clear; install_virtualization_module ;;
             "Setup Shell")                 clear; install_shell_module ;;
             "Setup Gaming")                clear; setup_gaming_module ;;
+            "Setup HyprDots")              clear; setup_hyprdots_module ;;
             "DSXSwap")                     clear; dsxswap_module ;;
             "DSXSecurity")                 clear; dsxsecurity_module ;;
             "DSXHealth")                  clear; dsxhealth_module ;;

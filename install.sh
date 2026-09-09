@@ -130,7 +130,6 @@ install_flatpak_module()        { module_runner "Setup Flatpak" "source \"$BASE_
 install_rpmfusion_module()       { module_runner "Setup RPM Fusion" "source \"$BASE_DIR/modules/rpmfusion.sh\"; setup_rpmfusion" || log_warn "RPM Fusion setup finished with errors."; }
 install_virtualization_module() { module_runner "Setup Virtualization" "source \"$BASE_DIR/modules/setup_virtualization.sh\"; setup_virtualization" || log_warn "Virtualization setup finished with errors."; }
 install_shell_module()          { module_runner "Setup Shell" "source \"$BASE_DIR/modules/shell_personalization.sh\"; setup_shell" || log_warn "Shell setup finished with errors."; }
-change_desktop_module()         { module_runner "Change Desktop" "source \"$BASE_DIR/modules/change_desktop.sh\"; prompt_change_desktop" || log_warn "Desktop setup finished with errors."; }
 setup_gaming_module()           { module_runner "Setup Gaming" "source \"$BASE_DIR/modules/setup_gaming.sh\"; setup_gaming" || log_warn "Gaming setup finished with errors."; }
 bluetooth_module()              { module_runner "Setup Bluetooth" "source \"$BASE_DIR/modules/setup_bluetooth.sh\"; setup_bluetooth" || log_warn "Bluetooth setup finished with errors."; }
 setup_printer_module()          { module_runner "Setup Printer" "source \"$BASE_DIR/modules/setup_printer.sh\"; setup_printer" || log_warn "Printer setup finished with errors."; }
@@ -160,15 +159,14 @@ build_menu() {
         "1 - Setup Alias" \
         "2 - Install TLP" \
         "3 - Install Apps" \
-        "4 - Change Desktop Environment" \
-        "5 - Fonts Downloader" \
-        "6 - Setup Flatpak" \
-        "7 - Setup Virtualization" \
-        "8 - Setup Shell" \
-        "9 - Setup Gaming" \
-        "10 - Setup Bluetooth" \
-        "11 - Setup Printer" \
-        "12 - DSXSwap" \
+        "4 - Fonts Downloader" \
+        "5 - Setup Flatpak" \
+        "6 - Setup Virtualization" \
+        "7 - Setup Shell" \
+        "8 - Setup Gaming" \
+        "9 - Setup Bluetooth" \
+        "10 - Setup Printer" \
+        "11 - DSXSwap" \
         "13 - DSXSecurity" \
         "14 - DSXHealth" \
         "15 - DSXRestore" \
@@ -248,7 +246,6 @@ dsxtool_main() {
             "Setup Alias")                 clear; setup_alias ;;
             "Install TLP")                 clear; install_tlp_module ;;
             "Install Apps")                clear; install_apps_module ;;
-            "Change Desktop Environment")  clear; change_desktop_module ;;
             "Fonts Downloader")            clear; install_fonts_module ;;
             "Setup Flatpak")               clear; install_flatpak_module ;;
             "Setup RPM Fusion")            clear; install_rpmfusion_module ;;

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 install() {
+    clear
     local repo_dir
     local install_script
 

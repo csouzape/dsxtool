@@ -88,12 +88,13 @@ set_default_shell() {
 }
 
 setup_shell() {
+    clear
     local choice
     choice=$(printf '%s\n' "bash (Starship Config)" "zsh" "fish" "Cancel" \
         | fzf \
               --prompt="Shell > " \
               --header="Select a shell to install" \
-              --height=8 \
+              --height=10 \
               --layout=reverse \
               --border=rounded \
               --pointer="▶" \

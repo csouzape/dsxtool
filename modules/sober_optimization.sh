@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 
 install() {
+    clear
     local repo_dir
     local install_script
 
     repo_dir=$(mktemp -d) || return 1
 
     echo "Installing Sober optimization..."
-    git clone "https://github.com/csouzape/sober-config" "$repo_dir" || {
-        echo "Failed to clone sober-config repository." >&2
+    git clone "https://github.com/csouzape/sober-optimizer" "$repo_dir" || {
+        echo "Failed to clone sober-optimizer repository." >&2
         rm -rf "$repo_dir"
         return 1
     }
 
     install_script="$repo_dir/install.sh"
     if [[ ! -f "$install_script" ]]; then
-        echo "install.sh not found in sober-config repository." >&2
+        echo "install.sh not found in sober-optimizer repository." >&2
         rm -rf "$repo_dir"
         return 1
     fi

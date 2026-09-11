@@ -616,6 +616,7 @@ fi
 main(){
     clear
     check_dependencies || return 1
+    export DSX_BACKUP_ROOT
 
     local USER_NAME
     USER_NAME="${SUDO_USER:-$USER}"
@@ -634,13 +635,13 @@ main(){
         --preview='
             case {} in
                 "Create backup")
-                    echo "Scan .config and XDG user folders (Downloads, Pictures, Documents, etc), let you pick which ones to include, and pack them into a timestamped tar.gz under '"$DSX_BACKUP_ROOT"'."
+                    echo "Scan .config and XDG user folders (Downloads, Pictures, Documents, etc), let you pick which ones to include, and pack them into a timestamped tar.gz under ${DSX_BACKUP_ROOT}."
                     ;;
                 "App snapshot")
-                    echo "Capture the list of installed packages, plus repo configuration, into a small tar.gz under '"$DSX_BACKUP_ROOT"'. Lightweight and portable — no binaries or configs, just what to reinstall."
+                    echo "Capture the list of installed packages, plus repo configuration, into a small tar.gz under ${DSX_BACKUP_ROOT}. Lightweight and portable — no binaries or configs, just what to reinstall."
                     ;;
                 "Restore app snapshot")
-                    echo "Pick a previously created app-snapshot archive and reinstall its packages using your system's package manager, plus Flatpak apps via flathub."
+                    echo "Pick a previously created app-snapshot archive and reinstall its packages using the system package manager, plus Flatpak apps via flathub."
                     ;;
                 "Clean app snapshots")
                     echo "Remove old app-snapshot archives: pick manually, keep only the N most recent, or wipe them all. Asks for confirmation before deleting."

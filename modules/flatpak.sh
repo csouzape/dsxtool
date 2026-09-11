@@ -15,6 +15,7 @@ _configure_flatpak() {
 }
 
 setup_flatpak() {
+    clear
     if pkg_exists flatpak; then
         log_info "Flatpak is already installed."
     else

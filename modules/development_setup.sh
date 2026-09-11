@@ -132,18 +132,18 @@ install_ide() {
             log_info "Installing VS Code..."
             if [[ "$DISTRO" == "arch" ]]; then
                 local method
-                method=$(printf "AUR helper\nflatpak" \
+                method=$(printf "AUR\nFlatpak" \
                     | _fzf_menu \
                         --prompt="VS Code install method > " \
                         --height=5 --layout=reverse --border=rounded --no-info \
                         --color="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,prompt:#cba6f7,pointer:#f38ba8,border:#2a2a2a")
                 case "$method" in
-                    "AUR helper")
+                    "AUR")
                         require_aur_helper
                         aur_install visual-studio-code-bin \
                             || die "Failed to install VS Code."
                         ;;
-                    flatpak)
+                    Flatpak)
                         flatpak install -y flathub com.visualstudio.code \
                             || die "Failed to install VS Code."
                         ;;

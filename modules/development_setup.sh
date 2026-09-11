@@ -141,14 +141,66 @@ install_ide() {
                     "AUR helper")
                         require_aur_helper
                         aur_install visual-studio-code-bin \
-                            && log_info "VS Code installed successfully." \
                             || die "Failed to install VS Code."
                         ;;
-                    flatpak) flatpak install -y flathub com.visualstudio.code ;;
+                    flatpak)
+                        flatpak install -y flathub com.visualstudio.code \
+                            || die "Failed to install VS Code."
+                        ;;
                     *)       log_warn "No method selected."; return 0 ;;
                 esac
             else
-                flatpak install -y flathub com.visualstudio.code
+                local method
+                method=$(printf "Oficial (Microsoft)\nflatpak" \
+                    | _fzf_menu \
+                        --prompt="VS Code install method > " \
+                        --height=5 --layout=reverse --border=rounded --no-info \
+                        --color="$_FZF_COLORS")
+                case "$method" in
+                    "Oficial (Microsoft)")
+                        case "$DISTRO" in
+                            debian)
+                                local deb_file
+                                deb_file=$(mktemp --suffix=.deb)
+                                curl -fsSL \
+                                    https://go.microsoft.com/fwlink/?LinkID=760868 \
+                                    -o "$deb_file" \
+                                    || die "Failed to download VS Code."
+                                sudo apt install -y "$deb_file" \
+                                    || die "Failed to install VS Code."
+                                rm -f "$deb_file"
+                                ;;
+                            fedora)
+                                sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc \
+                                    || die "Failed to import Microsoft's signing key."
+                                printf '%s\n' \
+                                    '[code]' \
+                                    'name=Visual Studio Code' \
+                                    'baseurl=https://packages.microsoft.com/yumrepos/vscode' \
+                                    'enabled=1' \
+                                    'autorefresh=1' \
+                                    'type=rpm-md' \
+                                    'gpgcheck=1' \
+                                    'gpgkey=https://packages.microsoft.com/keys/microsoft.asc' \
+                                    | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null \
+                                    || die "Failed to configure the VS Code repository."
+                                sudo dnf install -y code \
+                                    || die "Failed to install VS Code."
+                                ;;
+                            *)
+                                die "Unsupported distro for official VS Code installation: $DISTRO"
+                                ;;
+                        esac
+                        ;;
+                    flatpak)
+                        flatpak install -y flathub com.visualstudio.code \
+                            || die "Failed to install VS Code."
+                        ;;
+                    *)
+                        log_warn "No method selected."
+                        return 0
+                        ;;
+                esac
             fi
             log_info "VS Code installed successfully."
             ;;

@@ -162,17 +162,21 @@ install_ide() {
                             debian)
                                 local deb_file
                                 deb_file=$(mktemp --suffix=.deb)
-                                curl -fsSL \
+                                log_info "Downloading VS Code package from Microsoft..."
+                                curl -fL --progress-bar \
                                     https://go.microsoft.com/fwlink/?LinkID=760868 \
                                     -o "$deb_file" \
                                     || die "Failed to download VS Code."
+                                log_info "Installing VS Code package..."
                                 sudo apt install -y "$deb_file" \
                                     || die "Failed to install VS Code."
                                 rm -f "$deb_file"
                                 ;;
                             fedora)
+                                log_info "Importing Microsoft's repository key..."
                                 sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc \
                                     || die "Failed to import Microsoft's signing key."
+                                log_info "Configuring Microsoft's VS Code repository..."
                                 printf '%s\n' \
                                     '[code]' \
                                     'name=Visual Studio Code' \
@@ -184,6 +188,7 @@ install_ide() {
                                     'gpgkey=https://packages.microsoft.com/keys/microsoft.asc' \
                                     | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null \
                                     || die "Failed to configure the VS Code repository."
+                                log_info "Installing VS Code from the Microsoft repository..."
                                 sudo dnf install -y code \
                                     || die "Failed to install VS Code."
                                 ;;

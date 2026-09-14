@@ -124,6 +124,7 @@ _install_gaming_fedora() {
 }
 
 setup_gaming() {
+    clear
     case "$DISTRO" in
         arch)
             log_info "Setting up gaming environment for Arch..."

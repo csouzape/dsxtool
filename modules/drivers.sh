@@ -112,6 +112,7 @@ _install_drivers_intel() {
 }
 
 setup_drivers() {
+    clear
     log_info "Starting GPU driver setup..."
 
     if ! detect_gpu_vendors; then

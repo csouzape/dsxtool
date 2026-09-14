@@ -49,7 +49,7 @@ _install_gaming_arch() {
         steam lutris
     )
 
-    log_info "Verificando disponibilidade dos pacotes..."
+    log_info "Checking Package Availability..."
     local available=() missing=()
     for pkg in "${deps[@]}"; do
         if pacman -Si "$pkg" &>/dev/null || pacman -Qi "$pkg" &>/dev/null; then

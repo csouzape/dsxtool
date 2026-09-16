@@ -132,6 +132,7 @@ _install_font() {
 }
 
 setup_fonts() {
+    clear
     local font_list=()
     for font in "${!FONT_FC_NAME[@]}"; do
         font_list+=("$font")

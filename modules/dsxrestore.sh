@@ -403,13 +403,12 @@ find_app_snapshots(){
 
     find "${search_roots[@]}" \
         \( "${prune_args[@]}" \) -prune -o \
-        -type f -name 'dsxappsnapshot_*.tar.gz' -print 2>/dev/null \
-        | sort -r
+        -type f -name 'dsxappsnapshot_*.tar.gz' -printf '%T@ %p\n' 2>/dev/null \
+        | sort -rn | cut -d' ' -f2-
 }
 
 
 
-# ── App snapshot: restore ────────────────────────────────────────────
 
 restore_app_snapshot(){
     local archive="$1"

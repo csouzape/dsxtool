@@ -205,7 +205,7 @@ run_menu() {
 
     build_menu > "$tmp_in"
 
-    local FZF_COLORS="bg:#121212,bg+:#1e1e1e,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244"
+    local FZF_COLORS="bg:-1,bg+:-1,fg:#d1d1d1,fg+:#ffffff,hl:#89b4fa,hl+:#89b4fa,prompt:#cba6f7,pointer:#f38ba8,marker:#a6e3a1,header:#e8e8e8,border:#313244"
 
     SHELL=/usr/bin/bash fzf \
         --layout=reverse \

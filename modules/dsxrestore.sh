@@ -463,6 +463,7 @@ restore_app_snapshot(){
         case "$DISTRO" in
             arch)
                 local aur_helper=""
+                local helper
                 for helper in yay paru; do
                     command -v "$helper" &> /dev/null && { aur_helper="$helper"; break; }
                 done
@@ -484,7 +485,7 @@ restore_app_snapshot(){
                 cat "${restore_dir}/pacman-foreign.txt"
                 ;;
             *)
-                : # nothing to do — file is empty for debian, or DISTRO unsupported
+                :
                 ;;
         esac
     fi

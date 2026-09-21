@@ -383,15 +383,15 @@ create_app_snapshot(){
     local pacman_count=0 foreign_count=0 flatpak_count=0
 
     get_pacman_explicit | filter_user_packages > "${snapshot_dir}/pacman-explicit.txt"
-    pacman_count=$(wc -l < "${snapshot_dir}/pacman-explicit.txt")
+    pacman_count=$(grep -c . "${snapshot_dir}/pacman-explicit.txt")
     log_info "User-installed packages (filtered): $pacman_count"
 
     get_pacman_foreign > "${snapshot_dir}/pacman-foreign.txt"
-    foreign_count=$(wc -l < "${snapshot_dir}/pacman-foreign.txt")
+    foreign_count=$(grep -c . "${snapshot_dir}/pacman-foreign.txt")
     log_info "AUR/foreign packages: $foreign_count"
 
     if get_flatpak_apps > "${snapshot_dir}/flatpak-apps.txt" && [[ -s "${snapshot_dir}/flatpak-apps.txt" ]]; then
-        flatpak_count=$(wc -l < "${snapshot_dir}/flatpak-apps.txt")
+        flatpak_count=$(grep -c . "${snapshot_dir}/flatpak-apps.txt")
         log_info "Flatpak apps: $flatpak_count"
     else
         rm -f "${snapshot_dir}/flatpak-apps.txt"

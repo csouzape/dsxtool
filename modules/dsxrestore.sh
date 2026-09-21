@@ -81,7 +81,11 @@ backup_folder() {
 
 select_backup_targets() {
   local -a candidates=()
-  mapfile -t candidates < <(backup_folder) || return 1
+  local bf_output
+  if ! bf_output=$(backup_folder); then
+    return 1
+  fi
+  mapfile -t candidates <<< "$bf_output"
   candidates+=("Exit")
 
   local -a selected=()
@@ -113,6 +117,8 @@ select_backup_targets() {
   printf '%s\n' "${selected[@]}"
   return 0
 }
+
+
 
 prepare_backup_destination() {
   if [[ ! -d "$DSX_BACKUP_ROOT" ]]; then
@@ -325,15 +331,15 @@ create_app_snapshot(){
     local pacman_count=0 foreign_count=0 flatpak_count=0
 
     get_pacman_explicit | filter_user_packages > "${snapshot_dir}/pacman-explicit.txt"
-    pacman_count=$(wc -l < "${snapshot_dir}/pacman-explicit.txt")
+    pacman_count=$(grep -c . "${snapshot_dir}/pacman-explicit.txt")
     log_info "User-installed packages (filtered): $pacman_count"
 
     get_pacman_foreign > "${snapshot_dir}/pacman-foreign.txt"
-    foreign_count=$(wc -l < "${snapshot_dir}/pacman-foreign.txt")
+    foreign_count=$(grep -c . "${snapshot_dir}/pacman-foreign.txt")
     log_info "AUR/foreign packages: $foreign_count"
 
     if get_flatpak_apps > "${snapshot_dir}/flatpak-apps.txt" && [[ -s "${snapshot_dir}/flatpak-apps.txt" ]]; then
-        flatpak_count=$(wc -l < "${snapshot_dir}/flatpak-apps.txt")
+        flatpak_count=$(grep -c . "${snapshot_dir}/flatpak-apps.txt")
         log_info "Flatpak apps: $flatpak_count"
     else
         rm -f "${snapshot_dir}/flatpak-apps.txt"
@@ -398,13 +404,10 @@ find_app_snapshots(){
 
     find "${search_roots[@]}" \
         \( "${prune_args[@]}" \) -prune -o \
-        -type f -name 'dsxappsnapshot_*.tar.gz' -print 2>/dev/null \
-        | sort -r
+        -type f -name 'dsxappsnapshot_*.tar.gz' -printf '%T@ %p\n' 2>/dev/null \
+        | sort -rn | cut -d' ' -f2-
 }
 
-
-
-# ── App snapshot: restore ────────────────────────────────────────────
 
 restore_app_snapshot(){
     local archive="$1"
@@ -459,6 +462,7 @@ restore_app_snapshot(){
         case "$DISTRO" in
             arch)
                 local aur_helper=""
+                local helper
                 for helper in yay paru; do
                     command -v "$helper" &> /dev/null && { aur_helper="$helper"; break; }
                 done
@@ -480,7 +484,7 @@ restore_app_snapshot(){
                 cat "${restore_dir}/pacman-foreign.txt"
                 ;;
             *)
-                : # nothing to do — file is empty for debian, or DISTRO unsupported
+                :
                 ;;
         esac
     fi

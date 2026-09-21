@@ -2,6 +2,7 @@
 set -euo pipefail
 
 install_tlp() {
+    clear
     if pkg_exists tlp; then
         log_info "TLP is already installed."
         return 0

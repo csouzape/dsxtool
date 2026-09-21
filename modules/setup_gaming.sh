@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-set -uo pipefail
-
-
 
 _enable_multilib_arch() {
     [[ "${DISTRO:-}" == "arch" ]] || return 0
@@ -26,25 +23,25 @@ _install_gaming_arch() {
         gtk3 lib32-gtk3
         libpulse lib32-libpulse
         alsa-lib lib32-alsa-lib alsa-utils alsa-plugins lib32-alsa-plugins
-        giflib lib32-giflib
+        giflib
         libpng lib32-libpng
         libldap lib32-libldap
-        openal lib32-openal
+        openal
         libxcomposite lib32-libxcomposite
         libxinerama lib32-libxinerama
         libgcrypt lib32-libgcrypt
         libgpg-error lib32-libgpg-error
         ncurses lib32-ncurses
-        mpg123 lib32-mpg123
+        mpg123
         libjpeg-turbo lib32-libjpeg-turbo
         sqlite lib32-sqlite
         libva lib32-libva
-        gst-plugins-base-libs 
-        sdl2 lib32-sdl2
-        v4l-utils lib32-v4l-utils
+        gst-plugins-base-libs
+        sdl2
+        v4l-utils
         vulkan-icd-loader lib32-vulkan-icd-loader
         ocl-icd lib32-ocl-icd
-        libxslt lib32-libxslt
+        libxslt
         cups lib32-mesa
         vulkan-radeon lib32-vulkan-radeon
         mangohud lib32-mangohud
@@ -52,8 +49,22 @@ _install_gaming_arch() {
         steam lutris
     )
 
+    log_info "Checking Package Availability..."
+    local available=() missing=()
+    for pkg in "${deps[@]}"; do
+        if pacman -Si "$pkg" &>/dev/null || pacman -Qi "$pkg" &>/dev/null; then
+            available+=("$pkg")
+        else
+            missing+=("$pkg")
+        fi
+    done
+
+    if ((${#missing[@]})); then
+        log_warn "Pacotes indisponíveis, pulando: ${missing[*]}"
+    fi
+
     log_info "Installing gaming dependencies for Arch..."
-    pkg_install "${deps[@]}" || die "Failed to install gaming dependencies."
+    pkg_install "${available[@]}" || die "Failed to install gaming dependencies."
 }
 
 _install_gaming_debian() {
@@ -113,6 +124,7 @@ _install_gaming_fedora() {
 }
 
 setup_gaming() {
+    clear
     case "$DISTRO" in
         arch)
             log_info "Setting up gaming environment for Arch..."

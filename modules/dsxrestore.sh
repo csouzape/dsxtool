@@ -79,98 +79,46 @@ backup_folder() {
   return 0
 }
 
-restore_app_snapshot(){
-    local archive="$1"
+select_backup_targets() {
+  local -a candidates=()
+  local bf_output
+  if ! bf_output=$(backup_folder); then
+    return 1
+  fi
+  mapfile -t candidates <<< "$bf_output"
+  candidates+=("Exit")
 
-    if [[ -z "$archive" || ! -f "$archive" ]]; then
-        log_error "Snapshot archive not found: $archive"
-        return 1
+  local -a selected=()
+  if ! mapfile -t selected < <(
+    printf '%s\n' "${candidates[@]}" |
+      fzf --multi \
+        --layout=reverse \
+        --prompt="Select what to include in the backup > " \
+        --header="TAB to mark multiple | ENTER to confirm | select Exit to cancel" \
+        --preview='du -sh {} 2>/dev/null'
+  ); then
+    log_warn "Backup selection cancelled." >&2
+    return 1
+  fi
+
+  if [[ ${#selected[@]} -eq 0 ]]; then
+    log_warn "Nothing selected. Backup aborted." >&2
+    return 1
+  fi
+
+  local item
+  for item in "${selected[@]}"; do
+    if [[ "$item" == "Exit" ]]; then
+      log_info "Exit selected. Backup aborted." >&2
+      return 1
     fi
+  done
 
-    local restore_dir
-    restore_dir=$(mktemp -d) || { log_error "Couldn't create temp dir."; return 1; }
-
-    if ! tar -xzf "$archive" -C "$restore_dir" --strip-components=1; then
-        log_error "Failed to extract snapshot archive."
-        rm -rf "$restore_dir"
-        return 1
-    fi
-
-    if [[ -f "${restore_dir}/snapshot-info.txt" ]]; then
-        log_info "Restoring snapshot:"
-        cat "${restore_dir}/snapshot-info.txt"
-    fi
-
-    if [[ -s "${restore_dir}/pacman-explicit.txt" ]]; then
-        log_info "Installing official packages..."
-        local -a pkgs=()
-        mapfile -t pkgs < "${restore_dir}/pacman-explicit.txt"
-
-        case "$DISTRO" in
-            arch)
-                if ! sudo pacman -S --needed "${pkgs[@]}"; then
-                    log_warn "Some official packages failed to install. Check the log."
-                fi
-                ;;
-            debian)
-                if ! sudo apt install -y "${pkgs[@]}"; then
-                    log_warn "Some official packages failed to install. Check the log."
-                fi
-                ;;
-            fedora)
-                if ! sudo dnf install -y "${pkgs[@]}"; then
-                    log_warn "Some official packages failed to install. Check the log."
-                fi
-                ;;
-            *)
-                log_warn "Unsupported DISTRO '$DISTRO', skipping official package restore."
-                ;;
-        esac
-    fi
-
-    if [[ -s "${restore_dir}/pacman-foreign.txt" ]]; then
-        case "$DISTRO" in
-            arch)
-                local aur_helper=""
-                local helper
-                for helper in yay paru; do
-                    command -v "$helper" &> /dev/null && { aur_helper="$helper"; break; }
-                done
-
-                if [[ -n "$aur_helper" ]]; then
-                    local -a foreign_pkgs=()
-                    mapfile -t foreign_pkgs < "${restore_dir}/pacman-foreign.txt"
-                    log_info "Installing AUR packages via $aur_helper..."
-                    if ! "$aur_helper" -S --needed "${foreign_pkgs[@]}"; then
-                        log_warn "Some AUR packages failed to install. Check the log."
-                    fi
-                else
-                    log_warn "No AUR helper (yay/paru) found. Skipping AUR packages:"
-                    cat "${restore_dir}/pacman-foreign.txt"
-                fi
-                ;;
-            fedora)
-                log_warn "The following packages came from non-default repos and were not reinstalled automatically (origin repo may not exist on this system):"
-                cat "${restore_dir}/pacman-foreign.txt"
-                ;;
-            *)
-                :
-                ;;
-        esac
-    fi
-
-    if [[ -s "${restore_dir}/flatpak-apps.txt" ]] && command -v flatpak &> /dev/null; then
-        log_info "Installing Flatpak apps..."
-        while IFS= read -r app_id; do
-            [[ -z "$app_id" ]] && continue
-            flatpak install -y flathub "$app_id" || log_warn "Failed to install Flatpak app: $app_id"
-        done < "${restore_dir}/flatpak-apps.txt"
-    fi
-
-    rm -rf "$restore_dir"
-    log_info "App snapshot restore complete."
-    return 0
+  printf '%s\n' "${selected[@]}"
+  return 0
 }
+
+
 
 prepare_backup_destination() {
   if [[ ! -d "$DSX_BACKUP_ROOT" ]]; then
@@ -459,8 +407,6 @@ find_app_snapshots(){
         -type f -name 'dsxappsnapshot_*.tar.gz' -printf '%T@ %p\n' 2>/dev/null \
         | sort -rn | cut -d' ' -f2-
 }
-
-
 
 
 restore_app_snapshot(){

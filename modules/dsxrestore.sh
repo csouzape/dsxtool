@@ -81,7 +81,12 @@ backup_folder() {
 
 select_backup_targets() {
   local -a candidates=()
-  mapfile -t candidates < <(backup_folder) || return 1
+  local bf_output
+  if ! bf_output=$(backup_folder); then
+    return 1
+  fi
+  mapfile -t candidates <<< "$bf_output"
+  
   candidates+=("Exit")
 
   local -a selected=()

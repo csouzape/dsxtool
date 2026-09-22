@@ -44,6 +44,7 @@ install_hp_driver() {
 }
 
 setup_printer() {
+    clear
     install_cups
 
     local brand
